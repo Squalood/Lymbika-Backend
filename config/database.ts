@@ -25,18 +25,18 @@ export default ({ env }) => {
     postgres: {
       connection: {
         connectionString: env('DATABASE_URL'),
-        host: env('DATABASE_HOST', 'localhost'),
+        host: env('DATABASE_HOST', 'ep-dawn-salad-a5kggize-pooler.us-east-2.aws.neon.tech'),
         port: env.int('DATABASE_PORT', 5432),
-        database: env('DATABASE_NAME', 'e-lymbika'),
-        user: env('DATABASE_USERNAME', ''),
-        password: env('DATABASE_PASSWORD', ''),
+        database: env('DATABASE_NAME', 'neondb'),
+        user: env('DATABASE_USERNAME', 'neondb_owner'),
+        password: env('DATABASE_PASSWORD', 'npg_jTESZY1adCq5'),
         ssl: env.bool('DATABASE_SSL', false) && {
           key: env('DATABASE_SSL_KEY', undefined),
           cert: env('DATABASE_SSL_CERT', undefined),
           ca: env('DATABASE_SSL_CA', undefined),
           capath: env('DATABASE_SSL_CAPATH', undefined),
           cipher: env('DATABASE_SSL_CIPHER', undefined),
-          rejectUnauthorized: env.bool('DATABASE_SSL_REJECT_UNAUTHORIZED', true),
+          rejectUnauthorized: false,
         },
         schema: env('DATABASE_SCHEMA', 'public'),
       },
