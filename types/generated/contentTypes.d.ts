@@ -461,7 +461,28 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     publishedAt: Schema.Attribute.DateTime;
     slug: Schema.Attribute.UID<'productName'>;
     tipo: Schema.Attribute.Enumeration<
-      ['Pildora', 'Dolor', 'Antigripal', 'Antihipertensivo ']
+      [
+        'Pildora',
+        'Dolor',
+        'Antigripal',
+        'Antihipertensivo ',
+        'Tipo',
+        'Dolor y Fiebre',
+        'Gripe y Tos',
+        'Alergias y Respiratorios',
+        'Salud Digestiva',
+        'Vitaminas y Suplementos',
+        'Salud de la Piel',
+        'Cuidado Femenino',
+        'Salud Sexual y Reproductiva',
+        ' Salud Mental y Sue\u00F1o',
+        ' Diabetes y Control de Glucosa',
+        ' Hipertensi\u00F3n y Salud del Coraz\u00F3n',
+        ' Enfermedades Cr\u00F3nicas',
+        ' Medicamentos Especializados',
+        ' Antibi\u00F3ticos y Antivirales',
+        ' Cuidado Infantil y Pedi\u00E1trico',
+      ]
     >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &

@@ -46,7 +46,23 @@
         "Pildora",
         "Dolor",
         "Antigripal",
-        "Antihipertensivo "
+        "Antihipertensivo ",
+        "Tipo",
+        "Dolor y Fiebre",
+        "Gripe y Tos",
+        "Alergias y Respiratorios",
+        "Salud Digestiva",
+        "Vitaminas y Suplementos",
+        "Salud de la Piel",
+        "Cuidado Femenino",
+        "Salud Sexual y Reproductiva",
+        " Salud Mental y Sueño",
+        " Diabetes y Control de Glucosa",
+        " Hipertensión y Salud del Corazón",
+        " Enfermedades Crónicas",
+        " Medicamentos Especializados",
+        " Antibióticos y Antivirales",
+        " Cuidado Infantil y Pediátrico"
       ]
     },
     "isFeatured": {
