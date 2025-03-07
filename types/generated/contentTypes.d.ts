@@ -463,10 +463,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     tipo: Schema.Attribute.Enumeration<
       [
         'Pildora',
-        'Dolor',
         'Antigripal',
-        'Antihipertensivo ',
-        'Tipo',
         'Dolor y Fiebre',
         'Gripe y Tos',
         'Alergias y Respiratorios',

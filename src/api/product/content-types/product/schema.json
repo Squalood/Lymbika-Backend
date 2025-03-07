@@ -44,10 +44,7 @@
       "type": "enumeration",
       "enum": [
         "Pildora",
-        "Dolor",
         "Antigripal",
-        "Antihipertensivo ",
-        "Tipo",
         "Dolor y Fiebre",
         "Gripe y Tos",
         "Alergias y Respiratorios",
