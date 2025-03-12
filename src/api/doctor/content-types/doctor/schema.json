@@ -1,0 +1,45 @@
+{
+  "kind": "collectionType",
+  "collectionName": "doctors",
+  "info": {
+    "singularName": "doctor",
+    "pluralName": "doctors",
+    "displayName": "Doctor"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "doctorName": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "doctorName"
+    },
+    "image": {
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ],
+      "type": "media",
+      "multiple": true
+    },
+    "service": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::service.service"
+    },
+    "surgery": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::surgery.surgery"
+    },
+    "review": {
+      "type": "integer"
+    }
+  }
+}

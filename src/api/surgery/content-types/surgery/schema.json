@@ -1,0 +1,37 @@
+{
+  "kind": "collectionType",
+  "collectionName": "surgeries",
+  "info": {
+    "singularName": "surgery",
+    "pluralName": "surgeries",
+    "displayName": "Surgery",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "surgeryName": {
+      "type": "string"
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "surgeryName"
+    },
+    "description": {
+      "type": "text"
+    }
+  }
+}
