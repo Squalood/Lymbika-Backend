@@ -11,7 +11,7 @@ const { createCoreController } = require("@strapi/strapi").factories;
 module.exports = createCoreController("api::order.order", ({ strapi }) => ({
     async create(ctx) {
         //@ts-ignore
-        const { products } = ctx.request.body;
+        const { products, mediClubRegular } = ctx.request.body;
 
         try {
             const lineItems = await Promise.all(
@@ -24,7 +24,7 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
                             product_data: {
                                 name: item.productName,
                             },
-                            unit_amount: Math.round(item.price * 100),
+                            unit_amount: Math.round((mediClubRegular && item.priceMember > 0 ? item.priceMember : item.price) * 100),
                         },
                         quantity: 1,
                     };
