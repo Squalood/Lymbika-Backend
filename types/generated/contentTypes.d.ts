@@ -404,6 +404,7 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
 export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
   collectionName: 'doctors';
   info: {
+    description: '';
     displayName: 'Doctor';
     pluralName: 'doctors';
     singularName: 'doctor';
@@ -412,6 +413,7 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
+    about: Schema.Attribute.Text;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -420,12 +422,14 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
       'images' | 'files' | 'videos' | 'audios',
       true
     >;
+    languagesSpoken: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::doctor.doctor'
     > &
       Schema.Attribute.Private;
+    location: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     review: Schema.Attribute.Integer;
     service: Schema.Attribute.Relation<'oneToOne', 'api::service.service'>;

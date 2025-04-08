@@ -4,7 +4,8 @@
   "info": {
     "singularName": "doctor",
     "pluralName": "doctors",
-    "displayName": "Doctor"
+    "displayName": "Doctor",
+    "description": ""
   },
   "options": {
     "draftAndPublish": true
@@ -19,14 +20,15 @@
       "targetField": "doctorName"
     },
     "image": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
       "allowedTypes": [
         "images",
         "files",
         "videos",
         "audios"
-      ],
-      "type": "media",
-      "multiple": true
+      ]
     },
     "service": {
       "type": "relation",
@@ -40,6 +42,15 @@
     },
     "review": {
       "type": "integer"
+    },
+    "about": {
+      "type": "text"
+    },
+    "languagesSpoken": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
     }
   }
 }
