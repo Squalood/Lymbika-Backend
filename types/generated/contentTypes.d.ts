@@ -414,6 +414,9 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
   };
   attributes: {
     about: Schema.Attribute.Text;
+    bannerImage: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios'
+    >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -430,6 +433,7 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     location: Schema.Attribute.String;
+    priceCon: Schema.Attribute.Decimal;
     publishedAt: Schema.Attribute.DateTime;
     review: Schema.Attribute.Integer;
     service: Schema.Attribute.Relation<'oneToOne', 'api::service.service'>;

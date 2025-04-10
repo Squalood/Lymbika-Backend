@@ -51,6 +51,19 @@
     },
     "location": {
       "type": "string"
+    },
+    "bannerImage": {
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ],
+      "type": "media",
+      "multiple": false
+    },
+    "priceCon": {
+      "type": "decimal"
     }
   }
 }
