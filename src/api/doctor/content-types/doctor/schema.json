@@ -30,14 +30,14 @@
         "audios"
       ]
     },
-    "service": {
+    "services": {
       "type": "relation",
-      "relation": "oneToOne",
+      "relation": "oneToMany",
       "target": "api::service.service"
     },
-    "surgery": {
+    "surgeries": {
       "type": "relation",
-      "relation": "oneToOne",
+      "relation": "oneToMany",
       "target": "api::surgery.surgery"
     },
     "review": {
@@ -53,14 +53,15 @@
       "type": "string"
     },
     "bannerImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
       "allowedTypes": [
         "images",
         "files",
         "videos",
         "audios"
-      ],
-      "type": "media",
-      "multiple": false
+      ]
     },
     "priceCon": {
       "type": "decimal"

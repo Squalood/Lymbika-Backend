@@ -436,9 +436,9 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
     priceCon: Schema.Attribute.Decimal;
     publishedAt: Schema.Attribute.DateTime;
     review: Schema.Attribute.Integer;
-    service: Schema.Attribute.Relation<'oneToOne', 'api::service.service'>;
+    services: Schema.Attribute.Relation<'oneToMany', 'api::service.service'>;
     slug: Schema.Attribute.UID<'doctorName'>;
-    surgery: Schema.Attribute.Relation<'oneToOne', 'api::surgery.surgery'>;
+    surgeries: Schema.Attribute.Relation<'oneToMany', 'api::surgery.surgery'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
