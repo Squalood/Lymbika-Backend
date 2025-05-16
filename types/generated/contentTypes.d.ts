@@ -421,10 +421,16 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     doctorName: Schema.Attribute.String;
+    facebook: Schema.Attribute.String;
+    gallery: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios',
+      true
+    >;
     image: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios',
       true
     >;
+    instagram: Schema.Attribute.String;
     languagesSpoken: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -439,9 +445,11 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
     services: Schema.Attribute.Relation<'oneToMany', 'api::service.service'>;
     slug: Schema.Attribute.UID<'doctorName'>;
     surgeries: Schema.Attribute.Relation<'oneToMany', 'api::surgery.surgery'>;
+    tiktok: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    web: Schema.Attribute.String;
   };
 }
 
