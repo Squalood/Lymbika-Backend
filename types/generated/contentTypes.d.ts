@@ -417,6 +417,7 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
     bannerImage: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios'
     >;
+    closedAvailability: Schema.Attribute.Time;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -444,6 +445,7 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
     review: Schema.Attribute.Integer;
     services: Schema.Attribute.Relation<'oneToMany', 'api::service.service'>;
     slug: Schema.Attribute.UID<'doctorName'>;
+    startAvailability: Schema.Attribute.Time;
     surgeries: Schema.Attribute.Relation<'oneToMany', 'api::surgery.surgery'>;
     tiktok: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
