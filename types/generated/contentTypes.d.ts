@@ -421,6 +421,7 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    dayAvailable: Schema.Attribute.Text;
     doctorName: Schema.Attribute.String;
     facebook: Schema.Attribute.String;
     gallery: Schema.Attribute.Media<

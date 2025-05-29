@@ -94,6 +94,9 @@
     },
     "closedAvailability": {
       "type": "time"
+    },
+    "dayAvailable": {
+      "type": "text"
     }
   }
 }
