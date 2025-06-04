@@ -444,6 +444,7 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
     priceCon: Schema.Attribute.Decimal;
     publishedAt: Schema.Attribute.DateTime;
     review: Schema.Attribute.Integer;
+    reviews: Schema.Attribute.Relation<'oneToMany', 'api::review.review'>;
     services: Schema.Attribute.Relation<'oneToMany', 'api::service.service'>;
     slug: Schema.Attribute.UID<'doctorName'>;
     startAvailability: Schema.Attribute.Time;
@@ -540,6 +541,43 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+  };
+}
+
+export interface ApiReviewReview extends Struct.CollectionTypeSchema {
+  collectionName: 'reviews';
+  info: {
+    displayName: 'Review';
+    pluralName: 'reviews';
+    singularName: 'review';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    bedsideManner: Schema.Attribute.Integer;
+    comment: Schema.Attribute.Text;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    doctor: Schema.Attribute.Relation<'manyToOne', 'api::doctor.doctor'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::review.review'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    recommend: Schema.Attribute.Integer;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    User: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+    visitAgain: Schema.Attribute.Integer;
+    waitingTime: Schema.Attribute.Integer;
   };
 }
 
@@ -1095,6 +1133,7 @@ export interface PluginUsersPermissionsUser
     provider: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     resetPasswordToken: Schema.Attribute.String & Schema.Attribute.Private;
+    reviews: Schema.Attribute.Relation<'oneToMany', 'api::review.review'>;
     role: Schema.Attribute.Relation<
       'manyToOne',
       'plugin::users-permissions.role'
@@ -1125,6 +1164,7 @@ declare module '@strapi/strapi' {
       'api::doctor.doctor': ApiDoctorDoctor;
       'api::order.order': ApiOrderOrder;
       'api::product.product': ApiProductProduct;
+      'api::review.review': ApiReviewReview;
       'api::service.service': ApiServiceService;
       'api::surgery.surgery': ApiSurgerySurgery;
       'plugin::content-releases.release': PluginContentReleasesRelease;

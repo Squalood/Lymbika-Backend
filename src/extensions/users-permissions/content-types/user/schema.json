@@ -77,6 +77,12 @@
     "mediClubRegular": {
       "type": "boolean",
       "default": false
+    },
+    "reviews": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::review.review",
+      "mappedBy": "User"
     }
   }
 }

@@ -97,6 +97,12 @@
     },
     "dayAvailable": {
       "type": "text"
+    },
+    "reviews": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::review.review",
+      "mappedBy": "doctor"
     }
   }
 }
