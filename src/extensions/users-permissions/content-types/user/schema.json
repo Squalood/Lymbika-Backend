@@ -82,7 +82,7 @@
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::review.review",
-      "mappedBy": "User"
+      "mappedBy": "user"
     }
   }
 }
