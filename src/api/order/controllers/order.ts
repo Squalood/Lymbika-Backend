@@ -13,7 +13,7 @@ const { createCoreController } = require("@strapi/strapi").factories;
 module.exports = createCoreController("api::order.order", ({ strapi }) => ({
     async create(ctx) {
         //@ts-ignore
-        const { products, mediClubRegular, isDelivery } = ctx.request.body;
+        const { products, mediClubRegular, isDelivery, userEmail } = ctx.request.body;
 
         try {
             const lineItems = await Promise.all(
@@ -45,10 +45,14 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
                 sessionConfig.shipping_address_collection = { allowed_countries: ["MX"] };
             }
 
+            if (!userEmail) {
+                return ctx.badRequest("E-mail is required");
+            }
+
             const session = await stripe.checkout.sessions.create(sessionConfig)
 
             await strapi.service("api::order.order").create({
-                data: { products, stripeid: session.id },
+                data: { products, stripeid: session.id, isDelivery, userEmail, }, //error: No value exists in scope for the shorthand property 'userEmail'. Either declare one or provide an initializer.
             });
 
             return { stripeSession: session };
