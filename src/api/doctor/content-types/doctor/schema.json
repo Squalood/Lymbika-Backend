@@ -103,6 +103,12 @@
       "relation": "oneToMany",
       "target": "api::review.review",
       "mappedBy": "doctor"
+    },
+    "videos": {
+      "displayName": "youtube-video",
+      "type": "component",
+      "repeatable": true,
+      "component": "video-id.youtube-video"
     }
   }
 }
