@@ -1,0 +1,46 @@
+{
+  "kind": "collectionType",
+  "collectionName": "memberships",
+  "info": {
+    "singularName": "membership",
+    "pluralName": "memberships",
+    "displayName": "Membership"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "icon": {
+      "type": "enumeration",
+      "enum": [
+        "Stethoscope",
+        "Pill",
+        "Building2"
+      ]
+    },
+    "priceP": {
+      "type": "decimal"
+    },
+    "priceF": {
+      "type": "decimal"
+    },
+    "description": {
+      "type": "text"
+    },
+    "button": {
+      "displayName": "button",
+      "type": "component",
+      "repeatable": false,
+      "component": "button.button"
+    },
+    "features": {
+      "type": "component",
+      "repeatable": true,
+      "component": "feature.features"
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "collectionName": "components_button_buttons",
+  "info": {
+    "displayName": "button",
+    "icon": "book",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string"
+    },
+    "icon": {
+      "type": "enumeration",
+      "enum": [
+        "MoveRight",
+        "PhoneCall"
+      ]
+    },
+    "variant": {
+      "type": "enumeration",
+      "enum": [
+        "default",
+        "outline"
+      ]
+    },
+    "linkP": {
+      "type": "string"
+    },
+    "linkF": {
+      "type": "string"
+    },
+    "link": {
+      "type": "string"
+    }
+  }
+}
