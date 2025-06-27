@@ -458,6 +458,43 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiHospitalHospital extends Struct.CollectionTypeSchema {
+  collectionName: 'hospitals';
+  info: {
+    description: '';
+    displayName: 'Hospital';
+    pluralName: 'hospitals';
+    singularName: 'hospital';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    descripcion: Schema.Attribute.Text;
+    hospitalName: Schema.Attribute.String;
+    imagen: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    infraestructura: Schema.Attribute.Integer;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::hospital.hospital'
+    > &
+      Schema.Attribute.Private;
+    precio: Schema.Attribute.Enumeration<['economico', 'estandar', 'premium']> &
+      Schema.Attribute.DefaultTo<'estandar'>;
+    publishedAt: Schema.Attribute.DateTime;
+    review: Schema.Attribute.Decimal;
+    servicio: Schema.Attribute.Integer;
+    slug: Schema.Attribute.UID<'hospitalName'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
   collectionName: 'orders';
   info: {
@@ -1167,6 +1204,7 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::category.category': ApiCategoryCategory;
       'api::doctor.doctor': ApiDoctorDoctor;
+      'api::hospital.hospital': ApiHospitalHospital;
       'api::order.order': ApiOrderOrder;
       'api::product.product': ApiProductProduct;
       'api::review.review': ApiReviewReview;

@@ -1,0 +1,7 @@
+/**
+ * hospital controller
+ */
+
+import { factories } from '@strapi/strapi'
+
+export default factories.createCoreController('api::hospital.hospital');
