@@ -29,6 +29,18 @@ export interface FeatureFeatures extends Struct.ComponentSchema {
   };
 }
 
+export interface ItemFaqItem extends Struct.ComponentSchema {
+  collectionName: 'components_item_faq_items';
+  info: {
+    displayName: 'faq-item';
+    icon: 'bulletList';
+  };
+  attributes: {
+    answer: Schema.Attribute.Text;
+    question: Schema.Attribute.Text;
+  };
+}
+
 export interface VideoIdYoutubeVideo extends Struct.ComponentSchema {
   collectionName: 'components_video_id_youtube_videos';
   info: {
@@ -46,6 +58,7 @@ declare module '@strapi/strapi' {
     export interface ComponentSchemas {
       'button.button': ButtonButton;
       'feature.features': FeatureFeatures;
+      'item.faq-item': ItemFaqItem;
       'video-id.youtube-video': VideoIdYoutubeVideo;
     }
   }
