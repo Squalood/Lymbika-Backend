@@ -607,6 +607,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     description: Schema.Attribute.Text;
+    descriptionPro: Schema.Attribute.Blocks;
     images: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios',
       true
@@ -622,6 +623,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     priceMember: Schema.Attribute.Decimal;
     productName: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
+    sal: Schema.Attribute.Text;
     slug: Schema.Attribute.UID<'productName'>;
     tipo: Schema.Attribute.Enumeration<
       [

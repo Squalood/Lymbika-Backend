@@ -72,6 +72,12 @@
     },
     "priceMember": {
       "type": "decimal"
+    },
+    "descriptionPro": {
+      "type": "blocks"
+    },
+    "sal": {
+      "type": "text"
     }
   }
 }
