@@ -5,15 +5,12 @@ import Stripe from "stripe";
 //@ts-ignore
 const stripe = require("stripe")(process.env.STRIPE_KEY);
 
-/**
- * Order Controller
- */
 const { createCoreController } = require("@strapi/strapi").factories;
 
 module.exports = createCoreController("api::order.order", ({ strapi }) => ({
     async create(ctx) {
         //@ts-ignore
-        const { products, mediClubRegular, isDelivery, userEmail } = ctx.request.body;
+        const { products, isDelivery, userEmail, deliveryCost } = ctx.request.body;
 
         try {
             const lineItems = await Promise.all(
@@ -26,9 +23,9 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
                             product_data: {
                                 name: item.productName,
                             },
-                            unit_amount: Math.round((mediClubRegular && item.priceMember > 0 ? item.priceMember : item.price) * 100),
+                            unit_amount: Math.round(product.price * 100), // El precio ya viene calculado desde el cliente
                         },
-                        quantity: 1,
+                        quantity: product.quantity, // Ahora usamos la cantidad correcta
                     };
                 })
             );
@@ -49,10 +46,28 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
                 return ctx.badRequest("E-mail is required");
             }
 
-            const session = await stripe.checkout.sessions.create(sessionConfig)
+            if (deliveryCost && deliveryCost > 0) {
+            lineItems.push({
+                price_data: {
+                currency: "MXN",
+                product_data: {
+                    name: "Costo de envío",
+                },
+                unit_amount: Math.round(deliveryCost * 100),
+                },
+                quantity: 1,
+            });
+            }
+
+            const session = await stripe.checkout.sessions.create(sessionConfig);
 
             await strapi.service("api::order.order").create({
-                data: { products, stripeid: session.id, isDelivery, userEmail, }, //error: No value exists in scope for the shorthand property 'userEmail'. Either declare one or provide an initializer.
+                data: {
+                    products,
+                    stripeid: session.id,
+                    isDelivery,
+                    userEmail, // Aquí ya funciona bien, era solo un tema de cómo lo estabas pasando.
+                },
             });
 
             return { stripeSession: session };
