@@ -1,0 +1,75 @@
+{
+  "kind": "collectionType",
+  "collectionName": "clinics",
+  "info": {
+    "singularName": "clinic",
+    "pluralName": "clinics",
+    "displayName": "Clinic",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "title"
+    },
+    "heroTitle": {
+      "type": "string"
+    },
+    "heroSubtitle": {
+      "type": "text"
+    },
+    "heroImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "contactLocation": {
+      "type": "text"
+    },
+    "contactSchedule": {
+      "type": "string"
+    },
+    "contactPhone": {
+      "type": "string"
+    },
+    "contactWhatsappLink": {
+      "type": "string"
+    },
+    "services": {
+      "displayName": "services",
+      "type": "component",
+      "repeatable": true,
+      "component": "service.services"
+    },
+    "features": {
+      "type": "component",
+      "repeatable": true,
+      "component": "feature.features"
+    },
+    "testimonials": {
+      "displayName": "testimonials",
+      "type": "component",
+      "repeatable": true,
+      "component": "testimonial.testimonials"
+    },
+    "doctor": {
+      "displayName": "doctor",
+      "type": "component",
+      "repeatable": false,
+      "component": "doctor.doctor"
+    }
+  }
+}

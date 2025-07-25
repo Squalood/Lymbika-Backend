@@ -401,6 +401,47 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
+  collectionName: 'clinics';
+  info: {
+    description: '';
+    displayName: 'Clinic';
+    pluralName: 'clinics';
+    singularName: 'clinic';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    contactLocation: Schema.Attribute.Text;
+    contactPhone: Schema.Attribute.String;
+    contactSchedule: Schema.Attribute.String;
+    contactWhatsappLink: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    doctor: Schema.Attribute.Component<'doctor.doctor', false>;
+    features: Schema.Attribute.Component<'feature.features', true>;
+    heroImage: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    heroSubtitle: Schema.Attribute.Text;
+    heroTitle: Schema.Attribute.String;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::clinic.clinic'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    services: Schema.Attribute.Component<'service.services', true>;
+    slug: Schema.Attribute.UID<'title'>;
+    testimonials: Schema.Attribute.Component<'testimonial.testimonials', true>;
+    title: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
   collectionName: 'doctors';
   info: {
@@ -1270,6 +1311,7 @@ declare module '@strapi/strapi' {
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
       'api::category.category': ApiCategoryCategory;
+      'api::clinic.clinic': ApiClinicClinic;
       'api::doctor.doctor': ApiDoctorDoctor;
       'api::faq-group.faq-group': ApiFaqGroupFaqGroup;
       'api::hospital.hospital': ApiHospitalHospital;

@@ -1,17 +1,19 @@
 {
-  "collectionName": "components_feature_features",
+  "collectionName": "components_service_services",
   "info": {
-    "displayName": "features",
-    "icon": "bulletList",
-    "description": ""
+    "displayName": "services",
+    "icon": "bulletList"
   },
   "options": {},
   "attributes": {
     "title": {
-      "type": "text"
+      "type": "string"
     },
     "description": {
-      "type": "text"
+      "type": "string"
+    },
+    "price": {
+      "type": "decimal"
     },
     "icon": {
       "type": "enumeration",

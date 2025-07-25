@@ -1,0 +1,31 @@
+{
+  "collectionName": "components_doctor_doctors",
+  "info": {
+    "displayName": "doctor",
+    "icon": "briefcase",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "points": {
+      "type": "blocks"
+    }
+  }
+}
