@@ -27,6 +27,7 @@ export interface DoctorDoctor extends Struct.ComponentSchema {
   attributes: {
     description: Schema.Attribute.Text;
     image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    mapsEmbedUrl: Schema.Attribute.Text;
     name: Schema.Attribute.String;
     points: Schema.Attribute.Blocks;
   };
