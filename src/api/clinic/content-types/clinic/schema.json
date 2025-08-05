@@ -70,6 +70,25 @@
       "type": "component",
       "repeatable": false,
       "component": "doctor.doctor"
+    },
+    "icon": {
+      "type": "enumeration",
+      "enum": [
+        "HeartPulse",
+        "Stethoscope",
+        "ScanHeart",
+        "Hospital",
+        "Ribbon",
+        "Venus",
+        "Baby",
+        "Sparkles",
+        "Shell",
+        "ClipboardPlus",
+        "Syringe",
+        "Dumbbell",
+        "Laugh "
+      ],
+      "default": "Stethoscope"
     }
   }
 }

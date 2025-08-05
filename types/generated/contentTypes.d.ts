@@ -425,6 +425,24 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
     heroImage: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
     heroSubtitle: Schema.Attribute.Text;
     heroTitle: Schema.Attribute.String;
+    icon: Schema.Attribute.Enumeration<
+      [
+        'HeartPulse',
+        'Stethoscope',
+        'ScanHeart',
+        'Hospital',
+        'Ribbon',
+        'Venus',
+        'Baby',
+        'Sparkles',
+        'Shell',
+        'ClipboardPlus',
+        'Syringe',
+        'Dumbbell',
+        'Laugh ',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'Stethoscope'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
