@@ -430,6 +430,7 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
         'HeartPulse',
         'Stethoscope',
         'ScanHeart',
+        'Brain',
         'Hospital',
         'Ribbon',
         'Venus',
