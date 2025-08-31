@@ -1,0 +1,29 @@
+{
+  "kind": "collectionType",
+  "collectionName": "pages",
+  "info": {
+    "singularName": "page",
+    "pluralName": "pages",
+    "displayName": "page",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "namePage": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "namePage"
+    },
+    "promo": {
+      "displayName": "promo",
+      "type": "component",
+      "repeatable": true,
+      "component": "promo.promo"
+    }
+  }
+}

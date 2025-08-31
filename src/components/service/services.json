@@ -2,7 +2,8 @@
   "collectionName": "components_service_services",
   "info": {
     "displayName": "services",
-    "icon": "bulletList"
+    "icon": "bulletList",
+    "description": ""
   },
   "options": {},
   "attributes": {
@@ -23,7 +24,26 @@
         "icon3",
         "icon4",
         "icon5",
-        "icon6"
+        "icon6",
+        "Stethoscope",
+        "Activity",
+        "Heart",
+        "HeartPulse,",
+        "Brain",
+        "ScanHeart",
+        "Hospital",
+        "Ribbon",
+        "Venus",
+        "Baby",
+        "Sparkles",
+        "Shell",
+        "ClipboardPlus",
+        "Syringe",
+        "Dumbbell",
+        "BriefcaseMedical",
+        "Ambulance",
+        "Bandage",
+        "Pill"
       ]
     }
   }

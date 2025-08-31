@@ -43,7 +43,34 @@ export interface FeatureFeatures extends Struct.ComponentSchema {
   attributes: {
     description: Schema.Attribute.Text;
     icon: Schema.Attribute.Enumeration<
-      ['icon1', 'icon2', 'icon3', 'icon4', 'icon5', 'icon6']
+      [
+        'icon1',
+        'icon2',
+        'icon3',
+        'icon4',
+        'icon5',
+        'icon6',
+        'Stethoscope',
+        'Activity',
+        'Heart',
+        'HeartPulse,',
+        'Brain',
+        'ScanHeart',
+        'Hospital',
+        'Ribbon',
+        'Venus',
+        'Baby',
+        'Sparkles',
+        'Shell',
+        'ClipboardPlus',
+        'Syringe',
+        'Dumbbell',
+        'BriefcaseMedical',
+        'Ambulance',
+        'Bandage',
+        'Pill',
+        'Percent',
+      ]
     >;
     title: Schema.Attribute.Text;
   };
@@ -61,16 +88,57 @@ export interface ItemFaqItem extends Struct.ComponentSchema {
   };
 }
 
+export interface PromoPromo extends Struct.ComponentSchema {
+  collectionName: 'components_promo_promos';
+  info: {
+    description: '';
+    displayName: 'promo';
+    icon: 'crown';
+  };
+  attributes: {
+    image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    link: Schema.Attribute.String;
+    title: Schema.Attribute.String;
+  };
+}
+
 export interface ServiceServices extends Struct.ComponentSchema {
   collectionName: 'components_service_services';
   info: {
+    description: '';
     displayName: 'services';
     icon: 'bulletList';
   };
   attributes: {
     description: Schema.Attribute.String;
     icon: Schema.Attribute.Enumeration<
-      ['icon1', 'icon2', 'icon3', 'icon4', 'icon5', 'icon6']
+      [
+        'icon1',
+        'icon2',
+        'icon3',
+        'icon4',
+        'icon5',
+        'icon6',
+        'Stethoscope',
+        'Activity',
+        'Heart',
+        'HeartPulse,',
+        'Brain',
+        'ScanHeart',
+        'Hospital',
+        'Ribbon',
+        'Venus',
+        'Baby',
+        'Sparkles',
+        'Shell',
+        'ClipboardPlus',
+        'Syringe',
+        'Dumbbell',
+        'BriefcaseMedical',
+        'Ambulance',
+        'Bandage',
+        'Pill',
+      ]
     >;
     price: Schema.Attribute.Decimal;
     title: Schema.Attribute.String;
@@ -109,6 +177,7 @@ declare module '@strapi/strapi' {
       'doctor.doctor': DoctorDoctor;
       'feature.features': FeatureFeatures;
       'item.faq-item': ItemFaqItem;
+      'promo.promo': PromoPromo;
       'service.services': ServiceServices;
       'testimonial.testimonials': TestimonialTestimonials;
       'video-id.youtube-video': VideoIdYoutubeVideo;
