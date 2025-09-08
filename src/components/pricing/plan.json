@@ -1,0 +1,37 @@
+{
+  "collectionName": "components_pricing_plans",
+  "info": {
+    "displayName": "plan",
+    "icon": "store"
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "price": {
+      "type": "decimal"
+    },
+    "plus": {
+      "displayName": "plus",
+      "type": "component",
+      "repeatable": true,
+      "component": "plus.plus"
+    },
+    "less": {
+      "displayName": "less",
+      "type": "component",
+      "repeatable": true,
+      "component": "less.less"
+    },
+    "prominent": {
+      "type": "boolean"
+    },
+    "link": {
+      "type": "string"
+    }
+  }
+}

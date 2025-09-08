@@ -668,6 +668,7 @@ export interface ApiPagePage extends Struct.CollectionTypeSchema {
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::page.page'> &
       Schema.Attribute.Private;
     namePage: Schema.Attribute.String;
+    plan: Schema.Attribute.Component<'pricing.plan', true>;
     promo: Schema.Attribute.Component<'promo.promo', true>;
     publishedAt: Schema.Attribute.DateTime;
     slug: Schema.Attribute.UID<'namePage'>;

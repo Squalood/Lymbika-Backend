@@ -88,6 +88,47 @@ export interface ItemFaqItem extends Struct.ComponentSchema {
   };
 }
 
+export interface LessLess extends Struct.ComponentSchema {
+  collectionName: 'components_less_lesses';
+  info: {
+    description: '';
+    displayName: 'less';
+    icon: 'arrowDown';
+  };
+  attributes: {
+    text: Schema.Attribute.Text;
+  };
+}
+
+export interface PlusPlus extends Struct.ComponentSchema {
+  collectionName: 'components_plus_pluses';
+  info: {
+    description: '';
+    displayName: 'plus';
+    icon: 'check';
+  };
+  attributes: {
+    text: Schema.Attribute.Text;
+  };
+}
+
+export interface PricingPlan extends Struct.ComponentSchema {
+  collectionName: 'components_pricing_plans';
+  info: {
+    displayName: 'plan';
+    icon: 'store';
+  };
+  attributes: {
+    description: Schema.Attribute.Text;
+    less: Schema.Attribute.Component<'less.less', true>;
+    link: Schema.Attribute.String;
+    name: Schema.Attribute.String;
+    plus: Schema.Attribute.Component<'plus.plus', true>;
+    price: Schema.Attribute.Decimal;
+    prominent: Schema.Attribute.Boolean;
+  };
+}
+
 export interface PromoPromo extends Struct.ComponentSchema {
   collectionName: 'components_promo_promos';
   info: {
@@ -177,6 +218,9 @@ declare module '@strapi/strapi' {
       'doctor.doctor': DoctorDoctor;
       'feature.features': FeatureFeatures;
       'item.faq-item': ItemFaqItem;
+      'less.less': LessLess;
+      'plus.plus': PlusPlus;
+      'pricing.plan': PricingPlan;
       'promo.promo': PromoPromo;
       'service.services': ServiceServices;
       'testimonial.testimonials': TestimonialTestimonials;

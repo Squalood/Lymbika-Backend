@@ -1,0 +1,14 @@
+{
+  "collectionName": "components_plus_pluses",
+  "info": {
+    "displayName": "plus",
+    "icon": "check",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "text"
+    }
+  }
+}

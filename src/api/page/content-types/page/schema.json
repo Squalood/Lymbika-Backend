@@ -24,6 +24,12 @@
       "type": "component",
       "repeatable": true,
       "component": "promo.promo"
+    },
+    "plan": {
+      "displayName": "plan",
+      "type": "component",
+      "repeatable": true,
+      "component": "pricing.plan"
     }
   }
 }

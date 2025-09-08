@@ -1,0 +1,14 @@
+{
+  "collectionName": "components_less_lesses",
+  "info": {
+    "displayName": "less",
+    "icon": "arrowDown",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "text"
+    }
+  }
+}
