@@ -422,6 +422,10 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     doctor: Schema.Attribute.Component<'doctor.doctor', false>;
     features: Schema.Attribute.Component<'feature.features', true>;
+    gallery: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios',
+      true
+    >;
     heroImage: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
     heroSubtitle: Schema.Attribute.Text;
     heroTitle: Schema.Attribute.String;
@@ -458,6 +462,7 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    videos: Schema.Attribute.Component<'video-id.youtube-video', true>;
   };
 }
 
