@@ -455,6 +455,7 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
+    scheduleLink: Schema.Attribute.Text;
     services: Schema.Attribute.Component<'service.services', true>;
     slug: Schema.Attribute.UID<'title'>;
     testimonials: Schema.Attribute.Component<'testimonial.testimonials', true>;

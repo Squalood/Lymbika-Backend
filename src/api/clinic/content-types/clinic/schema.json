@@ -92,19 +92,23 @@
       "default": "Stethoscope"
     },
     "gallery": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
       "allowedTypes": [
         "images",
         "files",
         "videos",
         "audios"
-      ],
-      "type": "media",
-      "multiple": true
+      ]
     },
     "videos": {
       "type": "component",
       "repeatable": true,
       "component": "video-id.youtube-video"
+    },
+    "scheduleLink": {
+      "type": "text"
     }
   }
 }
