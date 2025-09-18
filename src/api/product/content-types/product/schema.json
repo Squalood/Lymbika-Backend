@@ -19,9 +19,6 @@
       "type": "uid",
       "targetField": "productName"
     },
-    "description": {
-      "type": "text"
-    },
     "images": {
       "type": "media",
       "multiple": true,
