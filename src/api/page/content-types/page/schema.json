@@ -30,6 +30,12 @@
       "type": "component",
       "repeatable": true,
       "component": "pricing.plan"
+    },
+    "hero": {
+      "displayName": "hero",
+      "type": "component",
+      "repeatable": false,
+      "component": "hero.hero"
     }
   }
 }

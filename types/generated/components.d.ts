@@ -76,6 +76,21 @@ export interface FeatureFeatures extends Struct.ComponentSchema {
   };
 }
 
+export interface HeroHero extends Struct.ComponentSchema {
+  collectionName: 'components_hero_heroes';
+  info: {
+    displayName: 'hero';
+    icon: 'picture';
+  };
+  attributes: {
+    buttonText: Schema.Attribute.String;
+    buttonUrl: Schema.Attribute.String;
+    description: Schema.Attribute.Text;
+    image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    title: Schema.Attribute.String;
+  };
+}
+
 export interface ItemFaqItem extends Struct.ComponentSchema {
   collectionName: 'components_item_faq_items';
   info: {
@@ -217,6 +232,7 @@ declare module '@strapi/strapi' {
       'button.button': ButtonButton;
       'doctor.doctor': DoctorDoctor;
       'feature.features': FeatureFeatures;
+      'hero.hero': HeroHero;
       'item.faq-item': ItemFaqItem;
       'less.less': LessLess;
       'plus.plus': PlusPlus;
