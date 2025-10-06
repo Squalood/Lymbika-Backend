@@ -454,6 +454,7 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
       'api::clinic.clinic'
     > &
       Schema.Attribute.Private;
+    product: Schema.Attribute.Relation<'manyToOne', 'api::product.product'>;
     publishedAt: Schema.Attribute.DateTime;
     scheduleLink: Schema.Attribute.Text;
     services: Schema.Attribute.Component<'service.services', true>;
@@ -699,6 +700,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
   attributes: {
     active: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     category: Schema.Attribute.Relation<'oneToOne', 'api::category.category'>;
+    clinics: Schema.Attribute.Relation<'oneToMany', 'api::clinic.clinic'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

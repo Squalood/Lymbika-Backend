@@ -75,6 +75,12 @@
     },
     "sal": {
       "type": "text"
+    },
+    "clinics": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::clinic.clinic",
+      "mappedBy": "product"
     }
   }
 }
