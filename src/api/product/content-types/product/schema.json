@@ -78,9 +78,9 @@
     },
     "clinics": {
       "type": "relation",
-      "relation": "oneToMany",
+      "relation": "manyToMany",
       "target": "api::clinic.clinic",
-      "mappedBy": "product"
+      "inversedBy": "products"
     }
   }
 }
