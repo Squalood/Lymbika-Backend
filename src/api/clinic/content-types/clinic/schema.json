@@ -87,7 +87,12 @@
         "ClipboardPlus",
         "Syringe",
         "Dumbbell",
-        "Laugh "
+        "Laugh ",
+        "BriefcaseMedical",
+        "PillBottle",
+        "Bone",
+        "Bandage",
+        "Dna"
       ],
       "default": "Stethoscope"
     },
