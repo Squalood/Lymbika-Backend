@@ -92,7 +92,8 @@
         "PillBottle",
         "Bone",
         "Bandage",
-        "Dna"
+        "Dna",
+        "Ambulance"
       ],
       "default": "Stethoscope"
     },

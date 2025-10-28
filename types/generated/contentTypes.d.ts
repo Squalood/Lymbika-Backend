@@ -450,6 +450,7 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
         'Bone',
         'Bandage',
         'Dna',
+        'Ambulance',
       ]
     > &
       Schema.Attribute.DefaultTo<'Stethoscope'>;
