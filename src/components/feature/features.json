@@ -41,7 +41,14 @@
         "Ambulance",
         "Bandage",
         "Pill",
-        "Percent"
+        "Percent",
+        "CalendarPlus",
+        "UserRoundPlus",
+        "Waypoints",
+        "Presentation",
+        "ChartNoAxesCombined",
+        "Handshake",
+        "Globe"
       ]
     }
   }

@@ -43,7 +43,14 @@
         "BriefcaseMedical",
         "Ambulance",
         "Bandage",
-        "Pill"
+        "Pill",
+        "CalendarPlus",
+        "UserRoundPlus",
+        "Waypoints",
+        "Presentation",
+        "ChartNoAxesCombined",
+        "Handshake",
+        "Globe"
       ]
     }
   }

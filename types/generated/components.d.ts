@@ -70,6 +70,13 @@ export interface FeatureFeatures extends Struct.ComponentSchema {
         'Bandage',
         'Pill',
         'Percent',
+        'CalendarPlus',
+        'UserRoundPlus',
+        'Waypoints',
+        'Presentation',
+        'ChartNoAxesCombined',
+        'Handshake',
+        'Globe',
       ]
     >;
     title: Schema.Attribute.Text;
@@ -194,6 +201,13 @@ export interface ServiceServices extends Struct.ComponentSchema {
         'Ambulance',
         'Bandage',
         'Pill',
+        'CalendarPlus',
+        'UserRoundPlus',
+        'Waypoints',
+        'Presentation',
+        'ChartNoAxesCombined',
+        'Handshake',
+        'Globe',
       ]
     >;
     price: Schema.Attribute.Decimal;
