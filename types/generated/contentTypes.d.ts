@@ -677,6 +677,7 @@ export interface ApiPagePage extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    features: Schema.Attribute.Component<'feature.features', true>;
     hero: Schema.Attribute.Component<'hero.hero', false>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::page.page'> &
@@ -686,9 +687,12 @@ export interface ApiPagePage extends Struct.CollectionTypeSchema {
     promo: Schema.Attribute.Component<'promo.promo', true>;
     publishedAt: Schema.Attribute.DateTime;
     slug: Schema.Attribute.UID<'namePage'>;
+    stats: Schema.Attribute.Component<'service.services', true>;
+    steps: Schema.Attribute.Component<'feature.features', true>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    values: Schema.Attribute.Component<'feature.features', true>;
   };
 }
 

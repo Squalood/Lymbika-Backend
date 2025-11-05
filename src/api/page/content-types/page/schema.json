@@ -36,6 +36,26 @@
       "type": "component",
       "repeatable": false,
       "component": "hero.hero"
+    },
+    "values": {
+      "type": "component",
+      "repeatable": true,
+      "component": "feature.features"
+    },
+    "features": {
+      "type": "component",
+      "repeatable": true,
+      "component": "feature.features"
+    },
+    "steps": {
+      "type": "component",
+      "repeatable": true,
+      "component": "feature.features"
+    },
+    "stats": {
+      "type": "component",
+      "repeatable": true,
+      "component": "service.services"
     }
   }
 }
