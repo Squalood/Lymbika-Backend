@@ -17,6 +17,24 @@ export interface ButtonButton extends Struct.ComponentSchema {
   };
 }
 
+export interface ContactContact extends Struct.ComponentSchema {
+  collectionName: 'components_contact_contacts';
+  info: {
+    displayName: 'Contact';
+    icon: 'phone';
+  };
+  attributes: {
+    contactLocation: Schema.Attribute.Text;
+    contactPhone: Schema.Attribute.String;
+    contactSchedule: Schema.Attribute.String;
+    contactWhatsappLink: Schema.Attribute.String;
+    direccionText: Schema.Attribute.Text;
+    Horario: Schema.Attribute.String;
+    image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    title: Schema.Attribute.String;
+  };
+}
+
 export interface DoctorDoctor extends Struct.ComponentSchema {
   collectionName: 'components_doctor_doctors';
   info: {
@@ -244,6 +262,7 @@ declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
       'button.button': ButtonButton;
+      'contact.contact': ContactContact;
       'doctor.doctor': DoctorDoctor;
       'feature.features': FeatureFeatures;
       'hero.hero': HeroHero;

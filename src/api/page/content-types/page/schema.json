@@ -56,6 +56,22 @@
       "type": "component",
       "repeatable": true,
       "component": "service.services"
+    },
+    "Contact": {
+      "displayName": "Contact",
+      "type": "component",
+      "repeatable": true,
+      "component": "contact.contact"
+    },
+    "imagenRe1": {
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ],
+      "type": "media",
+      "multiple": false
     }
   }
 }
