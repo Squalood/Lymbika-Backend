@@ -60,18 +60,19 @@
     "Contact": {
       "displayName": "Contact",
       "type": "component",
-      "repeatable": true,
+      "repeatable": false,
       "component": "contact.contact"
     },
     "imagenRe1": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
       "allowedTypes": [
         "images",
         "files",
         "videos",
         "audios"
-      ],
-      "type": "media",
-      "multiple": false
+      ]
     }
   }
 }

@@ -20,17 +20,19 @@ export interface ButtonButton extends Struct.ComponentSchema {
 export interface ContactContact extends Struct.ComponentSchema {
   collectionName: 'components_contact_contacts';
   info: {
+    description: '';
     displayName: 'Contact';
     icon: 'phone';
   };
   attributes: {
     contactLocation: Schema.Attribute.Text;
     contactPhone: Schema.Attribute.String;
-    contactSchedule: Schema.Attribute.String;
+    contactScheduleLink: Schema.Attribute.String;
     contactWhatsappLink: Schema.Attribute.String;
+    description: Schema.Attribute.Text;
     direccionText: Schema.Attribute.Text;
-    Horario: Schema.Attribute.String;
     image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    timeText: Schema.Attribute.String;
     title: Schema.Attribute.String;
   };
 }
