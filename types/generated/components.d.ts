@@ -230,6 +230,7 @@ export interface ServiceServices extends Struct.ComponentSchema {
         'Globe',
       ]
     >;
+    image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
     price: Schema.Attribute.Decimal;
     title: Schema.Attribute.String;
   };
