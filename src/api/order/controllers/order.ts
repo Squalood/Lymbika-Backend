@@ -14,19 +14,70 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
 
         try {
             const lineItems = await Promise.all(
-                products.map(async (product) => {
-                    const item = await strapi.entityService.findOne("api::product.product", product.id);
-
-                    return {
-                        price_data: {
-                            currency: "MXN",
-                            product_data: {
-                                name: item.productName,
+                products.map(async (item) => {
+                    // Detectar si es producto o servicio
+                    const isProduct = item.type === "product";
+                    
+                    let itemData;
+                    
+                    if (isProduct) {
+                        // Buscar producto
+                        itemData = await strapi.entityService.findOne(
+                            "api::product.product", 
+                            item.id
+                        );
+                        
+                        return {
+                            price_data: {
+                                currency: "MXN",
+                                product_data: {
+                                    name: itemData.productName,
+                                },
+                                unit_amount: Math.round(item.price * 100),
                             },
-                            unit_amount: Math.round(product.price * 100), // El precio ya viene calculado desde el cliente
-                        },
-                        quantity: product.quantity, // Ahora usamos la cantidad correcta
-                    };
+                            quantity: item.quantity,
+                        };
+                    } else {
+                        // Buscar servicio de clínica
+                        const clinics = await strapi.entityService.findMany(
+                            "api::clinic.clinic",
+                            {
+                                populate: {
+                                    services: {
+                                        populate: ['image']
+                                    },
+                                },
+                            }
+                        );
+                        
+                        // Encontrar el servicio específico en todas las clínicas
+                        let serviceData = null;
+                        if (clinics && clinics.length > 0) {
+                            for (const clinic of clinics) {
+                                if (clinic.services) {
+                                    const found = clinic.services.find(
+                                        (service) => service.id === item.id
+                                    );
+                                    if (found) {
+                                        serviceData = found;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        return {
+                            price_data: {
+                                currency: "MXN",
+                                product_data: {
+                                    name: serviceData?.title || item.name,
+                                    description: serviceData?.description || undefined,
+                                },
+                                unit_amount: Math.round(item.price * 100),
+                            },
+                            quantity: 1, // Servicios siempre tienen cantidad 1
+                        };
+                    }
                 })
             );
 
@@ -47,16 +98,16 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
             }
 
             if (deliveryCost && deliveryCost > 0) {
-            lineItems.push({
-                price_data: {
-                currency: "MXN",
-                product_data: {
-                    name: "Costo de envío",
-                },
-                unit_amount: Math.round(deliveryCost * 100),
-                },
-                quantity: 1,
-            });
+                lineItems.push({
+                    price_data: {
+                        currency: "MXN",
+                        product_data: {
+                            name: "Costo de envío",
+                        },
+                        unit_amount: Math.round(deliveryCost * 100),
+                    },
+                    quantity: 1,
+                });
             }
 
             const session = await stripe.checkout.sessions.create(sessionConfig);
@@ -66,7 +117,7 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
                     products,
                     stripeid: session.id,
                     isDelivery,
-                    userEmail, // Aquí ya funciona bien, era solo un tema de cómo lo estabas pasando.
+                    userEmail,
                 },
             });
 
