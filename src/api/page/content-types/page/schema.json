@@ -73,6 +73,9 @@
         "videos",
         "audios"
       ]
+    },
+    "landingPageJson": {
+      "type": "json"
     }
   }
 }

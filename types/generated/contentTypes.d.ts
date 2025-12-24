@@ -682,6 +682,7 @@ export interface ApiPagePage extends Struct.CollectionTypeSchema {
     features: Schema.Attribute.Component<'feature.features', true>;
     hero: Schema.Attribute.Component<'hero.hero', false>;
     imagenRe1: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    landingPageJson: Schema.Attribute.JSON;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::page.page'> &
       Schema.Attribute.Private;
