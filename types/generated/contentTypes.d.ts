@@ -492,6 +492,8 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
       'images' | 'files' | 'videos' | 'audios'
     >;
     closedAvailability: Schema.Attribute.Time;
+    contactButton: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'526561100446'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
