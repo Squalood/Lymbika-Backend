@@ -81,6 +81,11 @@
       "relation": "manyToMany",
       "target": "api::clinic.clinic",
       "inversedBy": "products"
+    },
+    "videos": {
+      "type": "component",
+      "repeatable": true,
+      "component": "video-id.youtube-video"
     }
   }
 }
