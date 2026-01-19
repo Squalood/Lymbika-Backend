@@ -421,6 +421,7 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     doctor: Schema.Attribute.Component<'doctor.doctor', false>;
+    estudios: Schema.Attribute.Component<'service.services', true>;
     featuredClinic: Schema.Attribute.Boolean;
     features: Schema.Attribute.Component<'feature.features', true>;
     gallery: Schema.Attribute.Media<
@@ -455,6 +456,7 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
       ]
     > &
       Schema.Attribute.DefaultTo<'Stethoscope'>;
+    laboratorio: Schema.Attribute.Component<'service.services', true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',

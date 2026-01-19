@@ -124,6 +124,16 @@
     },
     "featuredClinic": {
       "type": "boolean"
+    },
+    "estudios": {
+      "type": "component",
+      "repeatable": true,
+      "component": "service.services"
+    },
+    "laboratorio": {
+      "type": "component",
+      "repeatable": true,
+      "component": "service.services"
     }
   }
 }
