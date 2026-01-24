@@ -421,6 +421,7 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     doctor: Schema.Attribute.Component<'doctor.doctor', false>;
+    doctorPage: Schema.Attribute.Relation<'oneToOne', 'api::doctor.doctor'>;
     estudios: Schema.Attribute.Component<'service.services', true>;
     featuredClinic: Schema.Attribute.Boolean;
     features: Schema.Attribute.Component<'feature.features', true>;
@@ -493,6 +494,7 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
     bannerImage: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios'
     >;
+    clinic: Schema.Attribute.Relation<'oneToOne', 'api::clinic.clinic'>;
     closedAvailability: Schema.Attribute.Time;
     contactButton: Schema.Attribute.String &
       Schema.Attribute.DefaultTo<'526561100446'>;

@@ -113,6 +113,12 @@
     "contactButton": {
       "type": "string",
       "default": "526561100446"
+    },
+    "clinic": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::clinic.clinic",
+      "inversedBy": "doctorPage"
     }
   }
 }

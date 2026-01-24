@@ -134,6 +134,12 @@
       "type": "component",
       "repeatable": true,
       "component": "service.services"
+    },
+    "doctorPage": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::doctor.doctor",
+      "mappedBy": "clinic"
     }
   }
 }
