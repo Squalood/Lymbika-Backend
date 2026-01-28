@@ -9,6 +9,9 @@
   "attributes": {
     "videoID": {
       "type": "string"
+    },
+    "title": {
+      "type": "string"
     }
   }
 }

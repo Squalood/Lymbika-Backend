@@ -103,6 +103,21 @@ export interface FeatureFeatures extends Struct.ComponentSchema {
   };
 }
 
+export interface GalleryGallery extends Struct.ComponentSchema {
+  collectionName: 'components_gallery_galleries';
+  info: {
+    displayName: 'gallery';
+    icon: 'landscape';
+  };
+  attributes: {
+    images: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios',
+      true
+    >;
+    title: Schema.Attribute.String;
+  };
+}
+
 export interface HeroHero extends Struct.ComponentSchema {
   collectionName: 'components_hero_heroes';
   info: {
@@ -257,6 +272,7 @@ export interface VideoIdYoutubeVideo extends Struct.ComponentSchema {
     icon: 'play';
   };
   attributes: {
+    title: Schema.Attribute.String;
     videoID: Schema.Attribute.String;
   };
 }
@@ -268,6 +284,7 @@ declare module '@strapi/strapi' {
       'contact.contact': ContactContact;
       'doctor.doctor': DoctorDoctor;
       'feature.features': FeatureFeatures;
+      'gallery.gallery': GalleryGallery;
       'hero.hero': HeroHero;
       'item.faq-item': ItemFaqItem;
       'less.less': LessLess;

@@ -686,6 +686,7 @@ export interface ApiPagePage extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     features: Schema.Attribute.Component<'feature.features', true>;
+    gallery: Schema.Attribute.Component<'gallery.gallery', false>;
     hero: Schema.Attribute.Component<'hero.hero', false>;
     imagenRe1: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
     landingPageJson: Schema.Attribute.JSON;
@@ -703,6 +704,7 @@ export interface ApiPagePage extends Struct.CollectionTypeSchema {
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     values: Schema.Attribute.Component<'feature.features', true>;
+    videos: Schema.Attribute.Component<'video-id.youtube-video', true>;
   };
 }
 
