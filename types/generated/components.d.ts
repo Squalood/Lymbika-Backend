@@ -264,6 +264,21 @@ export interface TestimonialTestimonials extends Struct.ComponentSchema {
   };
 }
 
+export interface VentaItemVentaItem extends Struct.ComponentSchema {
+  collectionName: 'components_venta_item_venta_items';
+  info: {
+    displayName: 'venta-item';
+    icon: 'shoppingCart';
+  };
+  attributes: {
+    product: Schema.Attribute.Relation<'oneToOne', 'api::product.product'>;
+    productName: Schema.Attribute.String;
+    quantity: Schema.Attribute.Integer;
+    totalLine: Schema.Attribute.Decimal;
+    unitPrice: Schema.Attribute.Decimal;
+  };
+}
+
 export interface VideoIdYoutubeVideo extends Struct.ComponentSchema {
   collectionName: 'components_video_id_youtube_videos';
   info: {
@@ -293,6 +308,7 @@ declare module '@strapi/strapi' {
       'promo.promo': PromoPromo;
       'service.services': ServiceServices;
       'testimonial.testimonials': TestimonialTestimonials;
+      'venta-item.venta-item': VentaItemVentaItem;
       'video-id.youtube-video': VideoIdYoutubeVideo;
     }
   }

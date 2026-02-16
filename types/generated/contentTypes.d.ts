@@ -878,6 +878,42 @@ export interface ApiSurgerySurgery extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiVentaPosVentaPos extends Struct.CollectionTypeSchema {
+  collectionName: 'ventas_pos';
+  info: {
+    displayName: 'venta-pos';
+    pluralName: 'ventas-pos';
+    singularName: 'venta-pos';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    cambio: Schema.Attribute.Decimal;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    estado: Schema.Attribute.Enumeration<['completada', 'cancelada']>;
+    fecha: Schema.Attribute.DateTime;
+    iva: Schema.Attribute.Decimal;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::venta-pos.venta-pos'
+    > &
+      Schema.Attribute.Private;
+    metodoPago: Schema.Attribute.Enumeration<['efectivo', 'tarjeta']>;
+    publishedAt: Schema.Attribute.DateTime;
+    recibido: Schema.Attribute.Decimal;
+    subtotal: Schema.Attribute.Decimal;
+    total: Schema.Attribute.Decimal;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    venta: Schema.Attribute.Component<'venta-item.venta-item', true>;
+  };
+}
+
 export interface PluginContentReleasesRelease
   extends Struct.CollectionTypeSchema {
   collectionName: 'strapi_releases';
@@ -1404,6 +1440,7 @@ declare module '@strapi/strapi' {
       'api::review.review': ApiReviewReview;
       'api::service.service': ApiServiceService;
       'api::surgery.surgery': ApiSurgerySurgery;
+      'api::venta-pos.venta-pos': ApiVentaPosVentaPos;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

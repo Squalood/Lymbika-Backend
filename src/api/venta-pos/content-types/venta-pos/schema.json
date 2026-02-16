@@ -1,0 +1,53 @@
+{
+  "kind": "collectionType",
+  "collectionName": "ventas_pos",
+  "info": {
+    "singularName": "venta-pos",
+    "pluralName": "ventas-pos",
+    "displayName": "venta-pos"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "fecha": {
+      "type": "datetime"
+    },
+    "subtotal": {
+      "type": "decimal"
+    },
+    "iva": {
+      "type": "decimal"
+    },
+    "total": {
+      "type": "decimal"
+    },
+    "metodoPago": {
+      "type": "enumeration",
+      "enum": [
+        "efectivo",
+        "tarjeta"
+      ]
+    },
+    "recibido": {
+      "type": "decimal"
+    },
+    "cambio": {
+      "type": "decimal"
+    },
+    "estado": {
+      "type": "enumeration",
+      "enum": [
+        "completada",
+        "cancelada"
+      ]
+    },
+    "venta": {
+      "displayName": "venta-item",
+      "type": "component",
+      "repeatable": true,
+      "component": "venta-item.venta-item"
+    }
+  }
+}

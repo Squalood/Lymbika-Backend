@@ -1,0 +1,27 @@
+{
+  "collectionName": "components_venta_item_venta_items",
+  "info": {
+    "displayName": "venta-item",
+    "icon": "shoppingCart"
+  },
+  "options": {},
+  "attributes": {
+    "product": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::product.product"
+    },
+    "productName": {
+      "type": "string"
+    },
+    "quantity": {
+      "type": "integer"
+    },
+    "unitPrice": {
+      "type": "decimal"
+    },
+    "totalLine": {
+      "type": "decimal"
+    }
+  }
+}
