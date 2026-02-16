@@ -721,8 +721,10 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
   };
   attributes: {
     active: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    barCode: Schema.Attribute.Text;
     category: Schema.Attribute.Relation<'oneToOne', 'api::category.category'>;
     clinics: Schema.Attribute.Relation<'manyToMany', 'api::clinic.clinic'>;
+    conReceta: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -743,6 +745,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     productName: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     sal: Schema.Attribute.Text;
+    sku: Schema.Attribute.String;
     slug: Schema.Attribute.UID<'productName'>;
     tipo: Schema.Attribute.Enumeration<
       [

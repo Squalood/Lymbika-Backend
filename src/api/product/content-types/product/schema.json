@@ -86,6 +86,16 @@
       "type": "component",
       "repeatable": true,
       "component": "video-id.youtube-video"
+    },
+    "barCode": {
+      "type": "text"
+    },
+    "conReceta": {
+      "type": "boolean",
+      "default": false
+    },
+    "sku": {
+      "type": "string"
     }
   }
 }
