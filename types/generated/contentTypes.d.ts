@@ -721,7 +721,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
   };
   attributes: {
     active: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
-    barCode: Schema.Attribute.Text;
+    barCode: Schema.Attribute.String;
     category: Schema.Attribute.Relation<'oneToOne', 'api::category.category'>;
     clinics: Schema.Attribute.Relation<'manyToMany', 'api::clinic.clinic'>;
     conReceta: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
