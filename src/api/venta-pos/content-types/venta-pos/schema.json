@@ -4,7 +4,8 @@
   "info": {
     "singularName": "venta-pos",
     "pluralName": "ventas-pos",
-    "displayName": "venta-pos"
+    "displayName": "venta-pos",
+    "description": ""
   },
   "options": {
     "draftAndPublish": true
@@ -48,6 +49,9 @@
       "type": "component",
       "repeatable": true,
       "component": "venta-item.venta-item"
+    },
+    "operador": {
+      "type": "string"
     }
   }
 }

@@ -96,6 +96,11 @@
     },
     "sku": {
       "type": "string"
+    },
+    "stock": {
+      "min": 0,
+      "default": 0,
+      "type": "integer"
     }
   }
 }

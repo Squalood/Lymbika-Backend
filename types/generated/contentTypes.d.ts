@@ -747,6 +747,14 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     sal: Schema.Attribute.Text;
     sku: Schema.Attribute.String;
     slug: Schema.Attribute.UID<'productName'>;
+    stock: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<0>;
     tipo: Schema.Attribute.Enumeration<
       [
         'Pildora',
@@ -881,6 +889,7 @@ export interface ApiSurgerySurgery extends Struct.CollectionTypeSchema {
 export interface ApiVentaPosVentaPos extends Struct.CollectionTypeSchema {
   collectionName: 'ventas_pos';
   info: {
+    description: '';
     displayName: 'venta-pos';
     pluralName: 'ventas-pos';
     singularName: 'venta-pos';
@@ -903,6 +912,7 @@ export interface ApiVentaPosVentaPos extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     metodoPago: Schema.Attribute.Enumeration<['efectivo', 'tarjeta']>;
+    operador: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     recibido: Schema.Attribute.Decimal;
     subtotal: Schema.Attribute.Decimal;
