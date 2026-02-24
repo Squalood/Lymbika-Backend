@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm start)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:market.strapi.io)"
+    ]
+  }
+}
