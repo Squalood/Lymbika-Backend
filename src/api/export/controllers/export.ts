@@ -20,7 +20,7 @@ function toCSV(products: any[]): string {
   const header = CSV_FIELDS.join(',');
   const rows = products.map((p) =>
     CSV_FIELDS.map((field) => {
-      if (field === 'category') return escapeCsv(p.category?.name ?? '');
+      if (field === 'category') return escapeCsv(p.category?.categoryName ?? '');
       if (field === 'status') return escapeCsv(p.publishedAt ? 'published' : 'draft');
       return escapeCsv(p[field]);
     }).join(',')
@@ -135,7 +135,7 @@ export default {
         let categoryConnect: any = undefined;
         if (row.category) {
           const found = await strapi.documents('api::category.category').findFirst({
-            filters: { name: { $eq: row.category } } as any,
+            filters: { categoryName: { $eq: row.category } } as any,
           });
           if (found) {
             categoryConnect = { connect: [{ documentId: found.documentId }] };
