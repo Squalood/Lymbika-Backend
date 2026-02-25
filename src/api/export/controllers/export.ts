@@ -84,6 +84,14 @@ function normalizeTipo(val: string): string | null {
   return match ?? null;
 }
 
+// Parsea decimales tanto con punto (18.57) como con coma (18,57)
+function parseDecimal(val: string): number | null {
+  if (val === '' || val === undefined) return null;
+  const normalized = val.trim().replace(',', '.');
+  const num = parseFloat(normalized);
+  return isNaN(num) ? null : num;
+}
+
 // ── Controller ───────────────────────────────────────────────────────────────
 
 export default {
@@ -158,8 +166,8 @@ export default {
           ...(row.productName && { productName: row.productName }),
           ...(row.sku !== undefined && { sku: row.sku || null }),
           ...(row.barCode !== undefined && { barCode: row.barCode || null }),
-          ...(row.price !== '' && { price: parseFloat(row.price) || null }),
-          ...(row.priceMember !== '' && { priceMember: parseFloat(row.priceMember) || null }),
+          ...(row.price !== '' && { price: parseDecimal(row.price) }),
+          ...(row.priceMember !== '' && { priceMember: parseDecimal(row.priceMember) }),
           ...(row.stock !== '' && { stock: parseInt(row.stock) || 0 }),
           ...(row.active !== '' && { active: row.active === 'true' }),
           ...(row.isFeatured !== '' && { isFeatured: row.isFeatured === 'true' }),
