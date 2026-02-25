@@ -89,12 +89,24 @@ function normalizeTipo(val: string): string | null {
 export default {
   // GET /api/export/products
   async exportProducts(ctx: any) {
-    const products = await strapi.documents('api::product.product').findMany({
-      populate: { category: true },
-      status: 'draft', // returns both draft and published in Strapi 5
-    });
+    const [products, publishedProducts] = await Promise.all([
+      strapi.documents('api::product.product').findMany({
+        populate: { category: true },
+        status: 'draft',
+      }),
+      strapi.documents('api::product.product').findMany({
+        fields: ['documentId'],
+        status: 'published',
+      }),
+    ]);
 
-    const csv = toCSV(products);
+    const publishedIds = new Set(publishedProducts.map((p: any) => p.documentId));
+    const productsWithStatus = products.map((p: any) => ({
+      ...p,
+      publishedAt: publishedIds.has(p.documentId) ? true : null,
+    }));
+
+    const csv = toCSV(productsWithStatus);
 
     ctx.set('Content-Type', 'text/csv; charset=utf-8');
     ctx.set('Content-Disposition', 'attachment; filename="productos.csv"');
