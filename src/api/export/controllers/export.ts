@@ -204,4 +204,17 @@ export default {
       errors: results.errors,
     };
   },
+
+  // POST /api/export/products/reset-stock
+  async resetStock(ctx: any) {
+    const count = await strapi.db.query('api::product.product').updateMany({
+      where: {},
+      data: { stock: 0 },
+    });
+
+    ctx.body = {
+      message: `Stock reseteado a 0`,
+      updated: count.count,
+    };
+  },
 };

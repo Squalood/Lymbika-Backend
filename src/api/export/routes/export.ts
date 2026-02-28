@@ -18,5 +18,14 @@ export default {
         middlewares: [],
       },
     },
+    {
+      method: 'POST',
+      path: '/export/products/reset-stock',
+      handler: 'export.resetStock',
+      config: {
+        policies: [],
+        middlewares: [],
+      },
+    },
   ],
 };
