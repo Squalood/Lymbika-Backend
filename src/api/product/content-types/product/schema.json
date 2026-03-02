@@ -84,8 +84,8 @@
     },
     "videos": {
       "type": "component",
-      "repeatable": true,
-      "component": "video-id.youtube-video"
+      "component": "video-id.youtube-video",
+      "repeatable": true
     },
     "barCode": {
       "type": "string"
@@ -98,9 +98,8 @@
       "type": "string"
     },
     "stock": {
-      "min": 0,
-      "default": 0,
-      "type": "integer"
+      "type": "integer",
+      "default": 0
     }
   }
 }

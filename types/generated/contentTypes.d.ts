@@ -808,14 +808,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     sal: Schema.Attribute.Text;
     sku: Schema.Attribute.String;
     slug: Schema.Attribute.UID<'productName'>;
-    stock: Schema.Attribute.Integer &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<0>;
+    stock: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
     tipo: Schema.Attribute.Enumeration<
       [
         'Pildora',
