@@ -539,6 +539,42 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiDevolucionPosDevolucionPos
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'devoluciones_pos';
+  info: {
+    displayName: 'devolucion-pos';
+    pluralName: 'devoluciones-pos';
+    singularName: 'devolucion-pos';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    estado: Schema.Attribute.Enumeration<['Completada', 'Cancelada']>;
+    fecha: Schema.Attribute.DateTime;
+    items: Schema.Attribute.Component<'venta-item.venta-item', true>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::devolucion-pos.devolucion-pos'
+    > &
+      Schema.Attribute.Private;
+    metodo: Schema.Attribute.Enumeration<['Efectivo', 'Tarjeta']>;
+    montoReembolso: Schema.Attribute.Decimal;
+    motivo: Schema.Attribute.String;
+    operador: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    venta: Schema.Attribute.Relation<'manyToOne', 'api::venta-pos.venta-pos'>;
+  };
+}
+
 export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
   collectionName: 'doctors';
   info: {
@@ -956,6 +992,10 @@ export interface ApiVentaPosVentaPos extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    devolucion_pos: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::devolucion-pos.devolucion-pos'
+    >;
     estado: Schema.Attribute.Enumeration<['completada', 'cancelada']>;
     fecha: Schema.Attribute.DateTime;
     iva: Schema.Attribute.Decimal;
@@ -1496,6 +1536,7 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::category.category': ApiCategoryCategory;
       'api::clinic.clinic': ApiClinicClinic;
+      'api::devolucion-pos.devolucion-pos': ApiDevolucionPosDevolucionPos;
       'api::doctor.doctor': ApiDoctorDoctor;
       'api::faq-group.faq-group': ApiFaqGroupFaqGroup;
       'api::hospital.hospital': ApiHospitalHospital;

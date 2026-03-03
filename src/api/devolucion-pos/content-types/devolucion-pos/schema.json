@@ -1,0 +1,52 @@
+{
+  "kind": "collectionType",
+  "collectionName": "devoluciones_pos",
+  "info": {
+    "singularName": "devolucion-pos",
+    "pluralName": "devoluciones-pos",
+    "displayName": "devolucion-pos"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "venta": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::venta-pos.venta-pos",
+      "inversedBy": "devolucion_pos"
+    },
+    "fecha": {
+      "type": "datetime"
+    },
+    "motivo": {
+      "type": "string"
+    },
+    "metodo": {
+      "type": "enumeration",
+      "enum": [
+        "Efectivo",
+        "Tarjeta"
+      ]
+    },
+    "montoReembolso": {
+      "type": "decimal"
+    },
+    "estado": {
+      "type": "enumeration",
+      "enum": [
+        "Completada",
+        "Cancelada"
+      ]
+    },
+    "operador": {
+      "type": "string"
+    },
+    "items": {
+      "type": "component",
+      "component": "venta-item.venta-item",
+      "repeatable": true
+    }
+  }
+}

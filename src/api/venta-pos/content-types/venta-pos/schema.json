@@ -45,13 +45,18 @@
       ]
     },
     "venta": {
-      "displayName": "venta-item",
       "type": "component",
-      "repeatable": true,
-      "component": "venta-item.venta-item"
+      "component": "venta-item.venta-item",
+      "repeatable": true
     },
     "operador": {
       "type": "string"
+    },
+    "devolucion_pos": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::devolucion-pos.devolucion-pos",
+      "mappedBy": "venta"
     }
   }
 }
