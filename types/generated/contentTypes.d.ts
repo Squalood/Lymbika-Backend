@@ -430,6 +430,38 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiCajaPosCajaPos extends Struct.CollectionTypeSchema {
+  collectionName: 'cajas_pos';
+  info: {
+    displayName: 'caja-pos';
+    pluralName: 'cajas-pos';
+    singularName: 'caja-pos';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    estado: Schema.Attribute.Enumeration<['Abierta', 'Cerrada']>;
+    fecha: Schema.Attribute.DateTime;
+    fondoInicial: Schema.Attribute.Decimal;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::caja-pos.caja-pos'
+    > &
+      Schema.Attribute.Private;
+    operador: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    tipoCambio: Schema.Attribute.Decimal;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
   collectionName: 'categories';
   info: {
@@ -1534,6 +1566,7 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
+      'api::caja-pos.caja-pos': ApiCajaPosCajaPos;
       'api::category.category': ApiCategoryCategory;
       'api::clinic.clinic': ApiClinicClinic;
       'api::devolucion-pos.devolucion-pos': ApiDevolucionPosDevolucionPos;

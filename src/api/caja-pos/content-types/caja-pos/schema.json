@@ -1,0 +1,34 @@
+{
+  "kind": "collectionType",
+  "collectionName": "cajas_pos",
+  "info": {
+    "singularName": "caja-pos",
+    "pluralName": "cajas-pos",
+    "displayName": "caja-pos"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "fecha": {
+      "type": "datetime"
+    },
+    "fondoInicial": {
+      "type": "decimal"
+    },
+    "tipoCambio": {
+      "type": "decimal"
+    },
+    "estado": {
+      "type": "enumeration",
+      "enum": [
+        "Abierta",
+        "Cerrada"
+      ]
+    },
+    "operador": {
+      "type": "string"
+    }
+  }
+}
