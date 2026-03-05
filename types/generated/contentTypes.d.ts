@@ -1041,7 +1041,9 @@ export interface ApiVentaPosVentaPos extends Struct.CollectionTypeSchema {
     operador: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     recibido: Schema.Attribute.Decimal;
+    recibidoUSD: Schema.Attribute.Decimal & Schema.Attribute.DefaultTo<0>;
     subtotal: Schema.Attribute.Decimal;
+    tipoCambioUsado: Schema.Attribute.Decimal;
     total: Schema.Attribute.Decimal;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &

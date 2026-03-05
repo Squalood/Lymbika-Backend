@@ -57,6 +57,13 @@
       "relation": "oneToMany",
       "target": "api::devolucion-pos.devolucion-pos",
       "mappedBy": "venta"
+    },
+    "recibidoUSD": {
+      "type": "decimal",
+      "default": 0
+    },
+    "tipoCambioUsado": {
+      "type": "decimal"
     }
   }
 }
