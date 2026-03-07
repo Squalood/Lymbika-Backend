@@ -430,6 +430,39 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiB2BSaleB2BSale extends Struct.CollectionTypeSchema {
+  collectionName: 'b2b_sales';
+  info: {
+    description: 'Ventas mayoristas entre farmacias';
+    displayName: 'B2B Sale';
+    pluralName: 'b2b-sales';
+    singularName: 'b2b-sale';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::b2b-sale.b2b-sale'
+    > &
+      Schema.Attribute.Private;
+    pharmacy: Schema.Attribute.Relation<'manyToOne', 'api::pharmacy.pharmacy'>;
+    product: Schema.Attribute.Relation<'manyToOne', 'api::product.product'>;
+    publishedAt: Schema.Attribute.DateTime;
+    quantity: Schema.Attribute.Integer & Schema.Attribute.Required;
+    sale_price: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    sold_at: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiCajaPosCajaPos extends Struct.CollectionTypeSchema {
   collectionName: 'cajas_pos';
   info: {
@@ -837,6 +870,82 @@ export interface ApiPagePage extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiPharmacyStockPharmacyStock
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'pharmacy_stocks';
+  info: {
+    description: 'Stock de un producto en una farmacia espec\u00EDfica';
+    displayName: 'Pharmacy Stock';
+    pluralName: 'pharmacy-stocks';
+    singularName: 'pharmacy-stock';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::pharmacy-stock.pharmacy-stock'
+    > &
+      Schema.Attribute.Private;
+    min_stock: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<5>;
+    pharmacy: Schema.Attribute.Relation<'manyToOne', 'api::pharmacy.pharmacy'>;
+    product: Schema.Attribute.Relation<'manyToOne', 'api::product.product'>;
+    publishedAt: Schema.Attribute.DateTime;
+    stock: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<0>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiPharmacyPharmacy extends Struct.CollectionTypeSchema {
+  collectionName: 'pharmacies';
+  info: {
+    description: 'Farmacias registradas en el sistema';
+    displayName: 'Pharmacy';
+    pluralName: 'pharmacies';
+    singularName: 'pharmacy';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    b2b_sales: Schema.Attribute.Relation<'oneToMany', 'api::b2b-sale.b2b-sale'>;
+    clave: Schema.Attribute.UID<'nombre'> & Schema.Attribute.Required;
+    contacto_email: Schema.Attribute.Email;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    direccion: Schema.Attribute.Text;
+    is_b2b: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::pharmacy.pharmacy'
+    > &
+      Schema.Attribute.Private;
+    min_stock_default: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<5>;
+    nombre: Schema.Attribute.String & Schema.Attribute.Required;
+    pharmacy_stocks: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::pharmacy-stock.pharmacy-stock'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    status: Schema.Attribute.Enumeration<['activo', 'inactivo']> &
+      Schema.Attribute.DefaultTo<'activo'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiProductProduct extends Struct.CollectionTypeSchema {
   collectionName: 'products';
   info: {
@@ -858,6 +967,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     descriptionPro: Schema.Attribute.Blocks;
+    fecha_caducidad: Schema.Attribute.Date;
     images: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios',
       true
@@ -869,6 +979,10 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
       'api::product.product'
     > &
       Schema.Attribute.Private;
+    pharmacy_stocks: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::pharmacy-stock.pharmacy-stock'
+    >;
     price: Schema.Attribute.Decimal;
     priceMember: Schema.Attribute.Decimal;
     productName: Schema.Attribute.String;
@@ -876,7 +990,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     sal: Schema.Attribute.Text;
     sku: Schema.Attribute.String;
     slug: Schema.Attribute.UID<'productName'>;
-    stock: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    stock_central: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
     tipo: Schema.Attribute.Enumeration<
       [
         'Pildora',
@@ -970,6 +1084,51 @@ export interface ApiServiceService extends Struct.CollectionTypeSchema {
     publishedAt: Schema.Attribute.DateTime;
     serviceName: Schema.Attribute.String;
     slug: Schema.Attribute.UID<'serviceName'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiStockTransferStockTransfer
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'stock_transfers';
+  info: {
+    description: 'Registro de transferencias de stock entre farmacias';
+    displayName: 'Stock Transfer';
+    pluralName: 'stock-transfers';
+    singularName: 'stock-transfer';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    from_pharmacy: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::pharmacy.pharmacy'
+    >;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::stock-transfer.stock-transfer'
+    > &
+      Schema.Attribute.Private;
+    notes: Schema.Attribute.Text;
+    product: Schema.Attribute.Relation<'manyToOne', 'api::product.product'>;
+    publishedAt: Schema.Attribute.DateTime;
+    quantity: Schema.Attribute.Integer & Schema.Attribute.Required;
+    to_pharmacy: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::pharmacy.pharmacy'
+    >;
+    transferred_at: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    transferred_by: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1568,6 +1727,7 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
+      'api::b2b-sale.b2b-sale': ApiB2BSaleB2BSale;
       'api::caja-pos.caja-pos': ApiCajaPosCajaPos;
       'api::category.category': ApiCategoryCategory;
       'api::clinic.clinic': ApiClinicClinic;
@@ -1578,9 +1738,12 @@ declare module '@strapi/strapi' {
       'api::membership.membership': ApiMembershipMembership;
       'api::order.order': ApiOrderOrder;
       'api::page.page': ApiPagePage;
+      'api::pharmacy-stock.pharmacy-stock': ApiPharmacyStockPharmacyStock;
+      'api::pharmacy.pharmacy': ApiPharmacyPharmacy;
       'api::product.product': ApiProductProduct;
       'api::review.review': ApiReviewReview;
       'api::service.service': ApiServiceService;
+      'api::stock-transfer.stock-transfer': ApiStockTransferStockTransfer;
       'api::surgery.surgery': ApiSurgerySurgery;
       'api::venta-pos.venta-pos': ApiVentaPosVentaPos;
       'plugin::content-releases.release': PluginContentReleasesRelease;

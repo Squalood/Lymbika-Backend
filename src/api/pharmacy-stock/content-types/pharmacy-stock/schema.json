@@ -1,0 +1,37 @@
+{
+  "kind": "collectionType",
+  "collectionName": "pharmacy_stocks",
+  "info": {
+    "singularName": "pharmacy-stock",
+    "pluralName": "pharmacy-stocks",
+    "displayName": "Pharmacy Stock",
+    "description": "Stock de un producto en una farmacia específica"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "product": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product.product",
+      "inversedBy": "pharmacy_stocks"
+    },
+    "pharmacy": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::pharmacy.pharmacy",
+      "inversedBy": "pharmacy_stocks"
+    },
+    "stock": {
+      "type": "integer",
+      "default": 0,
+      "required": true
+    },
+    "min_stock": {
+      "type": "integer",
+      "default": 5
+    }
+  }
+}

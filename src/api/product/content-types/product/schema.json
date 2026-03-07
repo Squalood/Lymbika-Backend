@@ -97,9 +97,18 @@
     "sku": {
       "type": "string"
     },
-    "stock": {
+    "stock_central": {
       "type": "integer",
       "default": 0
+    },
+    "fecha_caducidad": {
+      "type": "date"
+    },
+    "pharmacy_stocks": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::pharmacy-stock.pharmacy-stock",
+      "mappedBy": "product"
     }
   }
 }

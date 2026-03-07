@@ -1,0 +1,39 @@
+{
+  "kind": "collectionType",
+  "collectionName": "b2b_sales",
+  "info": {
+    "singularName": "b2b-sale",
+    "pluralName": "b2b-sales",
+    "displayName": "B2B Sale",
+    "description": "Ventas mayoristas entre farmacias"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "product": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product.product"
+    },
+    "pharmacy": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::pharmacy.pharmacy",
+      "inversedBy": "b2b_sales"
+    },
+    "quantity": {
+      "type": "integer",
+      "required": true
+    },
+    "sale_price": {
+      "type": "decimal",
+      "required": true
+    },
+    "sold_at": {
+      "type": "datetime",
+      "required": true
+    }
+  }
+}

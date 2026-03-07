@@ -1,0 +1,47 @@
+{
+  "kind": "collectionType",
+  "collectionName": "stock_transfers",
+  "info": {
+    "singularName": "stock-transfer",
+    "pluralName": "stock-transfers",
+    "displayName": "Stock Transfer",
+    "description": "Registro de transferencias de stock entre farmacias"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "product": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product.product"
+    },
+    "from_pharmacy": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::pharmacy.pharmacy"
+    },
+    "to_pharmacy": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::pharmacy.pharmacy"
+    },
+    "quantity": {
+      "type": "integer",
+      "required": true
+    },
+    "transferred_by": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "transferred_at": {
+      "type": "datetime",
+      "required": true
+    },
+    "notes": {
+      "type": "text"
+    }
+  }
+}

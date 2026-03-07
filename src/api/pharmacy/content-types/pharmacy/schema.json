@@ -1,0 +1,56 @@
+{
+  "kind": "collectionType",
+  "collectionName": "pharmacies",
+  "info": {
+    "singularName": "pharmacy",
+    "pluralName": "pharmacies",
+    "displayName": "Pharmacy",
+    "description": "Farmacias registradas en el sistema"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "nombre": {
+      "type": "string",
+      "required": true
+    },
+    "clave": {
+      "type": "uid",
+      "targetField": "nombre",
+      "required": true
+    },
+    "direccion": {
+      "type": "text"
+    },
+    "contacto_email": {
+      "type": "email"
+    },
+    "min_stock_default": {
+      "type": "integer",
+      "default": 5
+    },
+    "is_b2b": {
+      "type": "boolean",
+      "default": false
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["activo", "inactivo"],
+      "default": "activo"
+    },
+    "pharmacy_stocks": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::pharmacy-stock.pharmacy-stock",
+      "mappedBy": "pharmacy"
+    },
+    "b2b_sales": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::b2b-sale.b2b-sale",
+      "mappedBy": "pharmacy"
+    }
+  }
+}
