@@ -35,7 +35,7 @@
       "type": "boolean",
       "default": false
     },
-    "status": {
+    "estado": {
       "type": "enumeration",
       "enum": ["activo", "inactivo"],
       "default": "activo"
