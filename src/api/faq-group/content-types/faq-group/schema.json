@@ -13,17 +13,22 @@
   "pluginOptions": {},
   "attributes": {
     "faq": {
-      "displayName": "faq-item",
       "type": "component",
-      "repeatable": true,
-      "component": "item.faq-item"
+      "component": "item.faq-item",
+      "repeatable": true
     },
-    "title": {
+    "nameFaq": {
       "type": "string"
     },
     "slug": {
       "type": "uid",
       "targetField": "title"
+    },
+    "title": {
+      "type": "string"
+    },
+    "descripction": {
+      "type": "text"
     }
   }
 }

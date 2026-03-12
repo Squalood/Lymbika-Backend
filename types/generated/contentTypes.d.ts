@@ -715,6 +715,7 @@ export interface ApiFaqGroupFaqGroup extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    descripction: Schema.Attribute.Text;
     faq: Schema.Attribute.Component<'item.faq-item', true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -722,6 +723,7 @@ export interface ApiFaqGroupFaqGroup extends Struct.CollectionTypeSchema {
       'api::faq-group.faq-group'
     > &
       Schema.Attribute.Private;
+    nameFaq: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     slug: Schema.Attribute.UID<'title'>;
     title: Schema.Attribute.String;
@@ -924,6 +926,8 @@ export interface ApiPharmacyPharmacy extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     direccion: Schema.Attribute.Text;
+    estado: Schema.Attribute.Enumeration<['activo', 'inactivo']> &
+      Schema.Attribute.DefaultTo<'activo'>;
     is_b2b: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -938,8 +942,6 @@ export interface ApiPharmacyPharmacy extends Struct.CollectionTypeSchema {
       'api::pharmacy-stock.pharmacy-stock'
     >;
     publishedAt: Schema.Attribute.DateTime;
-    status: Schema.Attribute.Enumeration<['activo', 'inactivo']> &
-      Schema.Attribute.DefaultTo<'activo'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
