@@ -32,15 +32,21 @@
       "type": "text"
     },
     "button": {
-      "displayName": "button",
       "type": "component",
-      "repeatable": false,
-      "component": "button.button"
+      "component": "button.button",
+      "repeatable": false
     },
     "features": {
       "type": "component",
-      "repeatable": true,
-      "component": "feature.features"
+      "component": "feature.features",
+      "repeatable": true
+    },
+    "featured": {
+      "type": "boolean",
+      "default": false
+    },
+    "order": {
+      "type": "integer"
     }
   }
 }

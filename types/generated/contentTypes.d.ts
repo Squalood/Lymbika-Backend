@@ -786,6 +786,7 @@ export interface ApiMembershipMembership extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     description: Schema.Attribute.Text;
+    featured: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     features: Schema.Attribute.Component<'feature.features', true>;
     icon: Schema.Attribute.Enumeration<['Stethoscope', 'Pill', 'Building2']>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
@@ -795,6 +796,7 @@ export interface ApiMembershipMembership extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     name: Schema.Attribute.String;
+    order: Schema.Attribute.Integer;
     priceF: Schema.Attribute.Decimal;
     priceP: Schema.Attribute.Decimal;
     publishedAt: Schema.Attribute.DateTime;
