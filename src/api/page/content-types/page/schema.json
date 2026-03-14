@@ -20,48 +20,44 @@
       "targetField": "namePage"
     },
     "promo": {
-      "displayName": "promo",
       "type": "component",
-      "repeatable": true,
-      "component": "promo.promo"
+      "component": "promo.promo",
+      "repeatable": true
     },
     "plan": {
-      "displayName": "plan",
       "type": "component",
-      "repeatable": true,
-      "component": "pricing.plan"
+      "component": "pricing.plan",
+      "repeatable": true
     },
     "hero": {
-      "displayName": "hero",
       "type": "component",
-      "repeatable": false,
-      "component": "hero.hero"
+      "component": "hero.hero",
+      "repeatable": false
     },
     "values": {
       "type": "component",
-      "repeatable": true,
-      "component": "feature.features"
+      "component": "feature.features",
+      "repeatable": true
     },
     "features": {
       "type": "component",
-      "repeatable": true,
-      "component": "feature.features"
+      "component": "feature.features",
+      "repeatable": true
     },
     "steps": {
       "type": "component",
-      "repeatable": true,
-      "component": "feature.features"
+      "component": "feature.features",
+      "repeatable": true
     },
     "stats": {
       "type": "component",
-      "repeatable": true,
-      "component": "service.services"
+      "component": "service.services",
+      "repeatable": true
     },
     "Contact": {
-      "displayName": "Contact",
       "type": "component",
-      "repeatable": false,
-      "component": "contact.contact"
+      "component": "contact.contact",
+      "repeatable": false
     },
     "imagenRe1": {
       "type": "media",
@@ -78,15 +74,19 @@
       "type": "json"
     },
     "gallery": {
-      "displayName": "gallery",
       "type": "component",
-      "repeatable": false,
-      "component": "gallery.gallery"
+      "component": "gallery.gallery",
+      "repeatable": false
     },
     "videos": {
       "type": "component",
-      "repeatable": true,
-      "component": "video-id.youtube-video"
+      "component": "video-id.youtube-video",
+      "repeatable": true
+    },
+    "badge": {
+      "type": "component",
+      "component": "badge.badge",
+      "repeatable": true
     }
   }
 }

@@ -1,5 +1,18 @@
 import type { Schema, Struct } from '@strapi/strapi';
 
+export interface BadgeBadge extends Struct.ComponentSchema {
+  collectionName: 'components_badge_badges';
+  info: {
+    displayName: 'badge';
+    icon: 'priceTag';
+  };
+  attributes: {
+    boldText: Schema.Attribute.String;
+    tag: Schema.Attribute.String;
+    text: Schema.Attribute.String;
+  };
+}
+
 export interface ButtonButton extends Struct.ComponentSchema {
   collectionName: 'components_button_buttons';
   info: {
@@ -295,6 +308,7 @@ export interface VideoIdYoutubeVideo extends Struct.ComponentSchema {
 declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
+      'badge.badge': BadgeBadge;
       'button.button': ButtonButton;
       'contact.contact': ContactContact;
       'doctor.doctor': DoctorDoctor;
