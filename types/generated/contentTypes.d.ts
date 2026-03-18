@@ -1062,11 +1062,11 @@ export interface ApiReviewReview extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiServiceService extends Struct.CollectionTypeSchema {
+export interface ApiServiceService extends Struct.SingleTypeSchema {
   collectionName: 'services';
   info: {
     description: '';
-    displayName: 'Service';
+    displayName: 'Specialty';
     pluralName: 'services';
     singularName: 'service';
   };
