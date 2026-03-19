@@ -593,6 +593,10 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
     products: Schema.Attribute.Relation<'manyToMany', 'api::product.product'>;
     publishedAt: Schema.Attribute.DateTime;
     scheduleLink: Schema.Attribute.Text;
+    service_rates: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::service-rate.service-rate'
+    >;
     services: Schema.Attribute.Component<'service.services', true>;
     slug: Schema.Attribute.UID<'title'>;
     testimonials: Schema.Attribute.Component<'testimonial.testimonials', true>;
@@ -687,6 +691,10 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
     publishedAt: Schema.Attribute.DateTime;
     review: Schema.Attribute.Integer;
     reviews: Schema.Attribute.Relation<'oneToMany', 'api::review.review'>;
+    service_rates: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::service-rate.service-rate'
+    >;
     services: Schema.Attribute.Relation<'oneToMany', 'api::service.service'>;
     slug: Schema.Attribute.UID<'doctorName'>;
     startAvailability: Schema.Attribute.Time;
@@ -764,6 +772,45 @@ export interface ApiHospitalHospital extends Struct.CollectionTypeSchema {
     review: Schema.Attribute.Decimal;
     servicio: Schema.Attribute.Integer;
     slug: Schema.Attribute.UID<'hospitalName'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiMedicalServiceMedicalService
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'medical_services';
+  info: {
+    displayName: 'Medical Service';
+    pluralName: 'medical-services';
+    singularName: 'medical-service';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text;
+    image: Schema.Attribute.Media<'images'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::medical-service.medical-service'
+    > &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    service_rates: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::service-rate.service-rate'
+    >;
+    slug: Schema.Attribute.UID<'name'>;
+    specialty: Schema.Attribute.Relation<'manyToOne', 'api::service.service'>;
+    type: Schema.Attribute.Enumeration<['consultation', 'procedure']> &
+      Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1062,7 +1109,43 @@ export interface ApiReviewReview extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiServiceService extends Struct.SingleTypeSchema {
+export interface ApiServiceRateServiceRate extends Struct.CollectionTypeSchema {
+  collectionName: 'service_rates';
+  info: {
+    displayName: 'Service Rate';
+    pluralName: 'service-rates';
+    singularName: 'service-rate';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    clinic: Schema.Attribute.Relation<'manyToOne', 'api::clinic.clinic'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    doctor: Schema.Attribute.Relation<'manyToOne', 'api::doctor.doctor'>;
+    duration_min: Schema.Attribute.Integer;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::service-rate.service-rate'
+    > &
+      Schema.Attribute.Private;
+    medical_service: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::medical-service.medical-service'
+    >;
+    notes: Schema.Attribute.Text;
+    price: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiServiceService extends Struct.CollectionTypeSchema {
   collectionName: 'services';
   info: {
     description: '';
@@ -1740,6 +1823,7 @@ declare module '@strapi/strapi' {
       'api::doctor.doctor': ApiDoctorDoctor;
       'api::faq-group.faq-group': ApiFaqGroupFaqGroup;
       'api::hospital.hospital': ApiHospitalHospital;
+      'api::medical-service.medical-service': ApiMedicalServiceMedicalService;
       'api::membership.membership': ApiMembershipMembership;
       'api::order.order': ApiOrderOrder;
       'api::page.page': ApiPagePage;
@@ -1747,6 +1831,7 @@ declare module '@strapi/strapi' {
       'api::pharmacy.pharmacy': ApiPharmacyPharmacy;
       'api::product.product': ApiProductProduct;
       'api::review.review': ApiReviewReview;
+      'api::service-rate.service-rate': ApiServiceRateServiceRate;
       'api::service.service': ApiServiceService;
       'api::stock-transfer.stock-transfer': ApiStockTransferStockTransfer;
       'api::surgery.surgery': ApiSurgerySurgery;

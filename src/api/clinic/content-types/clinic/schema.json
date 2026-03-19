@@ -140,6 +140,12 @@
       "relation": "oneToOne",
       "target": "api::doctor.doctor",
       "mappedBy": "clinic"
+    },
+    "service_rates": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::service-rate.service-rate",
+      "mappedBy": "clinic"
     }
   }
 }

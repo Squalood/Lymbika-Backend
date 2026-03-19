@@ -119,6 +119,12 @@
       "relation": "oneToOne",
       "target": "api::clinic.clinic",
       "inversedBy": "doctorPage"
+    },
+    "service_rates": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::service-rate.service-rate",
+      "mappedBy": "doctor"
     }
   }
 }

@@ -1,0 +1,18 @@
+{
+  "kind": "collectionType",
+  "collectionName": "service_rates",
+  "info": {
+    "singularName": "service-rate",
+    "pluralName": "service-rates",
+    "displayName": "Service Rate"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "medical_service": { "type": "relation", "relation": "manyToOne", "target": "api::medical-service.medical-service", "inversedBy": "service_rates" },
+    "doctor":          { "type": "relation", "relation": "manyToOne", "target": "api::doctor.doctor", "inversedBy": "service_rates" },
+    "clinic":          { "type": "relation", "relation": "manyToOne", "target": "api::clinic.clinic", "inversedBy": "service_rates" },
+    "price":           { "type": "decimal", "required": true },
+    "duration_min":    { "type": "integer" },
+    "notes":           { "type": "text" }
+  }
+}
