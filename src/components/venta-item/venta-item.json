@@ -22,6 +22,18 @@
     },
     "totalLine": {
       "type": "decimal"
+    },
+    "service_rate": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::service-rate.service-rate"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "product",
+        "service"
+      ]
     }
   }
 }

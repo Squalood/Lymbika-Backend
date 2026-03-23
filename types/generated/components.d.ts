@@ -287,7 +287,12 @@ export interface VentaItemVentaItem extends Struct.ComponentSchema {
     product: Schema.Attribute.Relation<'oneToOne', 'api::product.product'>;
     productName: Schema.Attribute.String;
     quantity: Schema.Attribute.Integer;
+    service_rate: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::service-rate.service-rate'
+    >;
     totalLine: Schema.Attribute.Decimal;
+    type: Schema.Attribute.Enumeration<['product', 'service']>;
     unitPrice: Schema.Attribute.Decimal;
   };
 }
