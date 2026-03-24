@@ -64,6 +64,9 @@
     },
     "tipoCambioUsado": {
       "type": "decimal"
+    },
+    "nota": {
+      "type": "text"
     }
   }
 }

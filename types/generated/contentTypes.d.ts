@@ -1285,6 +1285,7 @@ export interface ApiVentaPosVentaPos extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     metodoPago: Schema.Attribute.Enumeration<['efectivo', 'tarjeta']>;
+    nota: Schema.Attribute.Text;
     operador: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     recibido: Schema.Attribute.Decimal;
