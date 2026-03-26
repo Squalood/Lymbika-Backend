@@ -1275,6 +1275,7 @@ export interface ApiVentaPosVentaPos extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::devolucion-pos.devolucion-pos'
     >;
+    esMembresia: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     estado: Schema.Attribute.Enumeration<['completada', 'cancelada']>;
     fecha: Schema.Attribute.DateTime;
     iva: Schema.Attribute.Decimal;

@@ -67,6 +67,10 @@
     },
     "nota": {
       "type": "text"
+    },
+    "esMembresia": {
+      "type": "boolean",
+      "default": false
     }
   }
 }
