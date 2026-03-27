@@ -669,7 +669,7 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     dayAvailable: Schema.Attribute.Text;
     doctorName: Schema.Attribute.String;
-    experience: Schema.Attribute.RichText;
+    experience: Schema.Attribute.Blocks;
     facebook: Schema.Attribute.String;
     gallery: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios',

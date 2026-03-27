@@ -136,7 +136,7 @@
       "mappedBy": "doctor"
     },
     "experience": {
-      "type": "richtext"
+      "type": "blocks"
     }
   }
 }
