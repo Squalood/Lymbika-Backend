@@ -669,6 +669,7 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     dayAvailable: Schema.Attribute.Text;
     doctorName: Schema.Attribute.String;
+    experience: Schema.Attribute.RichText;
     facebook: Schema.Attribute.String;
     gallery: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios',
@@ -687,6 +688,7 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     location: Schema.Attribute.String;
+    mainImage: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
     priceCon: Schema.Attribute.Decimal;
     publishedAt: Schema.Attribute.DateTime;
     review: Schema.Attribute.Integer;

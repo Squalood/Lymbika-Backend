@@ -63,6 +63,16 @@
         "audios"
       ]
     },
+    "mainImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
     "priceCon": {
       "type": "decimal"
     },
@@ -105,10 +115,9 @@
       "mappedBy": "doctor"
     },
     "videos": {
-      "displayName": "youtube-video",
       "type": "component",
-      "repeatable": true,
-      "component": "video-id.youtube-video"
+      "component": "video-id.youtube-video",
+      "repeatable": true
     },
     "contactButton": {
       "type": "string",
@@ -125,6 +134,9 @@
       "relation": "oneToMany",
       "target": "api::service-rate.service-rate",
       "mappedBy": "doctor"
+    },
+    "experience": {
+      "type": "richtext"
     }
   }
 }
