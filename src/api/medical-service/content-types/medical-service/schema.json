@@ -6,14 +6,48 @@
     "pluralName": "medical-services",
     "displayName": "Medical Service"
   },
-  "options": { "draftAndPublish": true },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
   "attributes": {
-    "name":        { "type": "string", "required": true },
-    "slug":        { "type": "uid", "targetField": "name" },
-    "description": { "type": "text" },
-    "image":       { "type": "media", "multiple": false, "allowedTypes": ["images"] },
-    "type":        { "type": "enumeration", "enum": ["consultation", "procedure"], "required": true },
-    "specialty":   { "type": "relation", "relation": "manyToOne", "target": "api::service.service" },
-    "service_rates": { "type": "relation", "relation": "oneToMany", "target": "api::service-rate.service-rate", "mappedBy": "medical_service" }
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name"
+    },
+    "description": {
+      "type": "text"
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "type": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "consultation",
+        "procedure",
+        "study"
+      ]
+    },
+    "specialty": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::service.service"
+    },
+    "service_rates": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::service-rate.service-rate",
+      "mappedBy": "medical_service"
+    }
   }
 }

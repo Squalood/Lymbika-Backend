@@ -809,7 +809,7 @@ export interface ApiMedicalServiceMedicalService
     >;
     slug: Schema.Attribute.UID<'name'>;
     specialty: Schema.Attribute.Relation<'manyToOne', 'api::service.service'>;
-    type: Schema.Attribute.Enumeration<['consultation', 'procedure']> &
+    type: Schema.Attribute.Enumeration<['consultation', 'procedure', 'study']> &
       Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
