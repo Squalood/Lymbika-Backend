@@ -36,6 +36,32 @@
     "atePrimary": {
       "type": "boolean",
       "default": false
+    },
+    "icon": {
+      "type": "enumeration",
+      "default": "Stethoscope",
+      "enum": [
+        "Home",
+        "Smile",
+        "Droplets",
+        "HeartPulse",
+        "Scale",
+        "Atom",
+        "Baby",
+        "Brain",
+        "BrainCircuit",
+        "ScanFace",
+        "Flower2",
+        "Scissors",
+        "BrainCog",
+        "Stethoscope",
+        "Apple",
+        "Sparkles",
+        "Ear",
+        "Bone",
+        "Droplet",
+        "Wind"
+      ]
     }
   }
 }

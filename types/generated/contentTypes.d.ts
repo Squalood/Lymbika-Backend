@@ -1164,6 +1164,31 @@ export interface ApiServiceService extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     description: Schema.Attribute.Text;
+    icon: Schema.Attribute.Enumeration<
+      [
+        'Home',
+        'Smile',
+        'Droplets',
+        'HeartPulse',
+        'Scale',
+        'Atom',
+        'Baby',
+        'Brain',
+        'BrainCircuit',
+        'ScanFace',
+        'Flower2',
+        'Scissors',
+        'BrainCog',
+        'Stethoscope',
+        'Apple',
+        'Sparkles',
+        'Ear',
+        'Bone',
+        'Droplet',
+        'Wind',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'Stethoscope'>;
     image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
