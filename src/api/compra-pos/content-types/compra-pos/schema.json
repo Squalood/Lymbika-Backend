@@ -1,0 +1,55 @@
+{
+  "kind": "collectionType",
+  "collectionName": "compras_pos",
+  "info": {
+    "singularName": "compra-pos",
+    "pluralName": "compras-pos",
+    "displayName": "compra-pos"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "fecha": {
+      "type": "datetime"
+    },
+    "proveedor": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::proveedor.proveedor",
+      "inversedBy": "compra_pos"
+    },
+    "archivo": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "notas": {
+      "type": "text"
+    },
+    "total": {
+      "type": "decimal"
+    },
+    "operador": {
+      "type": "string"
+    },
+    "estado": {
+      "type": "enumeration",
+      "enum": [
+        "registrada",
+        "cancelada"
+      ]
+    },
+    "items": {
+      "type": "component",
+      "component": "compra-item.compra-item",
+      "repeatable": true
+    }
+  }
+}

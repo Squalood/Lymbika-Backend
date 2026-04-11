@@ -30,6 +30,21 @@ export interface ButtonButton extends Struct.ComponentSchema {
   };
 }
 
+export interface CompraItemCompraItem extends Struct.ComponentSchema {
+  collectionName: 'components_compra_item_compra_items';
+  info: {
+    displayName: 'compra-item';
+    icon: 'arrowDown';
+  };
+  attributes: {
+    costoUnitario: Schema.Attribute.Decimal;
+    product: Schema.Attribute.Relation<'oneToOne', 'api::product.product'>;
+    productName: Schema.Attribute.String;
+    quantity: Schema.Attribute.Integer;
+    totalLine: Schema.Attribute.Decimal;
+  };
+}
+
 export interface ContactContact extends Struct.ComponentSchema {
   collectionName: 'components_contact_contacts';
   info: {
@@ -315,6 +330,7 @@ declare module '@strapi/strapi' {
     export interface ComponentSchemas {
       'badge.badge': BadgeBadge;
       'button.button': ButtonButton;
+      'compra-item.compra-item': CompraItemCompraItem;
       'contact.contact': ContactContact;
       'doctor.doctor': DoctorDoctor;
       'feature.features': FeatureFeatures;

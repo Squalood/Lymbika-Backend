@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_compra_item_compra_items",
+  "info": {
+    "displayName": "compra-item",
+    "icon": "arrowDown"
+  },
+  "options": {},
+  "attributes": {
+    "product": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::product.product"
+    },
+    "productName": {
+      "type": "string"
+    },
+    "quantity": {
+      "type": "integer"
+    },
+    "costoUnitario": {
+      "type": "decimal"
+    },
+    "totalLine": {
+      "type": "decimal"
+    }
+  },
+  "config": {}
+}

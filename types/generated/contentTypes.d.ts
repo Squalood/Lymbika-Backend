@@ -608,6 +608,44 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiCompraPosCompraPos extends Struct.CollectionTypeSchema {
+  collectionName: 'compras_pos';
+  info: {
+    displayName: 'compra-pos';
+    pluralName: 'compras-pos';
+    singularName: 'compra-pos';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    archivo: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    estado: Schema.Attribute.Enumeration<['registrada', 'cancelada']>;
+    fecha: Schema.Attribute.DateTime;
+    items: Schema.Attribute.Component<'compra-item.compra-item', true>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::compra-pos.compra-pos'
+    > &
+      Schema.Attribute.Private;
+    notas: Schema.Attribute.Text;
+    operador: Schema.Attribute.String;
+    proveedor: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::proveedor.proveedor'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    total: Schema.Attribute.Decimal;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiDevolucionPosDevolucionPos
   extends Struct.CollectionTypeSchema {
   collectionName: 'devoluciones_pos';
@@ -1070,6 +1108,41 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     videos: Schema.Attribute.Component<'video-id.youtube-video', true>;
+  };
+}
+
+export interface ApiProveedorProveedor extends Struct.CollectionTypeSchema {
+  collectionName: 'proveedores';
+  info: {
+    displayName: 'proveedor';
+    pluralName: 'proveedores';
+    singularName: 'proveedor';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    compra_pos: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::compra-pos.compra-pos'
+    >;
+    contactoEmail: Schema.Attribute.String;
+    contactoTelefono: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::proveedor.proveedor'
+    > &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String & Schema.Attribute.Required;
+    notas: Schema.Attribute.Text;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
   };
 }
 
@@ -1848,6 +1921,7 @@ declare module '@strapi/strapi' {
       'api::caja-pos.caja-pos': ApiCajaPosCajaPos;
       'api::category.category': ApiCategoryCategory;
       'api::clinic.clinic': ApiClinicClinic;
+      'api::compra-pos.compra-pos': ApiCompraPosCompraPos;
       'api::devolucion-pos.devolucion-pos': ApiDevolucionPosDevolucionPos;
       'api::doctor.doctor': ApiDoctorDoctor;
       'api::faq-group.faq-group': ApiFaqGroupFaqGroup;
@@ -1859,6 +1933,7 @@ declare module '@strapi/strapi' {
       'api::pharmacy-stock.pharmacy-stock': ApiPharmacyStockPharmacyStock;
       'api::pharmacy.pharmacy': ApiPharmacyPharmacy;
       'api::product.product': ApiProductProduct;
+      'api::proveedor.proveedor': ApiProveedorProveedor;
       'api::review.review': ApiReviewReview;
       'api::service-rate.service-rate': ApiServiceRateServiceRate;
       'api::service.service': ApiServiceService;
