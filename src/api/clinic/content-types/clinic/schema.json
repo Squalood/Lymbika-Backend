@@ -49,30 +49,28 @@
       "type": "string"
     },
     "services": {
-      "displayName": "services",
       "type": "component",
-      "repeatable": true,
-      "component": "service.services"
+      "component": "service.services",
+      "repeatable": true
     },
     "features": {
       "type": "component",
-      "repeatable": true,
-      "component": "feature.features"
+      "component": "feature.features",
+      "repeatable": true
     },
     "testimonials": {
-      "displayName": "testimonials",
       "type": "component",
-      "repeatable": true,
-      "component": "testimonial.testimonials"
+      "component": "testimonial.testimonials",
+      "repeatable": true
     },
     "doctor": {
-      "displayName": "doctor",
       "type": "component",
-      "repeatable": false,
-      "component": "doctor.doctor"
+      "component": "doctor.doctor",
+      "repeatable": false
     },
     "icon": {
       "type": "enumeration",
+      "default": "Stethoscope",
       "enum": [
         "HeartPulse",
         "Stethoscope",
@@ -94,8 +92,7 @@
         "Bandage",
         "Dna",
         "Ambulance"
-      ],
-      "default": "Stethoscope"
+      ]
     },
     "gallery": {
       "type": "media",
@@ -110,8 +107,8 @@
     },
     "videos": {
       "type": "component",
-      "repeatable": true,
-      "component": "video-id.youtube-video"
+      "component": "video-id.youtube-video",
+      "repeatable": true
     },
     "scheduleLink": {
       "type": "text"
@@ -127,13 +124,13 @@
     },
     "estudios": {
       "type": "component",
-      "repeatable": true,
-      "component": "service.services"
+      "component": "service.services",
+      "repeatable": true
     },
     "laboratorio": {
       "type": "component",
-      "repeatable": true,
-      "component": "service.services"
+      "component": "service.services",
+      "repeatable": true
     },
     "doctorPage": {
       "type": "relation",
@@ -146,6 +143,19 @@
       "relation": "oneToMany",
       "target": "api::service-rate.service-rate",
       "mappedBy": "clinic"
+    },
+    "pageTexts": {
+      "type": "json"
+    },
+    "colorPage": {
+      "type": "enumeration",
+      "enum": [
+        "navy",
+        "pink",
+        "green",
+        "blue",
+        "red"
+      ]
     }
   }
 }

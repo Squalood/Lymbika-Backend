@@ -539,6 +539,9 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
+    colorPage: Schema.Attribute.Enumeration<
+      ['navy', 'pink', 'green', 'blue', 'red']
+    >;
     contactLocation: Schema.Attribute.Text;
     contactPhone: Schema.Attribute.String;
     contactSchedule: Schema.Attribute.String;
@@ -590,6 +593,7 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
       'api::clinic.clinic'
     > &
       Schema.Attribute.Private;
+    pageTexts: Schema.Attribute.JSON;
     products: Schema.Attribute.Relation<'manyToMany', 'api::product.product'>;
     publishedAt: Schema.Attribute.DateTime;
     scheduleLink: Schema.Attribute.Text;
