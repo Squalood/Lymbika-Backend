@@ -28,7 +28,9 @@
       "type": "enumeration",
       "enum": [
         "efectivo",
-        "tarjeta"
+        "tarjeta",
+        "mixto",
+        "transfe"
       ]
     },
     "recibido": {
@@ -71,6 +73,12 @@
     "esMembresia": {
       "type": "boolean",
       "default": false
+    },
+    "montoTarjeta": {
+      "type": "decimal"
+    },
+    "montoTransferencia": {
+      "type": "decimal"
     }
   }
 }
