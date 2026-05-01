@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_modal_steps",
+  "info": {
+    "displayName": "steps",
+    "icon": "plus"
+  },
+  "options": {},
+  "attributes": {
+    "icon": {
+      "type": "enumeration",
+      "enum": [
+        "Mail",
+        "Phone",
+        "Rocket"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    }
+  },
+  "config": {}
+}

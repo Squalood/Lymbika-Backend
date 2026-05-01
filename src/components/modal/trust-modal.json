@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_modal_trust_modals",
+  "info": {
+    "displayName": "TrustModal",
+    "icon": "handHeart"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": "string"
+    },
+    "ctaLabel": {
+      "type": "string"
+    },
+    "TrustStep": {
+      "type": "component",
+      "component": "modal.steps",
+      "repeatable": true
+    }
+  },
+  "config": {}
+}

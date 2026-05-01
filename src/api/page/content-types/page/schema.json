@@ -87,6 +87,11 @@
       "type": "component",
       "component": "badge.badge",
       "repeatable": true
+    },
+    "ModalPlan": {
+      "type": "component",
+      "component": "modal.trust-modal",
+      "repeatable": true
     }
   }
 }

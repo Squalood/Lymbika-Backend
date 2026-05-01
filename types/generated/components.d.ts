@@ -185,6 +185,33 @@ export interface LessLess extends Struct.ComponentSchema {
   };
 }
 
+export interface ModalSteps extends Struct.ComponentSchema {
+  collectionName: 'components_modal_steps';
+  info: {
+    displayName: 'steps';
+    icon: 'plus';
+  };
+  attributes: {
+    description: Schema.Attribute.Text;
+    icon: Schema.Attribute.Enumeration<['Mail', 'Phone', 'Rocket']>;
+    title: Schema.Attribute.String;
+  };
+}
+
+export interface ModalTrustModal extends Struct.ComponentSchema {
+  collectionName: 'components_modal_trust_modals';
+  info: {
+    displayName: 'TrustModal';
+    icon: 'handHeart';
+  };
+  attributes: {
+    ctaLabel: Schema.Attribute.String;
+    subtitle: Schema.Attribute.String;
+    title: Schema.Attribute.String;
+    TrustStep: Schema.Attribute.Component<'modal.steps', true>;
+  };
+}
+
 export interface PlusPlus extends Struct.ComponentSchema {
   collectionName: 'components_plus_pluses';
   info: {
@@ -338,6 +365,8 @@ declare module '@strapi/strapi' {
       'hero.hero': HeroHero;
       'item.faq-item': ItemFaqItem;
       'less.less': LessLess;
+      'modal.steps': ModalSteps;
+      'modal.trust-modal': ModalTrustModal;
       'plus.plus': PlusPlus;
       'pricing.plan': PricingPlan;
       'promo.promo': PromoPromo;

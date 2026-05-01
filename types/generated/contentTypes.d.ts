@@ -551,7 +551,6 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     doctor: Schema.Attribute.Component<'doctor.doctor', false>;
     doctorPage: Schema.Attribute.Relation<'oneToOne', 'api::doctor.doctor'>;
-    estudios: Schema.Attribute.Component<'service.services', true>;
     featuredClinic: Schema.Attribute.Boolean;
     features: Schema.Attribute.Component<'feature.features', true>;
     gallery: Schema.Attribute.Media<
@@ -586,7 +585,6 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
       ]
     > &
       Schema.Attribute.DefaultTo<'Stethoscope'>;
-    laboratorio: Schema.Attribute.Component<'service.services', true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -601,7 +599,6 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::service-rate.service-rate'
     >;
-    services: Schema.Attribute.Component<'service.services', true>;
     slug: Schema.Attribute.UID<'title'>;
     testimonials: Schema.Attribute.Component<'testimonial.testimonials', true>;
     title: Schema.Attribute.String;
@@ -951,6 +948,7 @@ export interface ApiPagePage extends Struct.CollectionTypeSchema {
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::page.page'> &
       Schema.Attribute.Private;
+    ModalPlan: Schema.Attribute.Component<'modal.trust-modal', true>;
     namePage: Schema.Attribute.String;
     plan: Schema.Attribute.Component<'pricing.plan', true>;
     promo: Schema.Attribute.Component<'promo.promo', true>;

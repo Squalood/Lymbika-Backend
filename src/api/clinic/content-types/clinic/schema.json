@@ -48,11 +48,6 @@
     "contactWhatsappLink": {
       "type": "string"
     },
-    "services": {
-      "type": "component",
-      "component": "service.services",
-      "repeatable": true
-    },
     "features": {
       "type": "component",
       "component": "feature.features",
@@ -121,16 +116,6 @@
     },
     "featuredClinic": {
       "type": "boolean"
-    },
-    "estudios": {
-      "type": "component",
-      "component": "service.services",
-      "repeatable": true
-    },
-    "laboratorio": {
-      "type": "component",
-      "component": "service.services",
-      "repeatable": true
     },
     "doctorPage": {
       "type": "relation",
