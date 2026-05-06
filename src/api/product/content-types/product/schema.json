@@ -109,6 +109,9 @@
       "relation": "oneToMany",
       "target": "api::pharmacy-stock.pharmacy-stock",
       "mappedBy": "product"
+    },
+    "priceInpatient": {
+      "type": "decimal"
     }
   }
 }

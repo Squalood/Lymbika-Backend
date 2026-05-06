@@ -1078,6 +1078,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
       'api::pharmacy-stock.pharmacy-stock'
     >;
     price: Schema.Attribute.Decimal;
+    priceInpatient: Schema.Attribute.Decimal;
     priceMember: Schema.Attribute.Decimal;
     productName: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
