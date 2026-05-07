@@ -113,11 +113,11 @@
     "priceInpatient": {
       "type": "decimal"
     },
-    "laboratorios": {
+    "laboratorio": {
       "type": "relation",
-      "relation": "oneToMany",
+      "relation": "manyToOne",
       "target": "api::laboratorio.laboratorio",
-      "mappedBy": "product"
+      "inversedBy": "products"
     }
   }
 }

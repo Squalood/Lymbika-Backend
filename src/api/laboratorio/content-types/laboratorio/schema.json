@@ -14,11 +14,11 @@
     "name": {
       "type": "string"
     },
-    "product": {
+    "products": {
       "type": "relation",
-      "relation": "manyToOne",
+      "relation": "oneToMany",
       "target": "api::product.product",
-      "inversedBy": "laboratorios"
+      "mappedBy": "laboratorio"
     }
   }
 }

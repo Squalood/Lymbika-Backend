@@ -840,7 +840,7 @@ export interface ApiLaboratorioLaboratorio extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     name: Schema.Attribute.String;
-    product: Schema.Attribute.Relation<'manyToOne', 'api::product.product'>;
+    products: Schema.Attribute.Relation<'oneToMany', 'api::product.product'>;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -1096,8 +1096,8 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
       true
     >;
     isFeatured: Schema.Attribute.Boolean;
-    laboratorios: Schema.Attribute.Relation<
-      'oneToMany',
+    laboratorio: Schema.Attribute.Relation<
+      'manyToOne',
       'api::laboratorio.laboratorio'
     >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;

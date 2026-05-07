@@ -2,9 +2,9 @@
 
 const CSV_FIELDS = [
   'documentId', 'productName', 'sku', 'barCode',
-  'price', 'priceMember', 'stock',
+  'price', 'priceMember', 'priceInpatient', 'stock_central',
   'active', 'isFeatured', 'conReceta',
-  'tipo', 'sal', 'category', 'status',
+  'tipo', 'sal', 'fecha_caducidad', 'category', 'laboratorio', 'status',
 ];
 
 function escapeCsv(val: unknown): string {
@@ -21,6 +21,7 @@ function toCSV(products: any[]): string {
   const rows = products.map((p) =>
     CSV_FIELDS.map((field) => {
       if (field === 'category') return escapeCsv(p.category?.categoryName ?? '');
+      if (field === 'laboratorio') return escapeCsv(p.laboratorio?.name ?? '');
       if (field === 'status') return escapeCsv(p.publishedAt ? 'published' : 'draft');
       return escapeCsv(p[field]);
     }).join(',')
@@ -99,7 +100,7 @@ export default {
   async exportProducts(ctx: any) {
     const [products, publishedProducts] = await Promise.all([
       strapi.documents('api::product.product').findMany({
-        populate: { category: true },
+        populate: { category: true, laboratorio: true },
         status: 'draft',
       }),
       strapi.documents('api::product.product').findMany({
@@ -162,19 +163,32 @@ export default {
           }
         }
 
+        let laboratorioConnect: any = undefined;
+        if (row.laboratorio) {
+          const found = await strapi.documents('api::laboratorio.laboratorio').findFirst({
+            filters: { name: { $eq: row.laboratorio } } as any,
+          });
+          if (found) {
+            laboratorioConnect = { laboratorio: { connect: [{ documentId: found.documentId }] } };
+          }
+        }
+
         const data: any = {
           ...(row.productName && { productName: row.productName }),
           ...(row.sku !== undefined && { sku: row.sku || null }),
           ...(row.barCode !== undefined && { barCode: row.barCode || null }),
           ...(row.price !== '' && { price: parseDecimal(row.price) }),
           ...(row.priceMember !== '' && { priceMember: parseDecimal(row.priceMember) }),
-          ...(row.stock !== '' && { stock: parseInt(row.stock) || 0 }),
+          ...(row.priceInpatient !== '' && { priceInpatient: parseDecimal(row.priceInpatient) }),
+          ...(row.stock_central !== '' && { stock_central: parseInt(row.stock_central) || 0 }),
           ...(row.active !== '' && { active: row.active === 'true' }),
           ...(row.isFeatured !== '' && { isFeatured: row.isFeatured === 'true' }),
           ...(row.conReceta !== '' && { conReceta: row.conReceta === 'true' }),
           ...(row.tipo !== '' && { tipo: normalizeTipo(row.tipo) }),
           ...(row.sal !== undefined && { sal: row.sal || null }),
+          ...(row.fecha_caducidad !== '' && { fecha_caducidad: row.fecha_caducidad || null }),
           ...categoryConnect,
+          ...laboratorioConnect,
         };
 
         const status = row.status === 'published' ? 'published' : 'draft';
@@ -209,7 +223,7 @@ export default {
   async resetStock(ctx: any) {
     const count = await strapi.db.query('api::product.product').updateMany({
       where: {},
-      data: { stock: 0 },
+      data: { stock_central: 0 },
     });
 
     ctx.body = {
