@@ -819,6 +819,35 @@ export interface ApiHospitalHospital extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiLaboratorioLaboratorio extends Struct.CollectionTypeSchema {
+  collectionName: 'laboratorios';
+  info: {
+    displayName: 'laboratorio';
+    pluralName: 'laboratorios';
+    singularName: 'laboratorio';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::laboratorio.laboratorio'
+    > &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String;
+    product: Schema.Attribute.Relation<'manyToOne', 'api::product.product'>;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiMedicalServiceMedicalService
   extends Struct.CollectionTypeSchema {
   collectionName: 'medical_services';
@@ -1067,6 +1096,10 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
       true
     >;
     isFeatured: Schema.Attribute.Boolean;
+    laboratorios: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::laboratorio.laboratorio'
+    >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -1933,6 +1966,7 @@ declare module '@strapi/strapi' {
       'api::doctor.doctor': ApiDoctorDoctor;
       'api::faq-group.faq-group': ApiFaqGroupFaqGroup;
       'api::hospital.hospital': ApiHospitalHospital;
+      'api::laboratorio.laboratorio': ApiLaboratorioLaboratorio;
       'api::medical-service.medical-service': ApiMedicalServiceMedicalService;
       'api::membership.membership': ApiMembershipMembership;
       'api::order.order': ApiOrderOrder;

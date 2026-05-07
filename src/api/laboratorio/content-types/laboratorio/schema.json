@@ -1,0 +1,24 @@
+{
+  "kind": "collectionType",
+  "collectionName": "laboratorios",
+  "info": {
+    "singularName": "laboratorio",
+    "pluralName": "laboratorios",
+    "displayName": "laboratorio"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "product": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product.product",
+      "inversedBy": "laboratorios"
+    }
+  }
+}
