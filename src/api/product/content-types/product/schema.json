@@ -118,6 +118,13 @@
       "relation": "manyToOne",
       "target": "api::laboratorio.laboratorio",
       "inversedBy": "products"
+    },
+    "drug_type": {
+      "type": "enumeration",
+      "enum": [
+        "generic",
+        "branded"
+      ]
     }
   }
 }
