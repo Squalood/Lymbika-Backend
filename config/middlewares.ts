@@ -29,6 +29,7 @@ export default [
     name: 'strapi::session',
     config: {
       secure: false,
+      sameSite: false,
     },
   },
   'strapi::favicon',
