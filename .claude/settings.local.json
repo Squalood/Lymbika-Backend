@@ -3,7 +3,20 @@
     "allow": [
       "Bash(npm start)",
       "WebFetch(domain:www.npmjs.com)",
-      "WebFetch(domain:market.strapi.io)"
+      "WebFetch(domain:market.strapi.io)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\ananc\\\\Desktop\\\\Lymbika\\\\e-lymbika\\\\backend-ecommerce\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(xargs ls -la)",
+      "Bash(find /c/Users/ananc/Desktop/Lymbika/e-lymbika -name \"*.md\" -type f | grep -v node_modules | head -20)",
+      "Read(//c/Users/ananc/Desktop/Lymbika/e-lymbika/**)",
+      "Bash(ls -la /c/Users/ananc/Desktop/Lymbika/e-lymbika/ | head -30)",
+      "Read(//c/Users/ananc/Desktop/Lymbika/e-lymbika//**)",
+      "WebFetch(domain:localhost)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} %{redirect_url}\" \"http://localhost:1337/api/connect/google\")",
+      "PowerShell(try { $response = Invoke-WebRequest -Uri \"http://localhost:1337/api/connect/google\" -MaximumRedirection 0 -ErrorAction Stop } catch { $_.Exception.Response.StatusCode.value__; $_.Exception.Response.Headers['Location'] })",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://localhost:1337/_health\" -TimeoutSec 3 -ErrorAction Stop; $r.StatusCode } catch { \"Server not running\" })",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://localhost:1337/api/connect/google\" -MaximumRedirection 0 -ErrorAction Stop; $r.StatusCode } catch { $status = $_.Exception.Response.StatusCode.value__; $location = $_.Exception.Response.Headers['Location']; \"Status: $status`nRedirect: $location\" })",
+      "Bash(curl -v -L --max-redirs 0 \"http://localhost:1337/api/connect/google\")"
     ]
   }
 }
