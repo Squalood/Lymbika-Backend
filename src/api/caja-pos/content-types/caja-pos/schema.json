@@ -29,6 +29,11 @@
     },
     "operador": {
       "type": "string"
+    },
+    "pharmacy": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::pharmacy.pharmacy"
     }
   }
 }

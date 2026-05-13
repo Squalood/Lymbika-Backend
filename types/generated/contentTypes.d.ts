@@ -487,6 +487,7 @@ export interface ApiCajaPosCajaPos extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     operador: Schema.Attribute.String;
+    pharmacy: Schema.Attribute.Relation<'oneToOne', 'api::pharmacy.pharmacy'>;
     publishedAt: Schema.Attribute.DateTime;
     tipoCambio: Schema.Attribute.Decimal;
     updatedAt: Schema.Attribute.DateTime;
