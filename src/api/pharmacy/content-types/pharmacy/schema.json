@@ -37,8 +37,11 @@
     },
     "estado": {
       "type": "enumeration",
-      "enum": ["activo", "inactivo"],
-      "default": "activo"
+      "default": "activo",
+      "enum": [
+        "activo",
+        "inactivo"
+      ]
     },
     "pharmacy_stocks": {
       "type": "relation",

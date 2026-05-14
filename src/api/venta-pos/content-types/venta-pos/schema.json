@@ -79,6 +79,11 @@
     },
     "montoTransferencia": {
       "type": "decimal"
+    },
+    "pharmacies": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::pharmacy.pharmacy"
     }
   }
 }

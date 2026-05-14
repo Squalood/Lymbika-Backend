@@ -676,6 +676,10 @@ export interface ApiDevolucionPosDevolucionPos
     montoReembolso: Schema.Attribute.Decimal;
     motivo: Schema.Attribute.String;
     operador: Schema.Attribute.String;
+    pharmacies: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::pharmacy.pharmacy'
+    >;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -1430,6 +1434,10 @@ export interface ApiVentaPosVentaPos extends Struct.CollectionTypeSchema {
     montoTransferencia: Schema.Attribute.Decimal;
     nota: Schema.Attribute.Text;
     operador: Schema.Attribute.String;
+    pharmacies: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::pharmacy.pharmacy'
+    >;
     publishedAt: Schema.Attribute.DateTime;
     recibido: Schema.Attribute.Decimal;
     recibidoUSD: Schema.Attribute.Decimal & Schema.Attribute.DefaultTo<0>;

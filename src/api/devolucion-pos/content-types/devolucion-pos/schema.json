@@ -47,6 +47,11 @@
       "type": "component",
       "component": "venta-item.venta-item",
       "repeatable": true
+    },
+    "pharmacies": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::pharmacy.pharmacy"
     }
   }
 }
