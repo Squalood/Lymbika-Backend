@@ -4,7 +4,7 @@ const CSV_FIELDS = [
   'documentId', 'productName', 'sku', 'barCode',
   'price', 'priceMember', 'priceInpatient', 'stock_central',
   'active', 'isFeatured', 'conReceta',
-  'tipo', 'sal', 'fecha_caducidad', 'category', 'laboratorio', 'status',
+  'drug_type', 'sal', 'fecha_caducidad', 'category', 'laboratorio', 'status',
 ];
 
 function escapeCsv(val: unknown): string {
@@ -65,24 +65,6 @@ function parseCSV(text: string): Record<string, string>[] {
       {} as Record<string, string>
     );
   });
-}
-
-// Enum values exactos del schema (incluyendo espacios originales)
-const TIPO_ENUM = [
-  'Pildora', 'Antigripal', 'Dolor y Fiebre', 'Gripe y Tos',
-  'Alergias y Respiratorios', 'Salud Digestiva', 'Vitaminas y Suplementos',
-  'Salud de la Piel', 'Cuidado Femenino', 'Salud Sexual y Reproductiva',
-  ' Salud Mental y Sueño', ' Diabetes y Control de Glucosa',
-  ' Hipertensión y Salud del Corazón', ' Enfermedades Crónicas',
-  ' Medicamentos Especializados', ' Antibióticos y Antivirales',
-  ' Cuidado Infantil y Pediátrico',
-];
-
-// Busca el valor exacto del enum aunque el CSV venga sin espacios al inicio
-function normalizeTipo(val: string): string | null {
-  if (!val) return null;
-  const match = TIPO_ENUM.find((e) => e.trim() === val.trim());
-  return match ?? null;
 }
 
 // Parsea decimales tanto con punto (18.57) como con coma (18,57)
@@ -184,7 +166,7 @@ export default {
           ...(row.active !== '' && { active: row.active === 'true' }),
           ...(row.isFeatured !== '' && { isFeatured: row.isFeatured === 'true' }),
           ...(row.conReceta !== '' && { conReceta: row.conReceta === 'true' }),
-          ...(row.tipo !== '' && { tipo: normalizeTipo(row.tipo) }),
+          ...(row.drug_type !== '' && { drug_type: row.drug_type || null }),
           ...(row.sal !== undefined && { sal: row.sal || null }),
           ...(row.fecha_caducidad !== '' && { fecha_caducidad: row.fecha_caducidad || null }),
           ...categoryConnect,
