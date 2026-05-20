@@ -34,6 +34,30 @@
       "type": "relation",
       "relation": "oneToOne",
       "target": "api::pharmacy.pharmacy"
+    },
+    "finalCashMXN": {
+      "type": "decimal"
+    },
+    "finalCashUSD": {
+      "type": "decimal"
+    },
+    "expectedMXN": {
+      "type": "decimal"
+    },
+    "expectedUSD": {
+      "type": "decimal"
+    },
+    "diffMXN": {
+      "type": "decimal"
+    },
+    "diffUSD": {
+      "type": "decimal"
+    },
+    "closedAt": {
+      "type": "datetime"
+    },
+    "closedBy": {
+      "type": "string"
     }
   }
 }
