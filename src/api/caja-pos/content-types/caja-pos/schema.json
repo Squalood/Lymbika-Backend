@@ -58,6 +58,24 @@
     },
     "closedBy": {
       "type": "string"
+    },
+    "expectedCard": {
+      "type": "decimal"
+    },
+    "finalCard": {
+      "type": "decimal"
+    },
+    "diffCard": {
+      "type": "decimal"
+    },
+    "expectedTransfe": {
+      "type": "decimal"
+    },
+    "finalTransfe": {
+      "type": "decimal"
+    },
+    "diffTransfe": {
+      "type": "decimal"
     }
   }
 }

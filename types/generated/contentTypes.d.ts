@@ -479,14 +479,20 @@ export interface ApiCajaPosCajaPos extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    diffCard: Schema.Attribute.Decimal;
     diffMXN: Schema.Attribute.Decimal;
+    diffTransfe: Schema.Attribute.Decimal;
     diffUSD: Schema.Attribute.Decimal;
     estado: Schema.Attribute.Enumeration<['Abierta', 'Cerrada']>;
+    expectedCard: Schema.Attribute.Decimal;
     expectedMXN: Schema.Attribute.Decimal;
+    expectedTransfe: Schema.Attribute.Decimal;
     expectedUSD: Schema.Attribute.Decimal;
     fecha: Schema.Attribute.DateTime;
+    finalCard: Schema.Attribute.Decimal;
     finalCashMXN: Schema.Attribute.Decimal;
     finalCashUSD: Schema.Attribute.Decimal;
+    finalTransfe: Schema.Attribute.Decimal;
     fondoInicial: Schema.Attribute.Decimal;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
