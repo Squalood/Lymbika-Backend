@@ -1135,6 +1135,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     priceMember: Schema.Attribute.Decimal;
     productName: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
+    reviews: Schema.Attribute.Relation<'oneToMany', 'api::review.review'>;
     sal: Schema.Attribute.Text;
     sku: Schema.Attribute.String;
     slug: Schema.Attribute.UID<'productName'>;
@@ -1226,6 +1227,7 @@ export interface ApiReviewReview extends Struct.CollectionTypeSchema {
       'api::review.review'
     > &
       Schema.Attribute.Private;
+    product: Schema.Attribute.Relation<'manyToOne', 'api::product.product'>;
     publishedAt: Schema.Attribute.DateTime;
     recommend: Schema.Attribute.Integer;
     updatedAt: Schema.Attribute.DateTime;

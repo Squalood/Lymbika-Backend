@@ -75,6 +75,24 @@ function parseDecimal(val: string): number | null {
   return isNaN(num) ? null : num;
 }
 
+// Acepta true/false en inglés y VERDADERO/FALSO en español
+function parseBool(val: string): boolean | null {
+  if (val === '' || val === undefined) return null;
+  const v = val.trim().toLowerCase();
+  if (v === 'true' || v === 'verdadero') return true;
+  if (v === 'false' || v === 'falso') return false;
+  return null;
+}
+
+// Normaliza drug_type al enum exacto del schema
+function normalizeDrugType(val: string): string | null {
+  if (!val) return null;
+  const v = val.trim().toLowerCase();
+  if (v === 'generic' || v === 'genérico') return 'generic';
+  if (v === 'branded' || v === 'brand' || v === 'marca') return 'branded';
+  return null;
+}
+
 // ── Controller ───────────────────────────────────────────────────────────────
 
 export default {
@@ -163,10 +181,10 @@ export default {
           ...(row.priceMember !== '' && { priceMember: parseDecimal(row.priceMember) }),
           ...(row.priceInpatient !== '' && { priceInpatient: parseDecimal(row.priceInpatient) }),
           ...(row.stock_central !== '' && { stock_central: parseInt(row.stock_central) || 0 }),
-          ...(row.active !== '' && { active: row.active === 'true' }),
-          ...(row.isFeatured !== '' && { isFeatured: row.isFeatured === 'true' }),
-          ...(row.conReceta !== '' && { conReceta: row.conReceta === 'true' }),
-          ...(row.drug_type !== '' && { drug_type: row.drug_type || null }),
+          ...(parseBool(row.active) !== null && { active: parseBool(row.active) }),
+          ...(parseBool(row.isFeatured) !== null && { isFeatured: parseBool(row.isFeatured) }),
+          ...(parseBool(row.conReceta) !== null && { conReceta: parseBool(row.conReceta) }),
+          ...(row.drug_type !== '' && { drug_type: normalizeDrugType(row.drug_type) }),
           ...(row.sal !== undefined && { sal: row.sal || null }),
           ...(row.fecha_caducidad !== '' && { fecha_caducidad: row.fecha_caducidad || null }),
           ...categoryConnect,
