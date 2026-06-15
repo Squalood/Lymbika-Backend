@@ -30,6 +30,11 @@
       "type": "component",
       "component": "item.values",
       "repeatable": true
+    },
+    "contact": {
+      "type": "component",
+      "component": "contact.contact",
+      "repeatable": false
     }
   }
 }
