@@ -1,0 +1,35 @@
+{
+  "kind": "singleType",
+  "collectionName": "about_pages",
+  "info": {
+    "singularName": "about-page",
+    "pluralName": "about-pages",
+    "displayName": "about-page"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "mission_title": {
+      "type": "string"
+    },
+    "mission_description": {
+      "type": "text"
+    },
+    "vision_title": {
+      "type": "string"
+    },
+    "vision_description": {
+      "type": "text"
+    },
+    "values_title": {
+      "type": "string"
+    },
+    "value": {
+      "type": "component",
+      "component": "item.values",
+      "repeatable": true
+    }
+  }
+}

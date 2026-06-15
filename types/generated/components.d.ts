@@ -173,6 +173,17 @@ export interface ItemFaqItem extends Struct.ComponentSchema {
   };
 }
 
+export interface ItemValues extends Struct.ComponentSchema {
+  collectionName: 'components_item_values';
+  info: {
+    displayName: 'values';
+    icon: 'apps';
+  };
+  attributes: {
+    label: Schema.Attribute.String;
+  };
+}
+
 export interface LessLess extends Struct.ComponentSchema {
   collectionName: 'components_less_lesses';
   info: {
@@ -364,6 +375,7 @@ declare module '@strapi/strapi' {
       'gallery.gallery': GalleryGallery;
       'hero.hero': HeroHero;
       'item.faq-item': ItemFaqItem;
+      'item.values': ItemValues;
       'less.less': LessLess;
       'modal.steps': ModalSteps;
       'modal.trust-modal': ModalTrustModal;

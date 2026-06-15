@@ -1,0 +1,14 @@
+{
+  "collectionName": "components_item_values",
+  "info": {
+    "displayName": "values",
+    "icon": "apps"
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}
