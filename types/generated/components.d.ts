@@ -180,6 +180,7 @@ export interface ItemValues extends Struct.ComponentSchema {
     icon: 'apps';
   };
   attributes: {
+    icon: Schema.Attribute.String;
     label: Schema.Attribute.String;
   };
 }
