@@ -979,6 +979,54 @@ export interface ApiMembershipMembership extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiNavbarSectionNavbarSection extends Struct.SingleTypeSchema {
+  collectionName: 'navbar_sections';
+  info: {
+    displayName: 'navbar-section';
+    pluralName: 'navbar-sections';
+    singularName: 'navbar-section';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    about_brand: Schema.Attribute.String;
+    about_brand_description: Schema.Attribute.Text;
+    about_brand_image: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios'
+    >;
+    about_trigger: Schema.Attribute.String;
+    clinics_featured_title: Schema.Attribute.String;
+    clinics_others_title: Schema.Attribute.String;
+    clinics_trigger: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    doctors_item_description: Schema.Attribute.Text;
+    doctors_item_title: Schema.Attribute.String;
+    doctors_link: Schema.Attribute.String;
+    h1_brand_name: Schema.Attribute.String;
+    h1_brand_suffix: Schema.Attribute.String;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::navbar-section.navbar-section'
+    > &
+      Schema.Attribute.Private;
+    membership_item_description: Schema.Attribute.Text;
+    membership_item_title: Schema.Attribute.String;
+    pharmacy_item_description: Schema.Attribute.Text;
+    pharmacy_item_title: Schema.Attribute.String;
+    pharmacy_trigger: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    services_item_description: Schema.Attribute.Text;
+    services_item_title: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
   collectionName: 'orders';
   info: {
@@ -2033,6 +2081,7 @@ declare module '@strapi/strapi' {
       'api::laboratorio.laboratorio': ApiLaboratorioLaboratorio;
       'api::medical-service.medical-service': ApiMedicalServiceMedicalService;
       'api::membership.membership': ApiMembershipMembership;
+      'api::navbar-section.navbar-section': ApiNavbarSectionNavbarSection;
       'api::order.order': ApiOrderOrder;
       'api::page.page': ApiPagePage;
       'api::pharmacy-stock.pharmacy-stock': ApiPharmacyStockPharmacyStock;

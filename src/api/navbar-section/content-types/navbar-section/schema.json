@@ -1,0 +1,79 @@
+{
+  "kind": "singleType",
+  "collectionName": "navbar_sections",
+  "info": {
+    "singularName": "navbar-section",
+    "pluralName": "navbar-sections",
+    "displayName": "navbar-section"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "h1_brand_name": {
+      "type": "string"
+    },
+    "h1_brand_suffix": {
+      "type": "string"
+    },
+    "about_brand_image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "about_trigger": {
+      "type": "string"
+    },
+    "about_brand": {
+      "type": "string"
+    },
+    "about_brand_description": {
+      "type": "text"
+    },
+    "pharmacy_item_title": {
+      "type": "string"
+    },
+    "pharmacy_item_description": {
+      "type": "text"
+    },
+    "services_item_title": {
+      "type": "string"
+    },
+    "services_item_description": {
+      "type": "text"
+    },
+    "doctors_item_title": {
+      "type": "string"
+    },
+    "doctors_item_description": {
+      "type": "text"
+    },
+    "membership_item_title": {
+      "type": "string"
+    },
+    "membership_item_description": {
+      "type": "text"
+    },
+    "clinics_trigger": {
+      "type": "string"
+    },
+    "clinics_featured_title": {
+      "type": "string"
+    },
+    "clinics_others_title": {
+      "type": "string"
+    },
+    "pharmacy_trigger": {
+      "type": "string"
+    },
+    "doctors_link": {
+      "type": "string"
+    }
+  }
+}
