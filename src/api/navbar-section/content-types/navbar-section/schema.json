@@ -74,6 +74,21 @@
     },
     "doctors_link": {
       "type": "string"
+    },
+    "mobile_menu_title": {
+      "type": "string"
+    },
+    "mobile_account_section": {
+      "type": "string"
+    },
+    "mobile_cart_link": {
+      "type": "string"
+    },
+    "mobile_wishlist_link": {
+      "type": "string"
+    },
+    "mobile_user_link": {
+      "type": "string"
     }
   }
 }

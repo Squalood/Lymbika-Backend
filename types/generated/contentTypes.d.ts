@@ -1015,6 +1015,11 @@ export interface ApiNavbarSectionNavbarSection extends Struct.SingleTypeSchema {
       Schema.Attribute.Private;
     membership_item_description: Schema.Attribute.Text;
     membership_item_title: Schema.Attribute.String;
+    mobile_account_section: Schema.Attribute.String;
+    mobile_cart_link: Schema.Attribute.String;
+    mobile_menu_title: Schema.Attribute.String;
+    mobile_user_link: Schema.Attribute.String;
+    mobile_wishlist_link: Schema.Attribute.String;
     pharmacy_item_description: Schema.Attribute.Text;
     pharmacy_item_title: Schema.Attribute.String;
     pharmacy_trigger: Schema.Attribute.String;
