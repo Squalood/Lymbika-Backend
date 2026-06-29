@@ -67,7 +67,7 @@
     "landingStat": {
       "type": "component",
       "component": "item.values",
-      "repeatable": false
+      "repeatable": true
     },
     "landingBenefit": {
       "type": "component",
