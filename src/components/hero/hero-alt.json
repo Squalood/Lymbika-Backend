@@ -1,0 +1,43 @@
+{
+  "collectionName": "components_hero_hero_alts",
+  "info": {
+    "displayName": "heroAlt",
+    "icon": "alien"
+  },
+  "options": {},
+  "attributes": {
+    "eyebrow": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": "text"
+    },
+    "price_display": {
+      "type": "text"
+    },
+    "hero_video": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "hero_image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "trust_pills": {
+      "type": "json"
+    }
+  },
+  "config": {}
+}

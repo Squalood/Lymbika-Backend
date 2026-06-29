@@ -9,6 +9,7 @@
   "options": {
     "draftAndPublish": false
   },
+  "pluginOptions": {},
   "attributes": {
     "medical_service": {
       "type": "relation",
@@ -36,6 +37,15 @@
       "type": "integer"
     },
     "notes": {
+      "type": "text"
+    },
+    "package_label": {
+      "type": "string"
+    },
+    "package_items": {
+      "type": "json"
+    },
+    "package_note": {
       "type": "text"
     }
   }

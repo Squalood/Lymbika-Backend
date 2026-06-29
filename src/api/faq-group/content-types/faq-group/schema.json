@@ -29,6 +29,12 @@
     },
     "descripction": {
       "type": "text"
+    },
+    "medical_service": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::medical-service.medical-service",
+      "inversedBy": "faq_group"
     }
   }
 }

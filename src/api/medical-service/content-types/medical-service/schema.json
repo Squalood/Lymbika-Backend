@@ -52,6 +52,42 @@
     "has_landing_page": {
       "type": "boolean",
       "default": false
+    },
+    "faq_group": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::faq-group.faq-group",
+      "mappedBy": "medical_service"
+    },
+    "landingHero": {
+      "type": "component",
+      "component": "hero.hero-alt",
+      "repeatable": false
+    },
+    "landingStat": {
+      "type": "component",
+      "component": "item.values",
+      "repeatable": false
+    },
+    "landingBenefit": {
+      "type": "component",
+      "component": "feature.features",
+      "repeatable": true
+    },
+    "landing_video_url": {
+      "type": "component",
+      "component": "video-id.youtube-video",
+      "repeatable": false
+    },
+    "landing_gallery": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
     }
   }
 }

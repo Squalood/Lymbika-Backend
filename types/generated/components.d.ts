@@ -161,6 +161,26 @@ export interface HeroHero extends Struct.ComponentSchema {
   };
 }
 
+export interface HeroHeroAlt extends Struct.ComponentSchema {
+  collectionName: 'components_hero_hero_alts';
+  info: {
+    displayName: 'heroAlt';
+    icon: 'alien';
+  };
+  attributes: {
+    eyebrow: Schema.Attribute.String;
+    hero_image: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios'
+    >;
+    hero_video: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios'
+    >;
+    price_display: Schema.Attribute.Text;
+    subtitle: Schema.Attribute.Text;
+    trust_pills: Schema.Attribute.JSON;
+  };
+}
+
 export interface ItemFaqItem extends Struct.ComponentSchema {
   collectionName: 'components_item_faq_items';
   info: {
@@ -182,6 +202,7 @@ export interface ItemValues extends Struct.ComponentSchema {
   attributes: {
     icon: Schema.Attribute.String;
     label: Schema.Attribute.String;
+    number: Schema.Attribute.String;
   };
 }
 
@@ -375,6 +396,7 @@ declare module '@strapi/strapi' {
       'feature.features': FeatureFeatures;
       'gallery.gallery': GalleryGallery;
       'hero.hero': HeroHero;
+      'hero.hero-alt': HeroHeroAlt;
       'item.faq-item': ItemFaqItem;
       'item.values': ItemValues;
       'less.less': LessLess;

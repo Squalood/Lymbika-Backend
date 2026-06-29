@@ -828,6 +828,10 @@ export interface ApiFaqGroupFaqGroup extends Struct.CollectionTypeSchema {
       'api::faq-group.faq-group'
     > &
       Schema.Attribute.Private;
+    medical_service: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::medical-service.medical-service'
+    >;
     nameFaq: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     slug: Schema.Attribute.UID<'title'>;
@@ -920,9 +924,24 @@ export interface ApiMedicalServiceMedicalService
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     description: Schema.Attribute.Text;
+    faq_group: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::faq-group.faq-group'
+    >;
     has_landing_page: Schema.Attribute.Boolean &
       Schema.Attribute.DefaultTo<false>;
     image: Schema.Attribute.Media<'images'>;
+    landing_gallery: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios',
+      true
+    >;
+    landing_video_url: Schema.Attribute.Component<
+      'video-id.youtube-video',
+      false
+    >;
+    landingBenefit: Schema.Attribute.Component<'feature.features', true>;
+    landingHero: Schema.Attribute.Component<'hero.hero-alt', false>;
+    landingStat: Schema.Attribute.Component<'item.values', false>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -1362,6 +1381,9 @@ export interface ApiServiceRateServiceRate extends Struct.CollectionTypeSchema {
       'api::medical-service.medical-service'
     >;
     notes: Schema.Attribute.Text;
+    package_items: Schema.Attribute.JSON;
+    package_label: Schema.Attribute.String;
+    package_note: Schema.Attribute.Text;
     price: Schema.Attribute.Decimal & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
