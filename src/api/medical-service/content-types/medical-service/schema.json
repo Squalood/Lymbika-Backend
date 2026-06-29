@@ -48,6 +48,10 @@
       "relation": "oneToMany",
       "target": "api::service-rate.service-rate",
       "mappedBy": "medical_service"
+    },
+    "has_landing_page": {
+      "type": "boolean",
+      "default": false
     }
   }
 }
