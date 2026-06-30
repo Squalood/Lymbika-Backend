@@ -16,12 +16,6 @@
     "icon": {
       "type": "enumeration",
       "enum": [
-        "icon1",
-        "icon2",
-        "icon3",
-        "icon4",
-        "icon5",
-        "icon6",
         "Stethoscope",
         "Activity",
         "Heart",
@@ -48,7 +42,14 @@
         "Presentation",
         "ChartNoAxesCombined",
         "Handshake",
-        "Globe"
+        "Globe",
+        "HeartHandshake",
+        "Home",
+        "Leaf",
+        "ShieldCheck",
+        "UserCheck",
+        "PillBottle",
+        "ClipboardCheck"
       ]
     }
   }
