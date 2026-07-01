@@ -1,0 +1,77 @@
+{
+  "collectionName": "components_landing_texts_landing_texts_medical_services",
+  "info": {
+    "displayName": "landing.texts.Medical-Service",
+    "icon": "bulletList"
+  },
+  "options": {},
+  "attributes": {
+    "hero_price_label": {
+      "type": "string"
+    },
+    "hero_primary_button": {
+      "type": "string"
+    },
+    "hero_secondary_button": {
+      "type": "string"
+    },
+    "video_label": {
+      "type": "string"
+    },
+    "benefits_label": {
+      "type": "string"
+    },
+    "benefits_title": {
+      "type": "string"
+    },
+    "package_label_section": {
+      "type": "string"
+    },
+    "package_title": {
+      "type": "string"
+    },
+    "package_cta_button": {
+      "type": "string"
+    },
+    "gallery_label": {
+      "type": "string"
+    },
+    "gallery_title": {
+      "type": "string"
+    },
+    "doctors_label": {
+      "type": "string"
+    },
+    "doctors_label_plural": {
+      "type": "string"
+    },
+    "doctors_title": {
+      "type": "string"
+    },
+    "doctors_title_plural": {
+      "type": "string"
+    },
+    "doctors_profile_button": {
+      "type": "string"
+    },
+    "faq_label": {
+      "type": "string"
+    },
+    "faq_header_title": {
+      "type": "string"
+    },
+    "faq_header_subtitle": {
+      "type": "string"
+    },
+    "cta_title": {
+      "type": "string"
+    },
+    "cta_subtitle": {
+      "type": "text"
+    },
+    "cta_button": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}

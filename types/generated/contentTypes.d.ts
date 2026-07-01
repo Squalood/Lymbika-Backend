@@ -942,6 +942,10 @@ export interface ApiMedicalServiceMedicalService
     landingBenefit: Schema.Attribute.Component<'feature.features', true>;
     landingHero: Schema.Attribute.Component<'hero.hero-alt', false>;
     landingStat: Schema.Attribute.Component<'item.values', true>;
+    landingTexts: Schema.Attribute.Component<
+      'landing-texts.landing-texts-medical-service',
+      false
+    >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',

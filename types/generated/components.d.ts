@@ -92,12 +92,6 @@ export interface FeatureFeatures extends Struct.ComponentSchema {
     description: Schema.Attribute.Text;
     icon: Schema.Attribute.Enumeration<
       [
-        'icon1',
-        'icon2',
-        'icon3',
-        'icon4',
-        'icon5',
-        'icon6',
         'Stethoscope',
         'Activity',
         'Heart',
@@ -125,6 +119,13 @@ export interface FeatureFeatures extends Struct.ComponentSchema {
         'ChartNoAxesCombined',
         'Handshake',
         'Globe',
+        'HeartHandshake',
+        'Home',
+        'Leaf',
+        'ShieldCheck',
+        'UserCheck',
+        'PillBottle',
+        'ClipboardCheck',
       ]
     >;
     title: Schema.Attribute.Text;
@@ -203,6 +204,39 @@ export interface ItemValues extends Struct.ComponentSchema {
     icon: Schema.Attribute.String;
     label: Schema.Attribute.String;
     number: Schema.Attribute.String;
+  };
+}
+
+export interface LandingTextsLandingTextsMedicalService
+  extends Struct.ComponentSchema {
+  collectionName: 'components_landing_texts_landing_texts_medical_services';
+  info: {
+    displayName: 'landing.texts.Medical-Service';
+    icon: 'bulletList';
+  };
+  attributes: {
+    benefits_label: Schema.Attribute.String;
+    benefits_title: Schema.Attribute.String;
+    cta_button: Schema.Attribute.String;
+    cta_subtitle: Schema.Attribute.Text;
+    cta_title: Schema.Attribute.String;
+    doctors_label: Schema.Attribute.String;
+    doctors_label_plural: Schema.Attribute.String;
+    doctors_profile_button: Schema.Attribute.String;
+    doctors_title: Schema.Attribute.String;
+    doctors_title_plural: Schema.Attribute.String;
+    faq_header_subtitle: Schema.Attribute.String;
+    faq_header_title: Schema.Attribute.String;
+    faq_label: Schema.Attribute.String;
+    gallery_label: Schema.Attribute.String;
+    gallery_title: Schema.Attribute.String;
+    hero_price_label: Schema.Attribute.String;
+    hero_primary_button: Schema.Attribute.String;
+    hero_secondary_button: Schema.Attribute.String;
+    package_cta_button: Schema.Attribute.String;
+    package_label_section: Schema.Attribute.String;
+    package_title: Schema.Attribute.String;
+    video_label: Schema.Attribute.String;
   };
 }
 
@@ -399,6 +433,7 @@ declare module '@strapi/strapi' {
       'hero.hero-alt': HeroHeroAlt;
       'item.faq-item': ItemFaqItem;
       'item.values': ItemValues;
+      'landing-texts.landing-texts-medical-service': LandingTextsLandingTextsMedicalService;
       'less.less': LessLess;
       'modal.steps': ModalSteps;
       'modal.trust-modal': ModalTrustModal;

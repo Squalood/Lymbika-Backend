@@ -88,6 +88,11 @@
         "videos",
         "audios"
       ]
+    },
+    "landingTexts": {
+      "type": "component",
+      "component": "landing-texts.landing-texts-medical-service",
+      "repeatable": false
     }
   }
 }
