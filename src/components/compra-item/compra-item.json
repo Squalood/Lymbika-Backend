@@ -22,6 +22,12 @@
     },
     "totalLine": {
       "type": "decimal"
+    },
+    "numeroLote": {
+      "type": "string"
+    },
+    "fechaCaducidad": {
+      "type": "date"
     }
   },
   "config": {}

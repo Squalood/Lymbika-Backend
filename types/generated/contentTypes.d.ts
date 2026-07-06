@@ -678,7 +678,6 @@ export interface ApiCompraPosCompraPos extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     estado: Schema.Attribute.Enumeration<['registrada', 'cancelada']>;
     fecha: Schema.Attribute.DateTime;
-    fechaCaducidad: Schema.Attribute.Date;
     inventory_lots: Schema.Attribute.Relation<
       'oneToMany',
       'api::inventory-lot.inventory-lot'
@@ -691,7 +690,6 @@ export interface ApiCompraPosCompraPos extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     notas: Schema.Attribute.Text;
-    numeroLote: Schema.Attribute.String;
     operador: Schema.Attribute.String;
     proveedor: Schema.Attribute.Relation<
       'manyToOne',
@@ -894,7 +892,7 @@ export interface ApiInventoryLotInventoryLot
     singularName: 'inventory-lot';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     compra: Schema.Attribute.Relation<
