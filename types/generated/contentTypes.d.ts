@@ -678,6 +678,11 @@ export interface ApiCompraPosCompraPos extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     estado: Schema.Attribute.Enumeration<['registrada', 'cancelada']>;
     fecha: Schema.Attribute.DateTime;
+    fechaCaducidad: Schema.Attribute.Date;
+    inventory_lots: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::inventory-lot.inventory-lot'
+    >;
     items: Schema.Attribute.Component<'compra-item.compra-item', true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -686,6 +691,7 @@ export interface ApiCompraPosCompraPos extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     notas: Schema.Attribute.Text;
+    numeroLote: Schema.Attribute.String;
     operador: Schema.Attribute.String;
     proveedor: Schema.Attribute.Relation<
       'manyToOne',
@@ -873,6 +879,44 @@ export interface ApiHospitalHospital extends Struct.CollectionTypeSchema {
     review: Schema.Attribute.Decimal;
     servicio: Schema.Attribute.Integer;
     slug: Schema.Attribute.UID<'hospitalName'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiInventoryLotInventoryLot
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'inventory_lots';
+  info: {
+    displayName: 'inventoryLot';
+    pluralName: 'inventory-lots';
+    singularName: 'inventory-lot';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    compra: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::compra-pos.compra-pos'
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    currentAmount: Schema.Attribute.Integer;
+    expirationDate: Schema.Attribute.Date;
+    initialQuantity: Schema.Attribute.Integer;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::inventory-lot.inventory-lot'
+    > &
+      Schema.Attribute.Private;
+    lotNumber: Schema.Attribute.String;
+    product: Schema.Attribute.Relation<'manyToOne', 'api::product.product'>;
+    publishedAt: Schema.Attribute.DateTime;
+    state: Schema.Attribute.Enumeration<['activo', 'agotado', 'vencido']>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1229,6 +1273,10 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     images: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios',
       true
+    >;
+    inventory_lots: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::inventory-lot.inventory-lot'
     >;
     isFeatured: Schema.Attribute.Boolean;
     laboratorio: Schema.Attribute.Relation<
@@ -2111,6 +2159,7 @@ declare module '@strapi/strapi' {
       'api::doctor.doctor': ApiDoctorDoctor;
       'api::faq-group.faq-group': ApiFaqGroupFaqGroup;
       'api::hospital.hospital': ApiHospitalHospital;
+      'api::inventory-lot.inventory-lot': ApiInventoryLotInventoryLot;
       'api::laboratorio.laboratorio': ApiLaboratorioLaboratorio;
       'api::medical-service.medical-service': ApiMedicalServiceMedicalService;
       'api::membership.membership': ApiMembershipMembership;

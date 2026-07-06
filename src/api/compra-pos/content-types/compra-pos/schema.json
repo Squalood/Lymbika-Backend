@@ -50,6 +50,18 @@
       "type": "component",
       "component": "compra-item.compra-item",
       "repeatable": true
+    },
+    "numeroLote": {
+      "type": "string"
+    },
+    "fechaCaducidad": {
+      "type": "date"
+    },
+    "inventory_lots": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::inventory-lot.inventory-lot",
+      "mappedBy": "compra"
     }
   }
 }
