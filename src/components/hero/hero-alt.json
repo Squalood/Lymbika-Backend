@@ -36,7 +36,9 @@
       ]
     },
     "trust_pills": {
-      "type": "json"
+      "type": "component",
+      "component": "item.pill",
+      "repeatable": true
     }
   },
   "config": {}

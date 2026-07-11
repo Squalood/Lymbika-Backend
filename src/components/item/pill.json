@@ -1,0 +1,14 @@
+{
+  "collectionName": "components_item_pills",
+  "info": {
+    "displayName": "pill",
+    "icon": "quote"
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}

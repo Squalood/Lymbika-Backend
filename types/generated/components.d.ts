@@ -180,7 +180,7 @@ export interface HeroHeroAlt extends Struct.ComponentSchema {
     >;
     price_display: Schema.Attribute.Text;
     subtitle: Schema.Attribute.Text;
-    trust_pills: Schema.Attribute.JSON;
+    trust_pills: Schema.Attribute.Component<'item.pill', true>;
   };
 }
 
@@ -196,6 +196,17 @@ export interface ItemFaqItem extends Struct.ComponentSchema {
   };
 }
 
+export interface ItemPill extends Struct.ComponentSchema {
+  collectionName: 'components_item_pills';
+  info: {
+    displayName: 'pill';
+    icon: 'quote';
+  };
+  attributes: {
+    text: Schema.Attribute.String;
+  };
+}
+
 export interface ItemValues extends Struct.ComponentSchema {
   collectionName: 'components_item_values';
   info: {
@@ -203,7 +214,6 @@ export interface ItemValues extends Struct.ComponentSchema {
     icon: 'apps';
   };
   attributes: {
-    icon: Schema.Attribute.String;
     label: Schema.Attribute.String;
     number: Schema.Attribute.String;
   };
@@ -434,6 +444,7 @@ declare module '@strapi/strapi' {
       'hero.hero': HeroHero;
       'hero.hero-alt': HeroHeroAlt;
       'item.faq-item': ItemFaqItem;
+      'item.pill': ItemPill;
       'item.values': ItemValues;
       'landing-texts.landing-texts-medical-service': LandingTextsLandingTextsMedicalService;
       'less.less': LessLess;

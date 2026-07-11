@@ -9,9 +9,6 @@
     "label": {
       "type": "string"
     },
-    "icon": {
-      "type": "string"
-    },
     "number": {
       "type": "string"
     }
