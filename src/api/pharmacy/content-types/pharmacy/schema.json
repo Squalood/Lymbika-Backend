@@ -49,12 +49,6 @@
       "target": "api::pharmacy-stock.pharmacy-stock",
       "mappedBy": "pharmacy"
     },
-    "b2b_sales": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::b2b-sale.b2b-sale",
-      "mappedBy": "pharmacy"
-    },
     "facturas": {
       "type": "relation",
       "relation": "oneToMany",

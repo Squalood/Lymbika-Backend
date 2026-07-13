@@ -467,39 +467,6 @@ export interface ApiAboutPageAboutPage extends Struct.SingleTypeSchema {
   };
 }
 
-export interface ApiB2BSaleB2BSale extends Struct.CollectionTypeSchema {
-  collectionName: 'b2b_sales';
-  info: {
-    description: 'Ventas mayoristas entre farmacias';
-    displayName: 'B2B Sale';
-    pluralName: 'b2b-sales';
-    singularName: 'b2b-sale';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::b2b-sale.b2b-sale'
-    > &
-      Schema.Attribute.Private;
-    pharmacy: Schema.Attribute.Relation<'manyToOne', 'api::pharmacy.pharmacy'>;
-    product: Schema.Attribute.Relation<'manyToOne', 'api::product.product'>;
-    publishedAt: Schema.Attribute.DateTime;
-    quantity: Schema.Attribute.Integer & Schema.Attribute.Required;
-    sale_price: Schema.Attribute.Decimal & Schema.Attribute.Required;
-    sold_at: Schema.Attribute.DateTime & Schema.Attribute.Required;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-  };
-}
-
 export interface ApiCajaPosCajaPos extends Struct.CollectionTypeSchema {
   collectionName: 'cajas_pos';
   info: {
@@ -1266,7 +1233,6 @@ export interface ApiPharmacyPharmacy extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
-    b2b_sales: Schema.Attribute.Relation<'oneToMany', 'api::b2b-sale.b2b-sale'>;
     clave: Schema.Attribute.UID<'nombre'> & Schema.Attribute.Required;
     contacto_email: Schema.Attribute.Email;
     createdAt: Schema.Attribute.DateTime;
@@ -2201,7 +2167,6 @@ declare module '@strapi/strapi' {
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
       'api::about-page.about-page': ApiAboutPageAboutPage;
-      'api::b2b-sale.b2b-sale': ApiB2BSaleB2BSale;
       'api::caja-pos.caja-pos': ApiCajaPosCajaPos;
       'api::category.category': ApiCategoryCategory;
       'api::clinic.clinic': ApiClinicClinic;
