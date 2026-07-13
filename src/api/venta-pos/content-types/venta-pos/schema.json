@@ -84,6 +84,12 @@
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::pharmacy.pharmacy"
+    },
+    "facturas": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::factura.factura",
+      "mappedBy": "venta_pos"
     }
   }
 }

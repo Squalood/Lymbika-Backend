@@ -1,0 +1,35 @@
+{
+  "collectionName": "components_factura_item_items",
+  "info": {
+    "displayName": "items",
+    "icon": "envelop"
+  },
+  "options": {},
+  "attributes": {
+    "descripcion": {
+      "type": "text",
+      "required": true
+    },
+    "cantidad": {
+      "type": "decimal"
+    },
+    "precioUnitario": {
+      "type": "decimal"
+    },
+    "impuesto": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "iva16",
+        "iva8",
+        "exento"
+      ]
+    },
+    "product": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::product.product"
+    }
+  },
+  "config": {}
+}

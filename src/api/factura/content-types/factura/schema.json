@@ -1,0 +1,95 @@
+{
+  "kind": "collectionType",
+  "collectionName": "facturas",
+  "info": {
+    "singularName": "factura",
+    "pluralName": "facturas",
+    "displayName": "factura"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "folio": {
+      "type": "string",
+      "required": true
+    },
+    "fecha": {
+      "type": "datetime",
+      "required": true
+    },
+    "fechaVencimiento": {
+      "type": "date"
+    },
+    "cliente": {
+      "type": "string",
+      "required": true
+    },
+    "rfc": {
+      "type": "string"
+    },
+    "tipoCliente": {
+      "type": "enumeration",
+      "enum": [
+        "empresa",
+        "particular"
+      ]
+    },
+    "formaDePago": {
+      "type": "string"
+    },
+    "politicaDePago": {
+      "type": "text"
+    },
+    "usoCfdi": {
+      "type": "text"
+    },
+    "diario": {
+      "type": "text"
+    },
+    "cfdiOrigen": {
+      "type": "text"
+    },
+    "cfdiAlPublico": {
+      "type": "boolean",
+      "default": false
+    },
+    "subtotal": {
+      "type": "decimal"
+    },
+    "iva16": {
+      "type": "decimal"
+    },
+    "iva8": {
+      "type": "decimal"
+    },
+    "total": {
+      "type": "decimal"
+    },
+    "estado": {
+      "type": "enumeration",
+      "enum": [
+        "emitida",
+        "cancelada"
+      ]
+    },
+    "items": {
+      "type": "component",
+      "component": "factura-item.items",
+      "repeatable": true
+    },
+    "pharmacy": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::pharmacy.pharmacy",
+      "inversedBy": "facturas"
+    },
+    "venta_pos": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::venta-pos.venta-pos",
+      "inversedBy": "facturas"
+    }
+  }
+}

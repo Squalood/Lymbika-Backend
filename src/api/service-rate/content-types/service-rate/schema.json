@@ -47,6 +47,11 @@
     },
     "package_note": {
       "type": "text"
+    },
+    "items": {
+      "type": "component",
+      "component": "plus.plus",
+      "repeatable": true
     }
   }
 }

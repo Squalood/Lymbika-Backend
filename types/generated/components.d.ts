@@ -83,6 +83,22 @@ export interface DoctorDoctor extends Struct.ComponentSchema {
   };
 }
 
+export interface FacturaItemItems extends Struct.ComponentSchema {
+  collectionName: 'components_factura_item_items';
+  info: {
+    displayName: 'items';
+    icon: 'envelop';
+  };
+  attributes: {
+    cantidad: Schema.Attribute.Decimal;
+    descripcion: Schema.Attribute.Text & Schema.Attribute.Required;
+    impuesto: Schema.Attribute.Enumeration<['iva16', 'iva8', 'exento']> &
+      Schema.Attribute.Required;
+    precioUnitario: Schema.Attribute.Decimal;
+    product: Schema.Attribute.Relation<'oneToOne', 'api::product.product'>;
+  };
+}
+
 export interface FeatureFeatures extends Struct.ComponentSchema {
   collectionName: 'components_feature_features';
   info: {
@@ -130,7 +146,7 @@ export interface FeatureFeatures extends Struct.ComponentSchema {
         'ClipboardCheck',
       ]
     >;
-    title: Schema.Attribute.Text;
+    title: Schema.Attribute.String;
   };
 }
 
@@ -439,6 +455,7 @@ declare module '@strapi/strapi' {
       'compra-item.compra-item': CompraItemCompraItem;
       'contact.contact': ContactContact;
       'doctor.doctor': DoctorDoctor;
+      'factura-item.items': FacturaItemItems;
       'feature.features': FeatureFeatures;
       'gallery.gallery': GalleryGallery;
       'hero.hero': HeroHero;

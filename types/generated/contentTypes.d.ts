@@ -809,6 +809,56 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiFacturaFactura extends Struct.CollectionTypeSchema {
+  collectionName: 'facturas';
+  info: {
+    displayName: 'factura';
+    pluralName: 'facturas';
+    singularName: 'factura';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    cfdiAlPublico: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    cfdiOrigen: Schema.Attribute.Text;
+    cliente: Schema.Attribute.String & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    diario: Schema.Attribute.Text;
+    estado: Schema.Attribute.Enumeration<['emitida', 'cancelada']>;
+    fecha: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    fechaVencimiento: Schema.Attribute.Date;
+    folio: Schema.Attribute.String & Schema.Attribute.Required;
+    formaDePago: Schema.Attribute.String;
+    items: Schema.Attribute.Component<'factura-item.items', true>;
+    iva16: Schema.Attribute.Decimal;
+    iva8: Schema.Attribute.Decimal;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::factura.factura'
+    > &
+      Schema.Attribute.Private;
+    pharmacy: Schema.Attribute.Relation<'manyToOne', 'api::pharmacy.pharmacy'>;
+    politicaDePago: Schema.Attribute.Text;
+    publishedAt: Schema.Attribute.DateTime;
+    rfc: Schema.Attribute.String;
+    subtotal: Schema.Attribute.Decimal;
+    tipoCliente: Schema.Attribute.Enumeration<['empresa', 'particular']>;
+    total: Schema.Attribute.Decimal;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    usoCfdi: Schema.Attribute.Text;
+    venta_pos: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::venta-pos.venta-pos'
+    >;
+  };
+}
+
 export interface ApiFaqGroupFaqGroup extends Struct.CollectionTypeSchema {
   collectionName: 'faq_groups';
   info: {
@@ -1225,6 +1275,7 @@ export interface ApiPharmacyPharmacy extends Struct.CollectionTypeSchema {
     direccion: Schema.Attribute.Text;
     estado: Schema.Attribute.Enumeration<['activo', 'inactivo']> &
       Schema.Attribute.DefaultTo<'activo'>;
+    facturas: Schema.Attribute.Relation<'oneToMany', 'api::factura.factura'>;
     is_b2b: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -1420,6 +1471,7 @@ export interface ApiServiceRateServiceRate extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     doctor: Schema.Attribute.Relation<'manyToOne', 'api::doctor.doctor'>;
     duration_min: Schema.Attribute.Integer;
+    items: Schema.Attribute.Component<'plus.plus', true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -1599,6 +1651,7 @@ export interface ApiVentaPosVentaPos extends Struct.CollectionTypeSchema {
     >;
     esMembresia: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     estado: Schema.Attribute.Enumeration<['completada', 'cancelada']>;
+    facturas: Schema.Attribute.Relation<'oneToMany', 'api::factura.factura'>;
     fecha: Schema.Attribute.DateTime;
     iva: Schema.Attribute.Decimal;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
@@ -2155,6 +2208,7 @@ declare module '@strapi/strapi' {
       'api::compra-pos.compra-pos': ApiCompraPosCompraPos;
       'api::devolucion-pos.devolucion-pos': ApiDevolucionPosDevolucionPos;
       'api::doctor.doctor': ApiDoctorDoctor;
+      'api::factura.factura': ApiFacturaFactura;
       'api::faq-group.faq-group': ApiFaqGroupFaqGroup;
       'api::hospital.hospital': ApiHospitalHospital;
       'api::inventory-lot.inventory-lot': ApiInventoryLotInventoryLot;
