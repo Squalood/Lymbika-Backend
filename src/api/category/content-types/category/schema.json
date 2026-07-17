@@ -32,6 +32,17 @@
     },
     "description": {
       "type": "text"
+    },
+    "icon": {
+      "type": "enumeration",
+      "enum": [
+        "Tablets",
+        "HeartPulse",
+        "Syringe",
+        "Baby",
+        "Pill",
+        "Sparkles"
+      ]
     }
   }
 }
