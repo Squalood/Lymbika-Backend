@@ -39,6 +39,8 @@ export interface CompraItemCompraItem extends Struct.ComponentSchema {
   attributes: {
     costoUnitario: Schema.Attribute.Decimal;
     fechaCaducidad: Schema.Attribute.Date;
+    iva: Schema.Attribute.Enumeration<['iva8', 'iva16', 'exento']> &
+      Schema.Attribute.DefaultTo<'exento'>;
     numeroLote: Schema.Attribute.String;
     product: Schema.Attribute.Relation<'oneToOne', 'api::product.product'>;
     productName: Schema.Attribute.String;

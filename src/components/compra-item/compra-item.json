@@ -28,6 +28,15 @@
     },
     "fechaCaducidad": {
       "type": "date"
+    },
+    "iva": {
+      "type": "enumeration",
+      "default": "exento",
+      "enum": [
+        "iva8",
+        "iva16",
+        "exento"
+      ]
     }
   },
   "config": {}
