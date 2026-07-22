@@ -798,7 +798,12 @@ export interface ApiFacturaFactura extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     diario: Schema.Attribute.Text;
     estado: Schema.Attribute.Enumeration<['emitida', 'cancelada']>;
+    estadoPago: Schema.Attribute.Enumeration<
+      ['pendiente', 'pagada', 'pagada_parcial']
+    > &
+      Schema.Attribute.DefaultTo<'pendiente'>;
     fecha: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    fechaPago: Schema.Attribute.DateTime;
     fechaVencimiento: Schema.Attribute.Date;
     folio: Schema.Attribute.String & Schema.Attribute.Required;
     formaDePago: Schema.Attribute.String;
@@ -811,6 +816,7 @@ export interface ApiFacturaFactura extends Struct.CollectionTypeSchema {
       'api::factura.factura'
     > &
       Schema.Attribute.Private;
+    montoPagado: Schema.Attribute.Decimal & Schema.Attribute.DefaultTo<0>;
     pharmacy: Schema.Attribute.Relation<'manyToOne', 'api::pharmacy.pharmacy'>;
     politicaDePago: Schema.Attribute.Text;
     publishedAt: Schema.Attribute.DateTime;
@@ -1238,6 +1244,7 @@ export interface ApiPharmacyPharmacy extends Struct.CollectionTypeSchema {
   attributes: {
     clave: Schema.Attribute.UID<'nombre'> & Schema.Attribute.Required;
     contacto_email: Schema.Attribute.Email;
+    contacto_tel: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1245,7 +1252,6 @@ export interface ApiPharmacyPharmacy extends Struct.CollectionTypeSchema {
     estado: Schema.Attribute.Enumeration<['activo', 'inactivo']> &
       Schema.Attribute.DefaultTo<'activo'>;
     facturas: Schema.Attribute.Relation<'oneToMany', 'api::factura.factura'>;
-    is_b2b: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -1259,6 +1265,8 @@ export interface ApiPharmacyPharmacy extends Struct.CollectionTypeSchema {
       'api::pharmacy-stock.pharmacy-stock'
     >;
     publishedAt: Schema.Attribute.DateTime;
+    razonSocial: Schema.Attribute.String;
+    rfc: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

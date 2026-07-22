@@ -90,6 +90,22 @@
       "relation": "manyToOne",
       "target": "api::venta-pos.venta-pos",
       "inversedBy": "facturas"
+    },
+    "estadoPago": {
+      "type": "enumeration",
+      "default": "pendiente",
+      "enum": [
+        "pendiente",
+        "pagada",
+        "pagada_parcial"
+      ]
+    },
+    "montoPagado": {
+      "type": "decimal",
+      "default": 0
+    },
+    "fechaPago": {
+      "type": "datetime"
     }
   }
 }

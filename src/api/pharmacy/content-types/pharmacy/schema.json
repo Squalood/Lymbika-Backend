@@ -31,10 +31,6 @@
       "type": "integer",
       "default": 5
     },
-    "is_b2b": {
-      "type": "boolean",
-      "default": false
-    },
     "estado": {
       "type": "enumeration",
       "default": "activo",
@@ -54,6 +50,15 @@
       "relation": "oneToMany",
       "target": "api::factura.factura",
       "mappedBy": "pharmacy"
+    },
+    "razonSocial": {
+      "type": "string"
+    },
+    "rfc": {
+      "type": "string"
+    },
+    "contacto_tel": {
+      "type": "string"
     }
   }
 }
