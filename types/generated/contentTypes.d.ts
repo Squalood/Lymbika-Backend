@@ -1295,7 +1295,6 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     descriptionPro: Schema.Attribute.Blocks;
     drug_type: Schema.Attribute.Enumeration<['generic', 'branded']>;
-    fecha_caducidad: Schema.Attribute.Date;
     images: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios',
       true

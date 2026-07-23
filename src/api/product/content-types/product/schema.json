@@ -101,9 +101,6 @@
       "type": "integer",
       "default": 0
     },
-    "fecha_caducidad": {
-      "type": "date"
-    },
     "pharmacy_stocks": {
       "type": "relation",
       "relation": "oneToMany",
