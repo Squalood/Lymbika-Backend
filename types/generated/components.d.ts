@@ -423,6 +423,9 @@ export interface VentaItemVentaItem extends Struct.ComponentSchema {
     icon: 'shoppingCart';
   };
   attributes: {
+    expirationDate: Schema.Attribute.Date;
+    lotDocumentId: Schema.Attribute.String;
+    lotNumber: Schema.Attribute.String;
     product: Schema.Attribute.Relation<'oneToOne', 'api::product.product'>;
     productName: Schema.Attribute.String;
     quantity: Schema.Attribute.Integer;
