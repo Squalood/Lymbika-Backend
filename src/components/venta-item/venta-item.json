@@ -34,6 +34,15 @@
         "product",
         "service"
       ]
+    },
+    "lotDocumentId": {
+      "type": "string"
+    },
+    "lotNumber": {
+      "type": "string"
+    },
+    "expirationDate": {
+      "type": "date"
     }
   }
 }
