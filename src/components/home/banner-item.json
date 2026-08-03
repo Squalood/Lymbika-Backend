@@ -1,0 +1,32 @@
+{
+  "collectionName": "components_home_banner_items",
+  "info": {
+    "displayName": "banner-item",
+    "icon": "hashtag"
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "string",
+      "required": true
+    },
+    "icon": {
+      "type": "enumeration",
+      "enum": [
+        "BadgeCheck",
+        "ShoppingBag",
+        "Clock",
+        "GraduationCap",
+        "Shield",
+        "CreditCard",
+        "Stethoscope",
+        "Hospital",
+        "MessageCircleHeart",
+        "BookUser",
+        "ShieldCheck",
+        "Plane"
+      ]
+    }
+  },
+  "config": {}
+}

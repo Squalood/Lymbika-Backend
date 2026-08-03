@@ -907,6 +907,7 @@ export interface ApiHomePageHomePage extends Struct.SingleTypeSchema {
         'home.hospital-section',
         'home.choose-category',
         'home.surgery-faq',
+        'home.text-banner',
       ]
     >;
     seoDescription: Schema.Attribute.Text;

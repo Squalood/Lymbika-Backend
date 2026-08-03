@@ -1,0 +1,16 @@
+{
+  "collectionName": "components_home_text_banners",
+  "info": {
+    "displayName": "text-banner",
+    "icon": "layer"
+  },
+  "options": {},
+  "attributes": {
+    "item": {
+      "type": "component",
+      "component": "home.banner-item",
+      "repeatable": true
+    }
+  },
+  "config": {}
+}

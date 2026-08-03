@@ -279,6 +279,33 @@ export interface HomeAreDoctorsSection extends Struct.ComponentSchema {
   };
 }
 
+export interface HomeBannerItem extends Struct.ComponentSchema {
+  collectionName: 'components_home_banner_items';
+  info: {
+    displayName: 'banner-item';
+    icon: 'hashtag';
+  };
+  attributes: {
+    icon: Schema.Attribute.Enumeration<
+      [
+        'BadgeCheck',
+        'ShoppingBag',
+        'Clock',
+        'GraduationCap',
+        'Shield',
+        'CreditCard',
+        'Stethoscope',
+        'Hospital',
+        'MessageCircleHeart',
+        'BookUser',
+        'ShieldCheck',
+        'Plane',
+      ]
+    >;
+    text: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
 export interface HomeCarouselServices extends Struct.ComponentSchema {
   collectionName: 'components_home_carousel_services';
   info: {
@@ -322,6 +349,7 @@ export interface HomeClinics extends Struct.ComponentSchema {
     icon: 'manyToMany';
   };
   attributes: {
+    subTitle: Schema.Attribute.String;
     title: Schema.Attribute.String;
   };
 }
@@ -357,7 +385,22 @@ export interface HomeSurgeryFaq extends Struct.ComponentSchema {
     icon: 'quote';
   };
   attributes: {
+    faq_group: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::faq-group.faq-group'
+    >;
     title: Schema.Attribute.String;
+  };
+}
+
+export interface HomeTextBanner extends Struct.ComponentSchema {
+  collectionName: 'components_home_text_banners';
+  info: {
+    displayName: 'text-banner';
+    icon: 'layer';
+  };
+  attributes: {
+    item: Schema.Attribute.Component<'home.banner-item', true>;
   };
 }
 
@@ -594,6 +637,7 @@ declare module '@strapi/strapi' {
       'home.alyus-feature': HomeAlyusFeature;
       'home.alyus-section': HomeAlyusSection;
       'home.are-doctors-section': HomeAreDoctorsSection;
+      'home.banner-item': HomeBannerItem;
       'home.carousel-services': HomeCarouselServices;
       'home.chat-message': HomeChatMessage;
       'home.choose-category': HomeChooseCategory;
@@ -601,6 +645,7 @@ declare module '@strapi/strapi' {
       'home.hospital-section': HomeHospitalSection;
       'home.promo-carousel': HomePromoCarousel;
       'home.surgery-faq': HomeSurgeryFaq;
+      'home.text-banner': HomeTextBanner;
       'home.turist-section': HomeTuristSection;
       'home.videos-section': HomeVideosSection;
       'item.faq-item': ItemFaqItem;

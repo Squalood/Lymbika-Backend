@@ -8,6 +8,11 @@
   "attributes": {
     "title": {
       "type": "string"
+    },
+    "faq_group": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::faq-group.faq-group"
     }
   },
   "config": {}

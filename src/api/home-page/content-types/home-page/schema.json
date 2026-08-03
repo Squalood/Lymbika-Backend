@@ -31,7 +31,8 @@
         "home.carousel-services",
         "home.hospital-section",
         "home.choose-category",
-        "home.surgery-faq"
+        "home.surgery-faq",
+        "home.text-banner"
       ]
     }
   }
