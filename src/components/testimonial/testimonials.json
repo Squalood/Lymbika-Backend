@@ -14,6 +14,9 @@
     },
     "rating": {
       "type": "decimal"
+    },
+    "role": {
+      "type": "string"
     }
   }
 }

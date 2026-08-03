@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_home_promo_carousels",
+  "info": {
+    "displayName": "promo-carousel",
+    "icon": "crown"
+  },
+  "options": {},
+  "attributes": {
+    "aspectRatio": {
+      "type": "enumeration",
+      "default": "video",
+      "enum": [
+        "square",
+        "video",
+        "portrait"
+      ]
+    },
+    "promos": {
+      "type": "component",
+      "component": "promo.promo",
+      "repeatable": true
+    }
+  },
+  "config": {}
+}

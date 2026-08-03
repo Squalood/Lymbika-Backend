@@ -1,0 +1,38 @@
+{
+  "kind": "singleType",
+  "collectionName": "home_pages",
+  "info": {
+    "singularName": "home-page",
+    "pluralName": "home-pages",
+    "displayName": "Home Page"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "seoTitle": {
+      "type": "string"
+    },
+    "seoDescription": {
+      "type": "text"
+    },
+    "sections": {
+      "type": "dynamiczone",
+      "components": [
+        "hero.hero",
+        "gallery.gallery",
+        "home.turist-section",
+        "home.videos-section",
+        "home.promo-carousel",
+        "home.alyus-section",
+        "home.are-doctors-section",
+        "home.clinics",
+        "home.carousel-services",
+        "home.hospital-section",
+        "home.choose-category",
+        "home.surgery-faq"
+      ]
+    }
+  }
+}

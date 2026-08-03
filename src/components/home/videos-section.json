@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_home_videos_sections",
+  "info": {
+    "displayName": "videos-section",
+    "icon": "play"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "videos": {
+      "type": "component",
+      "component": "video-id.youtube-video",
+      "repeatable": true
+    }
+  },
+  "config": {}
+}

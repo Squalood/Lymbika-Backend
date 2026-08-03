@@ -1,0 +1,14 @@
+{
+  "collectionName": "components_home_surgery_faqs",
+  "info": {
+    "displayName": "surgery-faq",
+    "icon": "quote"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}

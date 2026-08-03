@@ -202,6 +202,195 @@ export interface HeroHeroAlt extends Struct.ComponentSchema {
   };
 }
 
+export interface HomeAlyusFeature extends Struct.ComponentSchema {
+  collectionName: 'components_home_alyus_features';
+  info: {
+    displayName: 'alyus-feature';
+    icon: 'bulletList';
+  };
+  attributes: {
+    description: Schema.Attribute.Text;
+    icon: Schema.Attribute.Enumeration<
+      [
+        'Zap',
+        'Shield',
+        'Brain',
+        'Heart',
+        'Clock',
+        'Star',
+        'Globe',
+        'Phone',
+        'Lock',
+        'Activity',
+        'Stethoscope',
+        'Users',
+        'Bot',
+        'Sparkles',
+        'Check',
+        'Cpu',
+        'Smile',
+        'Medal',
+        'Leaf',
+        'FlaskConical',
+        'MonitorSmartphone',
+        'MessageSquare',
+        'Calendar',
+        'CreditCard',
+        'Video',
+      ]
+    >;
+    title: Schema.Attribute.String;
+  };
+}
+
+export interface HomeAlyusSection extends Struct.ComponentSchema {
+  collectionName: 'components_home_alyus_sections';
+  info: {
+    displayName: 'alyus-section';
+    icon: 'command';
+  };
+  attributes: {
+    badge: Schema.Attribute.String;
+    chatFooter: Schema.Attribute.String;
+    ctaHref: Schema.Attribute.String;
+    ctaText: Schema.Attribute.String;
+    description: Schema.Attribute.Text;
+    features: Schema.Attribute.Component<'home.alyus-feature', true>;
+    label: Schema.Attribute.String;
+    messages: Schema.Attribute.Component<'home.chat-message', true>;
+    title: Schema.Attribute.String;
+  };
+}
+
+export interface HomeAreDoctorsSection extends Struct.ComponentSchema {
+  collectionName: 'components_home_are_doctors_sections';
+  info: {
+    displayName: 'are-doctors-section';
+    icon: 'doctor';
+  };
+  attributes: {
+    badge: Schema.Attribute.String;
+    ctaHref: Schema.Attribute.String;
+    ctaText: Schema.Attribute.String;
+    description: Schema.Attribute.Text;
+    perks: Schema.Attribute.Component<'item.pill', true>;
+    testimonial: Schema.Attribute.Component<'testimonial.testimonials', false>;
+    title: Schema.Attribute.String;
+  };
+}
+
+export interface HomeCarouselServices extends Struct.ComponentSchema {
+  collectionName: 'components_home_carousel_services';
+  info: {
+    displayName: 'carousel-services';
+    icon: 'stack';
+  };
+  attributes: {
+    title: Schema.Attribute.String;
+  };
+}
+
+export interface HomeChatMessage extends Struct.ComponentSchema {
+  collectionName: 'components_home_chat_messages';
+  info: {
+    displayName: 'chat-message';
+    icon: 'discuss';
+  };
+  attributes: {
+    from: Schema.Attribute.Enumeration<['ai', 'user']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'ai'>;
+    text: Schema.Attribute.Text & Schema.Attribute.Required;
+  };
+}
+
+export interface HomeChooseCategory extends Struct.ComponentSchema {
+  collectionName: 'components_home_choose_categories';
+  info: {
+    displayName: 'choose-category';
+    icon: 'apps';
+  };
+  attributes: {
+    title: Schema.Attribute.String;
+  };
+}
+
+export interface HomeClinics extends Struct.ComponentSchema {
+  collectionName: 'components_home_clinics';
+  info: {
+    displayName: 'clinics';
+    icon: 'manyToMany';
+  };
+  attributes: {
+    title: Schema.Attribute.String;
+  };
+}
+
+export interface HomeHospitalSection extends Struct.ComponentSchema {
+  collectionName: 'components_home_hospital_sections';
+  info: {
+    displayName: 'hospital-section';
+    icon: 'house';
+  };
+  attributes: {
+    title: Schema.Attribute.String;
+  };
+}
+
+export interface HomePromoCarousel extends Struct.ComponentSchema {
+  collectionName: 'components_home_promo_carousels';
+  info: {
+    displayName: 'promo-carousel';
+    icon: 'crown';
+  };
+  attributes: {
+    aspectRatio: Schema.Attribute.Enumeration<['square', 'video', 'portrait']> &
+      Schema.Attribute.DefaultTo<'video'>;
+    promos: Schema.Attribute.Component<'promo.promo', true>;
+  };
+}
+
+export interface HomeSurgeryFaq extends Struct.ComponentSchema {
+  collectionName: 'components_home_surgery_faqs';
+  info: {
+    displayName: 'surgery-faq';
+    icon: 'quote';
+  };
+  attributes: {
+    title: Schema.Attribute.String;
+  };
+}
+
+export interface HomeTuristSection extends Struct.ComponentSchema {
+  collectionName: 'components_home_turist_sections';
+  info: {
+    displayName: 'turist-section';
+    icon: 'envelop';
+  };
+  attributes: {
+    ctaHref: Schema.Attribute.String;
+    ctaText: Schema.Attribute.String;
+    description: Schema.Attribute.Text;
+    label: Schema.Attribute.String;
+    testimonial: Schema.Attribute.Component<'testimonial.testimonials', false>;
+    title: Schema.Attribute.String;
+    videoId: Schema.Attribute.String;
+    videoLabel: Schema.Attribute.String;
+  };
+}
+
+export interface HomeVideosSection extends Struct.ComponentSchema {
+  collectionName: 'components_home_videos_sections';
+  info: {
+    displayName: 'videos-section';
+    icon: 'play';
+  };
+  attributes: {
+    title: Schema.Attribute.String;
+    videos: Schema.Attribute.Component<'video-id.youtube-video', true>;
+  };
+}
+
 export interface ItemFaqItem extends Struct.ComponentSchema {
   collectionName: 'components_item_faq_items';
   info: {
@@ -270,18 +459,6 @@ export interface LandingTextsLandingTextsMedicalService
   };
 }
 
-export interface LessLess extends Struct.ComponentSchema {
-  collectionName: 'components_less_lesses';
-  info: {
-    description: '';
-    displayName: 'less';
-    icon: 'arrowDown';
-  };
-  attributes: {
-    text: Schema.Attribute.Text;
-  };
-}
-
 export interface ModalSteps extends Struct.ComponentSchema {
   collectionName: 'components_modal_steps';
   info: {
@@ -329,7 +506,6 @@ export interface PricingPlan extends Struct.ComponentSchema {
   };
   attributes: {
     description: Schema.Attribute.Text;
-    less: Schema.Attribute.Component<'less.less', true>;
     link: Schema.Attribute.String;
     name: Schema.Attribute.String;
     plus: Schema.Attribute.Component<'plus.plus', true>;
@@ -352,57 +528,6 @@ export interface PromoPromo extends Struct.ComponentSchema {
   };
 }
 
-export interface ServiceServices extends Struct.ComponentSchema {
-  collectionName: 'components_service_services';
-  info: {
-    description: '';
-    displayName: 'services';
-    icon: 'bulletList';
-  };
-  attributes: {
-    description: Schema.Attribute.String;
-    icon: Schema.Attribute.Enumeration<
-      [
-        'icon1',
-        'icon2',
-        'icon3',
-        'icon4',
-        'icon5',
-        'icon6',
-        'Stethoscope',
-        'Activity',
-        'Heart',
-        'HeartPulse,',
-        'Brain',
-        'ScanHeart',
-        'Hospital',
-        'Ribbon',
-        'Venus',
-        'Baby',
-        'Sparkles',
-        'Shell',
-        'ClipboardPlus',
-        'Syringe',
-        'Dumbbell',
-        'BriefcaseMedical',
-        'Ambulance',
-        'Bandage',
-        'Pill',
-        'CalendarPlus',
-        'UserRoundPlus',
-        'Waypoints',
-        'Presentation',
-        'ChartNoAxesCombined',
-        'Handshake',
-        'Globe',
-      ]
-    >;
-    image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
-    price: Schema.Attribute.Decimal;
-    title: Schema.Attribute.String;
-  };
-}
-
 export interface TestimonialTestimonials extends Struct.ComponentSchema {
   collectionName: 'components_testimonial_testimonials';
   info: {
@@ -412,6 +537,7 @@ export interface TestimonialTestimonials extends Struct.ComponentSchema {
   attributes: {
     name: Schema.Attribute.String;
     rating: Schema.Attribute.Decimal;
+    role: Schema.Attribute.String;
     text: Schema.Attribute.Text;
   };
 }
@@ -465,17 +591,27 @@ declare module '@strapi/strapi' {
       'gallery.gallery': GalleryGallery;
       'hero.hero': HeroHero;
       'hero.hero-alt': HeroHeroAlt;
+      'home.alyus-feature': HomeAlyusFeature;
+      'home.alyus-section': HomeAlyusSection;
+      'home.are-doctors-section': HomeAreDoctorsSection;
+      'home.carousel-services': HomeCarouselServices;
+      'home.chat-message': HomeChatMessage;
+      'home.choose-category': HomeChooseCategory;
+      'home.clinics': HomeClinics;
+      'home.hospital-section': HomeHospitalSection;
+      'home.promo-carousel': HomePromoCarousel;
+      'home.surgery-faq': HomeSurgeryFaq;
+      'home.turist-section': HomeTuristSection;
+      'home.videos-section': HomeVideosSection;
       'item.faq-item': ItemFaqItem;
       'item.pill': ItemPill;
       'item.values': ItemValues;
       'landing-texts.landing-texts-medical-service': LandingTextsLandingTextsMedicalService;
-      'less.less': LessLess;
       'modal.steps': ModalSteps;
       'modal.trust-modal': ModalTrustModal;
       'plus.plus': PlusPlus;
       'pricing.plan': PricingPlan;
       'promo.promo': PromoPromo;
-      'service.services': ServiceServices;
       'testimonial.testimonials': TestimonialTestimonials;
       'venta-item.venta-item': VentaItemVentaItem;
       'video-id.youtube-video': VideoIdYoutubeVideo;

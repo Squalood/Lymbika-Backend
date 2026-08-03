@@ -872,6 +872,51 @@ export interface ApiFaqGroupFaqGroup extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiHomePageHomePage extends Struct.SingleTypeSchema {
+  collectionName: 'home_pages';
+  info: {
+    displayName: 'Home Page';
+    pluralName: 'home-pages';
+    singularName: 'home-page';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::home-page.home-page'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    sections: Schema.Attribute.DynamicZone<
+      [
+        'hero.hero',
+        'gallery.gallery',
+        'home.turist-section',
+        'home.videos-section',
+        'home.promo-carousel',
+        'home.alyus-section',
+        'home.are-doctors-section',
+        'home.clinics',
+        'home.carousel-services',
+        'home.hospital-section',
+        'home.choose-category',
+        'home.surgery-faq',
+      ]
+    >;
+    seoDescription: Schema.Attribute.Text;
+    seoTitle: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiHospitalHospital extends Struct.CollectionTypeSchema {
   collectionName: 'hospitals';
   info: {
@@ -1185,7 +1230,6 @@ export interface ApiPagePage extends Struct.CollectionTypeSchema {
     promo: Schema.Attribute.Component<'promo.promo', true>;
     publishedAt: Schema.Attribute.DateTime;
     slug: Schema.Attribute.UID<'namePage'>;
-    stats: Schema.Attribute.Component<'service.services', true>;
     steps: Schema.Attribute.Component<'feature.features', true>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -2185,6 +2229,7 @@ declare module '@strapi/strapi' {
       'api::doctor.doctor': ApiDoctorDoctor;
       'api::factura.factura': ApiFacturaFactura;
       'api::faq-group.faq-group': ApiFaqGroupFaqGroup;
+      'api::home-page.home-page': ApiHomePageHomePage;
       'api::hospital.hospital': ApiHospitalHospital;
       'api::inventory-lot.inventory-lot': ApiInventoryLotInventoryLot;
       'api::laboratorio.laboratorio': ApiLaboratorioLaboratorio;

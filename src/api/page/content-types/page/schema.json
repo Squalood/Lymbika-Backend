@@ -49,11 +49,6 @@
       "component": "feature.features",
       "repeatable": true
     },
-    "stats": {
-      "type": "component",
-      "component": "service.services",
-      "repeatable": true
-    },
     "Contact": {
       "type": "component",
       "component": "contact.contact",

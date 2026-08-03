@@ -1,0 +1,37 @@
+{
+  "collectionName": "components_home_turist_sections",
+  "info": {
+    "displayName": "turist-section",
+    "icon": "envelop"
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "videoId": {
+      "type": "string"
+    },
+    "videoLabel": {
+      "type": "string"
+    },
+    "ctaText": {
+      "type": "string"
+    },
+    "ctaHref": {
+      "type": "string"
+    },
+    "testimonial": {
+      "type": "component",
+      "component": "testimonial.testimonials",
+      "repeatable": false
+    }
+  },
+  "config": {}
+}

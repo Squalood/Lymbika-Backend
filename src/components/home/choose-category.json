@@ -1,0 +1,14 @@
+{
+  "collectionName": "components_home_choose_categories",
+  "info": {
+    "displayName": "choose-category",
+    "icon": "apps"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}

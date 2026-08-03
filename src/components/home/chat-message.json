@@ -1,0 +1,24 @@
+{
+  "collectionName": "components_home_chat_messages",
+  "info": {
+    "displayName": "chat-message",
+    "icon": "discuss"
+  },
+  "options": {},
+  "attributes": {
+    "from": {
+      "type": "enumeration",
+      "required": true,
+      "default": "ai",
+      "enum": [
+        "ai",
+        "user"
+      ]
+    },
+    "text": {
+      "type": "text",
+      "required": true
+    }
+  },
+  "config": {}
+}

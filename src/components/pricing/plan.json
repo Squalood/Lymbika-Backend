@@ -16,16 +16,9 @@
       "type": "decimal"
     },
     "plus": {
-      "displayName": "plus",
       "type": "component",
-      "repeatable": true,
-      "component": "plus.plus"
-    },
-    "less": {
-      "displayName": "less",
-      "type": "component",
-      "repeatable": true,
-      "component": "less.less"
+      "component": "plus.plus",
+      "repeatable": true
     },
     "prominent": {
       "type": "boolean"

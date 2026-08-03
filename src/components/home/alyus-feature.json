@@ -1,0 +1,47 @@
+{
+  "collectionName": "components_home_alyus_features",
+  "info": {
+    "displayName": "alyus-feature",
+    "icon": "bulletList"
+  },
+  "options": {},
+  "attributes": {
+    "icon": {
+      "type": "enumeration",
+      "enum": [
+        "Zap",
+        "Shield",
+        "Brain",
+        "Heart",
+        "Clock",
+        "Star",
+        "Globe",
+        "Phone",
+        "Lock",
+        "Activity",
+        "Stethoscope",
+        "Users",
+        "Bot",
+        "Sparkles",
+        "Check",
+        "Cpu",
+        "Smile",
+        "Medal",
+        "Leaf",
+        "FlaskConical",
+        "MonitorSmartphone",
+        "MessageSquare",
+        "Calendar",
+        "CreditCard",
+        "Video"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    }
+  },
+  "config": {}
+}

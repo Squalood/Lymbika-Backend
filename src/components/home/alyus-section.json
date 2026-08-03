@@ -1,0 +1,42 @@
+{
+  "collectionName": "components_home_alyus_sections",
+  "info": {
+    "displayName": "alyus-section",
+    "icon": "command"
+  },
+  "options": {},
+  "attributes": {
+    "badge": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "chatFooter": {
+      "type": "string"
+    },
+    "ctaText": {
+      "type": "string"
+    },
+    "ctaHref": {
+      "type": "string"
+    },
+    "features": {
+      "type": "component",
+      "component": "home.alyus-feature",
+      "repeatable": true
+    },
+    "messages": {
+      "type": "component",
+      "component": "home.chat-message",
+      "repeatable": true
+    }
+  },
+  "config": {}
+}

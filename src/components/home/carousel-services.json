@@ -1,0 +1,14 @@
+{
+  "collectionName": "components_home_carousel_services",
+  "info": {
+    "displayName": "carousel-services",
+    "icon": "stack"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}
