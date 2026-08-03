@@ -8,9 +8,6 @@
   "attributes": {
     "title": {
       "type": "string"
-    },
-    "subTitle": {
-      "type": "string"
     }
   },
   "config": {}

@@ -313,6 +313,7 @@ export interface HomeCarouselServices extends Struct.ComponentSchema {
     icon: 'stack';
   };
   attributes: {
+    subTitle: Schema.Attribute.String;
     title: Schema.Attribute.String;
   };
 }
@@ -349,7 +350,6 @@ export interface HomeClinics extends Struct.ComponentSchema {
     icon: 'manyToMany';
   };
   attributes: {
-    subTitle: Schema.Attribute.String;
     title: Schema.Attribute.String;
   };
 }
