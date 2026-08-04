@@ -1693,6 +1693,7 @@ export interface ApiVentaPosVentaPos extends Struct.CollectionTypeSchema {
       'api::pharmacy.pharmacy'
     >;
     publishedAt: Schema.Attribute.DateTime;
+    recargoTarjeta: Schema.Attribute.Decimal;
     recibido: Schema.Attribute.Decimal;
     recibidoUSD: Schema.Attribute.Decimal & Schema.Attribute.DefaultTo<0>;
     subtotal: Schema.Attribute.Decimal;

@@ -90,6 +90,9 @@
       "relation": "oneToMany",
       "target": "api::factura.factura",
       "mappedBy": "venta_pos"
+    },
+    "recargoTarjeta": {
+      "type": "decimal"
     }
   }
 }
