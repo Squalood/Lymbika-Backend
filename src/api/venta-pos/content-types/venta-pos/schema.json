@@ -93,6 +93,13 @@
     },
     "recargoTarjeta": {
       "type": "decimal"
+    },
+    "esProveedor": {
+      "type": "boolean",
+      "default": false
+    },
+    "managementFee": {
+      "type": "decimal"
     }
   }
 }

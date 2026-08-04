@@ -1671,6 +1671,7 @@ export interface ApiVentaPosVentaPos extends Struct.CollectionTypeSchema {
       'api::devolucion-pos.devolucion-pos'
     >;
     esMembresia: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    esProveedor: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     estado: Schema.Attribute.Enumeration<['completada', 'cancelada']>;
     facturas: Schema.Attribute.Relation<'oneToMany', 'api::factura.factura'>;
     fecha: Schema.Attribute.DateTime;
@@ -1681,6 +1682,7 @@ export interface ApiVentaPosVentaPos extends Struct.CollectionTypeSchema {
       'api::venta-pos.venta-pos'
     > &
       Schema.Attribute.Private;
+    managementFee: Schema.Attribute.Decimal;
     metodoPago: Schema.Attribute.Enumeration<
       ['efectivo', 'tarjeta', 'mixto', 'transfe']
     >;
