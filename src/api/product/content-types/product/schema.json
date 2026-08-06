@@ -134,6 +134,15 @@
       "relation": "oneToMany",
       "target": "api::inventory-lot.inventory-lot",
       "mappedBy": "product"
+    },
+    "impuesto": {
+      "type": "enumeration",
+      "default": "iva0",
+      "enum": [
+        "iva0",
+        "iva8",
+        "iva16"
+      ]
     }
   }
 }

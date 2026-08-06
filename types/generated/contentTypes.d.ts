@@ -1344,6 +1344,8 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
       'images' | 'files' | 'videos' | 'audios',
       true
     >;
+    impuesto: Schema.Attribute.Enumeration<['iva0', 'iva8', 'iva16']> &
+      Schema.Attribute.DefaultTo<'iva0'>;
     inventory_lots: Schema.Attribute.Relation<
       'oneToMany',
       'api::inventory-lot.inventory-lot'
