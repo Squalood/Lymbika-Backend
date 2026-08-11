@@ -11,6 +11,27 @@
     },
     "subTitle": {
       "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "allLabel": {
+      "type": "string"
+    },
+    "emptyLabel": {
+      "type": "string"
+    },
+    "priceLabel": {
+      "type": "string"
+    },
+    "ctaLabel": {
+      "type": "string"
+    },
+    "showDetailsLabel": {
+      "type": "string"
+    },
+    "hideDetailsLabel": {
+      "type": "string"
     }
   },
   "config": {}

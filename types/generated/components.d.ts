@@ -313,6 +313,13 @@ export interface HomeCarouselServices extends Struct.ComponentSchema {
     icon: 'stack';
   };
   attributes: {
+    allLabel: Schema.Attribute.String;
+    ctaLabel: Schema.Attribute.String;
+    description: Schema.Attribute.Text;
+    emptyLabel: Schema.Attribute.String;
+    hideDetailsLabel: Schema.Attribute.String;
+    priceLabel: Schema.Attribute.String;
+    showDetailsLabel: Schema.Attribute.String;
     subTitle: Schema.Attribute.String;
     title: Schema.Attribute.String;
   };
