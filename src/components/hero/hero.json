@@ -27,6 +27,15 @@
         "videos",
         "audios"
       ]
+    },
+    "searchPlaceholder": {
+      "type": "string"
+    },
+    "searchButtonText": {
+      "type": "string"
+    },
+    "searchSuggestions": {
+      "type": "json"
     }
   }
 }
