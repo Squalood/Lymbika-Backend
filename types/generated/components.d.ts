@@ -178,6 +178,9 @@ export interface HeroHero extends Struct.ComponentSchema {
     buttonUrl: Schema.Attribute.String;
     description: Schema.Attribute.Text;
     image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    searchButtonText: Schema.Attribute.String;
+    searchPlaceholder: Schema.Attribute.String;
+    searchSuggestions: Schema.Attribute.JSON;
     title: Schema.Attribute.String;
   };
 }
