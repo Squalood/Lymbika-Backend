@@ -1044,6 +1044,7 @@ export interface ApiMedicalServiceMedicalService
     >;
     has_landing_page: Schema.Attribute.Boolean &
       Schema.Attribute.DefaultTo<false>;
+    hospitals: Schema.Attribute.Relation<'oneToMany', 'api::hospital.hospital'>;
     image: Schema.Attribute.Media<'images'>;
     landing_gallery: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios',

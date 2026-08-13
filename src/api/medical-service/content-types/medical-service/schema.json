@@ -93,6 +93,11 @@
       "type": "component",
       "component": "landing-texts.landing-texts-medical-service",
       "repeatable": false
+    },
+    "hospitals": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::hospital.hospital"
     }
   }
 }
