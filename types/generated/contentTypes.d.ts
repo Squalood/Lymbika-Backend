@@ -1489,10 +1489,13 @@ export interface ApiServiceRateServiceRate extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
+    badgePrestigio: Schema.Attribute.String;
     clinic: Schema.Attribute.Relation<'manyToOne', 'api::clinic.clinic'>;
+    comercialidad: Schema.Attribute.Integer;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    destacado: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     doctor: Schema.Attribute.Relation<'manyToOne', 'api::doctor.doctor'>;
     duration_min: Schema.Attribute.Integer;
     items: Schema.Attribute.Component<'plus.plus', true>;
@@ -1512,6 +1515,7 @@ export interface ApiServiceRateServiceRate extends Struct.CollectionTypeSchema {
     package_note: Schema.Attribute.Text;
     price: Schema.Attribute.Decimal & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
+    requiereCirugia: Schema.Attribute.Boolean;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

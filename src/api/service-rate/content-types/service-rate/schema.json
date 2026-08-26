@@ -52,6 +52,19 @@
       "type": "component",
       "component": "plus.plus",
       "repeatable": true
+    },
+    "comercialidad": {
+      "type": "integer"
+    },
+    "destacado": {
+      "type": "boolean",
+      "default": false
+    },
+    "badgePrestigio": {
+      "type": "string"
+    },
+    "requiereCirugia": {
+      "type": "boolean"
     }
   }
 }
