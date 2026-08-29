@@ -1166,6 +1166,7 @@ export interface ApiNavbarSectionNavbarSection extends Struct.SingleTypeSchema {
     publishedAt: Schema.Attribute.DateTime;
     services_item_description: Schema.Attribute.Text;
     services_item_title: Schema.Attribute.String;
+    surgeries_trigger: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

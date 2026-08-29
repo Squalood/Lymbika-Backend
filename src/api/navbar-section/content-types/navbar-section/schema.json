@@ -66,6 +66,9 @@
     "clinics_featured_title": {
       "type": "string"
     },
+    "surgeries_trigger": {
+      "type": "string"
+    },
     "clinics_others_title": {
       "type": "string"
     },
