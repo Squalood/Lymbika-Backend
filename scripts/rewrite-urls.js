@@ -85,8 +85,10 @@ async function runRewrite() {
   const client = db();
   await client.connect();
   const { rows } = await client.query(
+    // Sólo lo que sigue en Cloudinary: las filas que ya nacieron en S3 están
+    // bien y no deben tocarse.
     `select id, name, url, provider, provider_metadata, ext, mime, size, width, height, formats
-       from files order by id ${LIMIT ? `limit ${LIMIT}` : ''}`,
+       from files where provider <> 'aws-s3' order by id ${LIMIT ? `limit ${LIMIT}` : ''}`,
   );
 
   console.log(`${APPLY ? 'APLICANDO' : 'DRY-RUN'} sobre ${rows.length} filas\n`);
