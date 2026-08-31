@@ -129,3 +129,12 @@ dist
 build
 .strapi-updater.json
 .strapi-cloud.json
+
+# Copia local de los assets de Cloudinary (1 GB, no va al repo)
+.backup-cloudinary/
+
+
+# Artefactos que generan los scripts de mantenimiento (datos, no código)
+scripts/*.rollback.json
+scripts/orphans.json
+scripts/orphan-queries.txt
