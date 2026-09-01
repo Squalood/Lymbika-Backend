@@ -139,3 +139,8 @@ scripts/*.rollback.json
 scripts/orphans.json
 scripts/orphan-queries.txt
 .migracion-media/
+
+# Reporte de la migracion: enumera permisos abiertos todavia sin cerrar, y el
+# repo es publico. Sacar de aqui cuando el repo sea privado y esos permisos
+# esten cerrados.
+docs/migracion-media-cloudinary-a-s3.md
