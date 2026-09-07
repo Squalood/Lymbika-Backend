@@ -547,7 +547,7 @@ export interface PlusPlus extends Struct.ComponentSchema {
     icon: 'check';
   };
   attributes: {
-    text: Schema.Attribute.Text;
+    text: Schema.Attribute.String;
   };
 }
 
