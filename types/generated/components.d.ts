@@ -512,6 +512,20 @@ export interface LandingTextsLandingTextsMedicalService
   };
 }
 
+export interface LandingTextsMembershipTexts extends Struct.ComponentSchema {
+  collectionName: 'components_landing_texts_membership_texts';
+  info: {
+    displayName: 'membership-texts';
+    icon: 'bulletList';
+  };
+  attributes: {
+    featured_label: Schema.Attribute.String;
+    price_period: Schema.Attribute.String;
+    toggle_family: Schema.Attribute.String;
+    toggle_personal: Schema.Attribute.String;
+  };
+}
+
 export interface ModalSteps extends Struct.ComponentSchema {
   collectionName: 'components_modal_steps';
   info: {
@@ -662,6 +676,7 @@ declare module '@strapi/strapi' {
       'item.pill': ItemPill;
       'item.values': ItemValues;
       'landing-texts.landing-texts-medical-service': LandingTextsLandingTextsMedicalService;
+      'landing-texts.membership-texts': LandingTextsMembershipTexts;
       'modal.steps': ModalSteps;
       'modal.trust-modal': ModalTrustModal;
       'plus.plus': PlusPlus;

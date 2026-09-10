@@ -1083,6 +1083,44 @@ export interface ApiMedicalServiceMedicalService
   };
 }
 
+export interface ApiMembershipPageMembershipPage
+  extends Struct.SingleTypeSchema {
+  collectionName: 'membership_pages';
+  info: {
+    displayName: 'Membership Page';
+    pluralName: 'membership-pages';
+    singularName: 'membership-page';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    badge: Schema.Attribute.Component<'badge.badge', false>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text;
+    faq_group: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::faq-group.faq-group'
+    >;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::membership-page.membership-page'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    seoDescription: Schema.Attribute.Text;
+    seoTitle: Schema.Attribute.String;
+    texts: Schema.Attribute.Component<'landing-texts.membership-texts', false>;
+    title: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiMembershipMembership extends Struct.CollectionTypeSchema {
   collectionName: 'memberships';
   info: {
@@ -2246,6 +2284,7 @@ declare module '@strapi/strapi' {
       'api::inventory-lot.inventory-lot': ApiInventoryLotInventoryLot;
       'api::laboratorio.laboratorio': ApiLaboratorioLaboratorio;
       'api::medical-service.medical-service': ApiMedicalServiceMedicalService;
+      'api::membership-page.membership-page': ApiMembershipPageMembershipPage;
       'api::membership.membership': ApiMembershipMembership;
       'api::navbar-section.navbar-section': ApiNavbarSectionNavbarSection;
       'api::order.order': ApiOrderOrder;

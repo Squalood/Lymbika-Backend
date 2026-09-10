@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_landing_texts_membership_texts",
+  "info": {
+    "displayName": "membership-texts",
+    "icon": "bulletList"
+  },
+  "options": {},
+  "attributes": {
+    "toggle_personal": {
+      "type": "string"
+    },
+    "toggle_family": {
+      "type": "string"
+    },
+    "featured_label": {
+      "type": "string"
+    },
+    "price_period": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}

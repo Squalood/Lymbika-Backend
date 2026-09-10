@@ -1,0 +1,42 @@
+{
+  "kind": "singleType",
+  "collectionName": "membership_pages",
+  "info": {
+    "singularName": "membership-page",
+    "pluralName": "membership-pages",
+    "displayName": "Membership Page"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "seoTitle": {
+      "type": "string"
+    },
+    "seoDescription": {
+      "type": "text"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "badge": {
+      "type": "component",
+      "component": "badge.badge",
+      "repeatable": false
+    },
+    "texts": {
+      "type": "component",
+      "component": "landing-texts.membership-texts",
+      "repeatable": false
+    },
+    "faq_group": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::faq-group.faq-group"
+    }
+  }
+}
