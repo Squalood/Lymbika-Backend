@@ -12,7 +12,8 @@
   "pluginOptions": {},
   "attributes": {
     "name": {
-      "type": "string"
+      "type": "string",
+      "required": true
     },
     "icon": {
       "type": "enumeration",
@@ -23,10 +24,12 @@
       ]
     },
     "priceP": {
-      "type": "decimal"
+      "type": "decimal",
+      "required": true
     },
     "priceF": {
-      "type": "decimal"
+      "type": "decimal",
+      "required": true
     },
     "description": {
       "type": "text"
@@ -34,7 +37,8 @@
     "button": {
       "type": "component",
       "component": "button.button",
-      "repeatable": false
+      "repeatable": false,
+      "required": true
     },
     "features": {
       "type": "component",

@@ -1110,6 +1110,10 @@ export interface ApiMembershipPageMembershipPage
       'api::membership-page.membership-page'
     > &
       Schema.Attribute.Private;
+    memberships: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::membership.membership'
+    >;
     publishedAt: Schema.Attribute.DateTime;
     seoDescription: Schema.Attribute.Text;
     seoTitle: Schema.Attribute.String;
@@ -1132,7 +1136,8 @@ export interface ApiMembershipMembership extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
-    button: Schema.Attribute.Component<'button.button', false>;
+    button: Schema.Attribute.Component<'button.button', false> &
+      Schema.Attribute.Required;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1146,10 +1151,10 @@ export interface ApiMembershipMembership extends Struct.CollectionTypeSchema {
       'api::membership.membership'
     > &
       Schema.Attribute.Private;
-    name: Schema.Attribute.String;
+    name: Schema.Attribute.String & Schema.Attribute.Required;
     order: Schema.Attribute.Integer;
-    priceF: Schema.Attribute.Decimal;
-    priceP: Schema.Attribute.Decimal;
+    priceF: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    priceP: Schema.Attribute.Decimal & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
