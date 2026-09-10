@@ -975,6 +975,12 @@ export interface ApiInventoryLotInventoryLot
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     currentAmount: Schema.Attribute.Integer;
+    discardedAt: Schema.Attribute.DateTime;
+    discardedBy: Schema.Attribute.String;
+    discardedQuantity: Schema.Attribute.Integer;
+    discardReason: Schema.Attribute.Enumeration<
+      ['expired', 'damaged', 'theft', 'other']
+    >;
     expirationDate: Schema.Attribute.Date;
     initialQuantity: Schema.Attribute.Integer;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
