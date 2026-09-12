@@ -1237,6 +1237,8 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    estado: Schema.Attribute.Enumeration<['pending', 'paid', 'failed']> &
+      Schema.Attribute.DefaultTo<'pending'>;
     isDelivery: Schema.Attribute.Boolean;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::order.order'> &
@@ -1244,9 +1246,14 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
     products: Schema.Attribute.JSON;
     publishedAt: Schema.Attribute.DateTime;
     stripeid: Schema.Attribute.String;
+    total: Schema.Attribute.Decimal;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
     userEmail: Schema.Attribute.String;
   };
 }

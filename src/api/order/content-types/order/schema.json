@@ -23,6 +23,19 @@
     },
     "userEmail": {
       "type": "string"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "estado": {
+      "type": "enumeration",
+      "enum": ["pending", "paid", "failed"],
+      "default": "pending"
+    },
+    "total": {
+      "type": "decimal"
     }
   }
 }
