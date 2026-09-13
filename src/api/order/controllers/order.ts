@@ -227,6 +227,9 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
             total: totalCentavos / 100,
             estado: "pending",
           },
+          // Una orden es un registro transaccional: nace publicada. Sin esto
+          // Strapi v5 la deja como borrador y no aparece en los listados.
+          status: "published",
         });
       } catch (error) {
         strapi.log.error(
