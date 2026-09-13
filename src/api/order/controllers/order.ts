@@ -98,7 +98,6 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
             "price",
             "priceMember",
             "active",
-            "stock_central",
           ],
           status: "published",
         });
@@ -107,6 +106,9 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
         productos.map((p: any) => [Number(p.id), p])
       );
 
+      // No se valida stock: `stock_central` es del inventario de farmacia
+      // (caja-pos / inventory-lot), no de la tienda en linea. La venta online
+      // no depende de el.
       // El descuento de miembro sale del usuario autenticado, nunca del body.
       const esMiembro = user.mediClubRegular === true;
 
@@ -126,14 +128,6 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
         }
         if (producto.active === false) {
           return ctx.badRequest(`"${producto.productName}" no está disponible.`);
-        }
-        if (
-          typeof producto.stock_central === "number" &&
-          producto.stock_central < quantity
-        ) {
-          return ctx.badRequest(
-            `No hay existencias suficientes de "${producto.productName}".`
-          );
         }
 
         const precioMiembro = Number(producto.priceMember);
