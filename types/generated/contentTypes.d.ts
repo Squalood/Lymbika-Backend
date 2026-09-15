@@ -1682,6 +1682,43 @@ export interface ApiStockTransferStockTransfer
   };
 }
 
+export interface ApiStripeEventStripeEvent extends Struct.CollectionTypeSchema {
+  collectionName: 'stripe_events';
+  info: {
+    displayName: 'Stripe Event';
+    pluralName: 'stripe-events';
+    singularName: 'stripe-event';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    detalle: Schema.Attribute.Text;
+    estado: Schema.Attribute.Enumeration<
+      ['recibido', 'procesado', 'ignorado', 'fallido']
+    > &
+      Schema.Attribute.DefaultTo<'recibido'>;
+    eventId: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::stripe-event.stripe-event'
+    > &
+      Schema.Attribute.Private;
+    objetoId: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    tipo: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiSurgerySurgery extends Struct.CollectionTypeSchema {
   collectionName: 'surgeries';
   info: {
@@ -2315,6 +2352,7 @@ declare module '@strapi/strapi' {
       'api::service-rate.service-rate': ApiServiceRateServiceRate;
       'api::service.service': ApiServiceService;
       'api::stock-transfer.stock-transfer': ApiStockTransferStockTransfer;
+      'api::stripe-event.stripe-event': ApiStripeEventStripeEvent;
       'api::surgery.surgery': ApiSurgerySurgery;
       'api::venta-pos.venta-pos': ApiVentaPosVentaPos;
       'plugin::content-releases.release': PluginContentReleasesRelease;

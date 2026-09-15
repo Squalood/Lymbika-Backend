@@ -187,13 +187,17 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
       );
 
       // ── 5. Sesión de Stripe ───────────────────────────────────────────────
-      // Sin `payment_method_types`: Stripe habilita los métodos activos en el
-      // Dashboard (tarjeta, OXXO, SPEI) en lugar de forzar solo tarjeta.
+      // Sin `payment_method_types`: Stripe ofrece los métodos que estén activos
+      // en el Dashboard. Hoy solo hay tarjeta; si se activan OXXO o SPEI hay
+      // que añadir los eventos async_payment_* a la allowlist del webhook.
       const sessionConfig: Stripe.Checkout.SessionCreateParams = {
         mode: "payment",
         line_items: lineItems,
         customer_email: user.email,
         client_reference_id: String(user.id),
+        // El webhook recibe también los eventos de suscripción por el mismo
+        // endpoint: esto le dice de un vistazo qué le toca a cada evento.
+        metadata: { tipo: "producto", origen: "ecommerce" },
         success_url: `${process.env.CLIENT_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.CLIENT_URL}/cart`,
       };

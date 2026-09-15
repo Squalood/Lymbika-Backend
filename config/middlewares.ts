@@ -34,7 +34,11 @@ export default [
   'strapi::cors',
   'strapi::poweredBy',
   'strapi::query',
-  'strapi::body',
+  // Stripe firma el cuerpo byte a byte: constructEvent necesita el texto tal
+  // como llego, no el objeto ya parseado. Con esto koa-body deja el original
+  // en ctx.request.body[Symbol.for('unparsedBody')], ademas del parseado de
+  // siempre. No afecta a multipart: koa-body evalua esa rama antes.
+  { name: 'strapi::body', config: { includeUnparsed: true } },
   {
     name: 'strapi::session',
     config: {

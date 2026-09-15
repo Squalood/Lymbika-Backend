@@ -1,0 +1,40 @@
+{
+  "kind": "collectionType",
+  "collectionName": "stripe_events",
+  "info": {
+    "singularName": "stripe-event",
+    "pluralName": "stripe-events",
+    "displayName": "Stripe Event"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "eventId": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "tipo": {
+      "type": "string",
+      "required": true
+    },
+    "estado": {
+      "type": "enumeration",
+      "default": "recibido",
+      "enum": [
+        "recibido",
+        "procesado",
+        "ignorado",
+        "fallido"
+      ]
+    },
+    "objetoId": {
+      "type": "string"
+    },
+    "detalle": {
+      "type": "text"
+    }
+  }
+}
