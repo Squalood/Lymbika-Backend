@@ -43,6 +43,12 @@
     },
     "expirationDate": {
       "type": "date"
+    },
+    "unitCost": {
+      "type": "decimal"
+    },
+    "tax": {
+      "type": "string"
     }
   }
 }

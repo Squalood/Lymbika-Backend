@@ -626,8 +626,10 @@ export interface VentaItemVentaItem extends Struct.ComponentSchema {
       'oneToOne',
       'api::service-rate.service-rate'
     >;
+    tax: Schema.Attribute.String;
     totalLine: Schema.Attribute.Decimal;
     type: Schema.Attribute.Enumeration<['product', 'service']>;
+    unitCost: Schema.Attribute.Decimal;
     unitPrice: Schema.Attribute.Decimal;
   };
 }
