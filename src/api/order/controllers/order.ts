@@ -244,4 +244,48 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
       );
     }
   },
+
+  // ── GET /api/orders/by-session/:sessionId ─────────────────────────────────
+  /**
+   * Devuelve el estado de UNA orden, la del usuario autenticado.
+   *
+   * Existe para que /success pueda decir la verdad sobre el pago en vez de dar
+   * las gracias a ciegas. Deliberadamente NO se usa el `find` del core: eso
+   * dejaría a cualquier usuario listar las órdenes de todos.
+   */
+  async porSesion(ctx) {
+    const user = ctx.state.user;
+    if (!user) {
+      return ctx.unauthorized("Debes iniciar sesión para ver tu orden.");
+    }
+
+    const { sessionId } = ctx.params;
+    if (typeof sessionId !== "string" || !sessionId.startsWith("cs_")) {
+      return ctx.badRequest("Identificador de sesión inválido.");
+    }
+
+    // El filtro por `user` es lo que impide leer la orden de otro. Se busca el
+    // borrador porque siempre existe y el webhook lo deja al día.
+    const ordenes = await strapi.documents("api::order.order").findMany({
+      filters: { stripeid: sessionId, user: { id: user.id } },
+      fields: ["estado", "total", "isDelivery", "products"],
+      status: "draft",
+      limit: 1,
+    });
+
+    if (ordenes.length === 0) {
+      // 404 en vez de 403: no confirmamos ni negamos que la sesión exista.
+      return ctx.notFound("No encontramos esa orden.");
+    }
+
+    const orden = ordenes[0];
+
+    return {
+      estado: orden.estado,
+      // `total` es decimal: Postgres lo devuelve como string.
+      total: Number(orden.total),
+      isDelivery: orden.isDelivery,
+      products: orden.products ?? [],
+    };
+  },
 }));
