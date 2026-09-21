@@ -1,6 +1,7 @@
 'use strict';
 
 import { manejarOrden, EVENTOS_DE_ORDEN } from '../handlers/orders';
+import { manejarSuscripcion, EVENTOS_DE_SUSCRIPCION } from '../handlers/subscriptions';
 import type { Resultado } from '../handlers/orders';
 
 //@ts-ignore
@@ -24,7 +25,7 @@ const EVENTO_UID = 'api::stripe-event.stripe-event' as any;
  * órdenes se quedarán en `pending` para siempre: con esos métodos el evento
  * `completed` llega cuando el cliente imprime el voucher, no cuando paga.
  */
-const EVENTOS = new Set<string>([...EVENTOS_DE_ORDEN]);
+const EVENTOS = new Set<string>([...EVENTOS_DE_ORDEN, ...EVENTOS_DE_SUSCRIPCION]);
 
 // ── Idempotencia ─────────────────────────────────────────────────────────────
 
@@ -136,11 +137,23 @@ export default {
 // ── Despacho ─────────────────────────────────────────────────────────────────
 
 /**
- * Un dominio por handler. `checkout.session.completed` lo reciben los dos
- * flujos —compras y suscripciones—, así que el discriminador es `session.mode`
- * y lo aplica cada handler, no este despachador.
+ * Un dominio por handler, para que el de suscripciones y el de órdenes no se
+ * toquen entre sí.
+ *
+ * El único evento compartido es `checkout.session.completed`: lo generan las
+ * compras (`mode: 'payment'`) y las suscripciones (`mode: 'subscription'`).
+ * Aquí se decide por `mode`, y además cada handler vuelve a comprobarlo por su
+ * cuenta — así ninguno procesa lo que no es suyo si se le llama por error.
  */
 async function despachar(evento: any): Promise<Resultado> {
+  if (evento.type === 'checkout.session.completed') {
+    const modo = evento.data?.object?.mode;
+    return modo === 'subscription' ? manejarSuscripcion(evento) : manejarOrden(evento);
+  }
+
+  if (EVENTOS_DE_SUSCRIPCION.has(evento.type)) {
+    return manejarSuscripcion(evento);
+  }
   if (EVENTOS_DE_ORDEN.has(evento.type)) {
     return manejarOrden(evento);
   }
