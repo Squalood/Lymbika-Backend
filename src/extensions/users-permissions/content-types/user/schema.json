@@ -11,6 +11,7 @@
   "options": {
     "draftAndPublish": false
   },
+  "pluginOptions": {},
   "attributes": {
     "username": {
       "type": "string",
@@ -74,15 +75,56 @@
     "bio": {
       "type": "text"
     },
-    "mediClubRegular": {
-      "type": "boolean",
-      "default": false
-    },
     "reviews": {
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::review.review",
       "mappedBy": "user"
+    },
+    "stripeCustomerId": {
+      "type": "string",
+      "private": true,
+      "unique": true
+    },
+    "stripeSubscriptionId": {
+      "type": "string",
+      "private": true
+    },
+    "subscriptionStatus": {
+      "type": "enumeration",
+      "default": "none",
+      "enum": [
+        "none",
+        "incomplete",
+        "trialing",
+        "active",
+        "past_due",
+        "unpaid",
+        "canceled",
+        "paused"
+      ]
+    },
+    "subscriptionCurrentPeriodEnd": {
+      "type": "datetime"
+    },
+    "subscriptionCancelAtPeriodEnd": {
+      "type": "boolean",
+      "default": false
+    },
+    "subscriptionTier": {
+      "type": "enumeration",
+      "enum": [
+        "personal",
+        "familiar"
+      ]
+    },
+    "membershipManual": {
+      "type": "boolean",
+      "default": false
+    },
+    "membershipActive": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

@@ -7,7 +7,7 @@
  *
  * Reemplaza al permiso `update` de users-permissions, que es todo o nada:
  * concede editar CUALQUIER usuario y CUALQUIER campo — incluido
- * `mediClubRegular`, con el que cualquiera podía regalarse la membresía.
+ * `membershipActive`, con el que cualquiera podía regalarse la membresía.
  */
 const CAMPOS_EDITABLES = {
   firstName: 100,

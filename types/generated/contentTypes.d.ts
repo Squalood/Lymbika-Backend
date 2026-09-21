@@ -2287,7 +2287,9 @@ export interface PluginUsersPermissionsUser
       'plugin::users-permissions.user'
     > &
       Schema.Attribute.Private;
-    mediClubRegular: Schema.Attribute.Boolean &
+    membershipActive: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
+    membershipManual: Schema.Attribute.Boolean &
       Schema.Attribute.DefaultTo<false>;
     password: Schema.Attribute.Password &
       Schema.Attribute.Private &
@@ -2302,6 +2304,27 @@ export interface PluginUsersPermissionsUser
       'manyToOne',
       'plugin::users-permissions.role'
     >;
+    stripeCustomerId: Schema.Attribute.String &
+      Schema.Attribute.Private &
+      Schema.Attribute.Unique;
+    stripeSubscriptionId: Schema.Attribute.String & Schema.Attribute.Private;
+    subscriptionCancelAtPeriodEnd: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
+    subscriptionCurrentPeriodEnd: Schema.Attribute.DateTime;
+    subscriptionStatus: Schema.Attribute.Enumeration<
+      [
+        'none',
+        'incomplete',
+        'trialing',
+        'active',
+        'past_due',
+        'unpaid',
+        'canceled',
+        'paused',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'none'>;
+    subscriptionTier: Schema.Attribute.Enumeration<['personal', 'familiar']>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

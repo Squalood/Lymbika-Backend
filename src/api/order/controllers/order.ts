@@ -21,7 +21,7 @@ type ItemNormalizado = { id: number; quantity: number };
 
 /**
  * Deja pasar únicamente { id, quantity }. Todo lo demás que venga en el body
- * —precio, nombre, email, mediClubRegular— se descarta: el precio y la
+ * —precio, nombre, email, membershipActive— se descarta: el precio y la
  * identidad los resuelve el servidor, nunca el cliente.
  */
 function normalizarItems(
@@ -110,7 +110,7 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
       // (caja-pos / inventory-lot), no de la tienda en linea. La venta online
       // no depende de el.
       // El descuento de miembro sale del usuario autenticado, nunca del body.
-      const esMiembro = user.mediClubRegular === true;
+      const esMiembro = user.membershipActive === true;
 
       const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
       const resumen: {
