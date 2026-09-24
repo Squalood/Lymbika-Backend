@@ -797,7 +797,7 @@ export interface ApiFacturaFactura extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     diario: Schema.Attribute.Text;
-    estado: Schema.Attribute.Enumeration<['emitida', 'cancelada']>;
+    estado: Schema.Attribute.Enumeration<['emitida', 'cancelada', 'borrador']>;
     estadoPago: Schema.Attribute.Enumeration<
       ['pendiente', 'pagada', 'pagada_parcial']
     > &

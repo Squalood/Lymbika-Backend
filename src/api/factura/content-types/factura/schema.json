@@ -71,7 +71,8 @@
       "type": "enumeration",
       "enum": [
         "emitida",
-        "cancelada"
+        "cancelada",
+        "borrador"
       ]
     },
     "items": {
