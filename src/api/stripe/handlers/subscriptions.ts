@@ -1,6 +1,7 @@
 'use strict';
 
 import { derivarMembresia } from '../services/membership';
+import { tipoPorPriceId, type Tipo } from '../../subscription/services/planes';
 import type { Resultado } from './orders';
 
 //@ts-ignore
@@ -43,6 +44,27 @@ async function porId(userId: number): Promise<Usuario | null> {
   return (users[0] as Usuario) ?? null;
 }
 
+// ── Que plan contrato ────────────────────────────────────────────────────────
+
+/**
+ * El tier sale del precio realmente contratado, no de la metadata.
+ *
+ * Si el usuario se cambia de plan desde el Customer Portal, Stripe cambia el
+ * precio del item pero **deja la metadata como estaba**: derivarlo del precio
+ * se autocorrige, la metadata se quedaria mintiendo para siempre. La metadata
+ * queda de respaldo para las suscripciones cuyo precio ya no este en el
+ * catalogo (por ejemplo las que vienen de los Payment Links viejos).
+ */
+async function derivarTipo(sub: any): Promise<Tipo | null> {
+  for (const item of sub?.items?.data ?? []) {
+    const tipo = await tipoPorPriceId(String(item?.price?.id ?? ''));
+    if (tipo) return tipo;
+  }
+
+  const meta = sub?.metadata?.tier;
+  return meta === 'personal' || meta === 'familiar' ? meta : null;
+}
+
 // ── Escritura ────────────────────────────────────────────────────────────────
 
 /**
@@ -64,6 +86,11 @@ async function sincronizar(usuario: Usuario, sub: any, customerId: string): Prom
       : null,
     membershipActive: derivarMembresia(status, usuario.membershipManual === true),
   };
+
+  // Solo se escribe cuando se puede resolver: un evento que no trae los items
+  // no debe borrar un tier que ya se conocia.
+  const tipo = await derivarTipo(sub);
+  if (tipo) data.subscriptionTier = tipo;
 
   await strapi.documents(USER_UID).update({
     documentId: usuario.documentId,
@@ -127,8 +154,16 @@ export async function manejarSuscripcion(evento: any): Promise<Resultado> {
   // siempre devuelve el estado actual.
   let sub: any;
   if (evento.type === 'customer.subscription.deleted') {
-    // La suscripción borrada ya no se puede releer con estado útil.
-    sub = { id: objeto.id, status: 'canceled', cancel_at_period_end: false };
+    // La suscripción borrada ya no se puede releer con estado útil, pero el
+    // evento sí trae los items y la metadata: se conservan para no perder el
+    // tier al cancelar.
+    sub = {
+      id: objeto.id,
+      status: 'canceled',
+      cancel_at_period_end: false,
+      items: objeto.items,
+      metadata: objeto.metadata,
+    };
   } else {
     sub = await stripe.subscriptions.retrieve(objeto.id);
   }

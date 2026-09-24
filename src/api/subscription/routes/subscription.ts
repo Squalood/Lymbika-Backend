@@ -2,6 +2,15 @@ export default {
   routes: [
     {
       method: 'POST',
+      path: '/subscription/checkout',
+      handler: 'subscription.checkout',
+      config: {
+        policies: [],
+        middlewares: [],
+      },
+    },
+    {
+      method: 'POST',
       path: '/subscription/portal',
       handler: 'subscription.portal',
       config: {
