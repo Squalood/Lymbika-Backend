@@ -13,7 +13,7 @@ export type Tipo = 'personal' | 'familiar';
 export const TIPOS = new Set<string>(['personal', 'familiar']);
 
 export type Plan = {
-  id: number;
+  documentId: string;
   name: string;
   /** Lo que anuncia la pagina, en pesos. Solo para registro. */
   precio: number | null;
@@ -60,23 +60,27 @@ function priceIdDeDesarrollo(tipo: Tipo): string | null {
 /**
  * Busca una membresia publicada y devuelve el price id del tipo pedido.
  *
+ * Se direcciona por `documentId`, NO por el id numerico. En Strapi v5,
+ * republicar un documento borra la fila publicada y crea otra: el id numerico
+ * cambia y el `documentId` no. Con el id numerico, cada edicion de un plan en
+ * el admin rompia el boton de suscribirse hasta que caducara la cache del
+ * frontend.
+ *
  * `status: 'published'` es obligatorio: el Document Service de v5 devuelve el
  * borrador por omision, y no se cobra por un plan sin publicar.
  */
-export async function buscarPlan(membershipId: number, tipo: Tipo): Promise<Plan | null> {
-  let filas: any[];
+export async function buscarPlan(documentId: string, tipo: Tipo): Promise<Plan | null> {
+  let fila: any;
   try {
-    filas = await strapi.documents(MEMBERSHIP_UID).findMany({
-      filters: { id: membershipId } as any,
+    fila = await strapi.documents(MEMBERSHIP_UID).findOne({
+      documentId,
       status: 'published',
-      limit: 1,
     });
   } catch (error) {
-    strapi.log.error(`[planes] no se pudo leer la membresía ${membershipId}`, error);
+    strapi.log.error(`[planes] no se pudo leer la membresía ${documentId}`, error);
     return null;
   }
 
-  const fila = filas[0] as any;
   if (!fila) return null;
 
   const campo = tipo === 'familiar' ? 'stripePriceIdF' : 'stripePriceIdP';
@@ -88,23 +92,23 @@ export async function buscarPlan(membershipId: number, tipo: Tipo): Promise<Plan
   // guardado sin publicar, porque aqui se lee la version publicada.
   if (!enStrapi) {
     if (bruto == null || String(bruto).trim() === '') {
-      const borrador = await leerBorrador(membershipId, campo);
+      const borrador = await leerBorrador(documentId, campo);
       if (borrador) {
         strapi.log.error(
-          `[planes] la membresía ${membershipId} tiene ${campo} en el BORRADOR pero no en la version publicada: falta darle a Publish`
+          `[planes] la membresía ${documentId} tiene ${campo} en el BORRADOR pero no en la version publicada: falta darle a Publish`
         );
       } else {
-        strapi.log.error(`[planes] la membresía ${membershipId} no tiene ${campo}`);
+        strapi.log.error(`[planes] la membresía ${documentId} no tiene ${campo}`);
       }
     } else {
       strapi.log.error(
-        `[planes] ${campo} de la membresía ${membershipId} no parece un price id de Stripe: "${String(bruto).slice(0, 40)}" (debe empezar por price_)`
+        `[planes] ${campo} de la membresía ${documentId} no parece un price id de Stripe: "${String(bruto).slice(0, 40)}" (debe empezar por price_)`
       );
     }
   }
 
   return {
-    id: Number(fila.id),
+    documentId: String(fila.documentId),
     name: String(fila.name ?? '').trim(),
     precio: Number(tipo === 'familiar' ? fila.priceF : fila.priceP) || null,
     priceId: priceIdDeDesarrollo(tipo) ?? enStrapi,
@@ -112,14 +116,13 @@ export async function buscarPlan(membershipId: number, tipo: Tipo): Promise<Plan
 }
 
 /** Solo para el diagnostico de arriba: dice si el valor existe sin publicar. */
-async function leerBorrador(membershipId: number, campo: string): Promise<string | null> {
+async function leerBorrador(documentId: string, campo: string): Promise<string | null> {
   try {
-    const filas = await strapi.documents(MEMBERSHIP_UID).findMany({
-      filters: { id: membershipId } as any,
+    const fila = await strapi.documents(MEMBERSHIP_UID).findOne({
+      documentId,
       status: 'draft',
-      limit: 1,
     });
-    return limpiarPriceId((filas[0] as any)?.[campo]);
+    return limpiarPriceId((fila as any)?.[campo]);
   } catch {
     return null;
   }

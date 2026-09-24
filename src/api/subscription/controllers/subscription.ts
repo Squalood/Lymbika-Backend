@@ -54,8 +54,10 @@ export default {
       tipo?: unknown;
     };
 
-    const id = Number(membershipId);
-    if (!Number.isInteger(id) || id <= 0) {
+    // Es un documentId de Strapi v5 (cadena), no el id numerico: ese cambia
+    // cada vez que se republica el documento.
+    const id = typeof membershipId === 'string' ? membershipId.trim() : '';
+    if (!id || id.length > 60) {
       return ctx.badRequest('Ese plan no está disponible.');
     }
     if (typeof tipo !== 'string' || !TIPOS.has(tipo)) {
@@ -131,7 +133,7 @@ export default {
         // Esta metadata viaja al objeto Subscription, asi que aparece en todos
         // los customer.subscription.* y no solo en la sesion.
         subscription_data: {
-          metadata: { strapiUserId: String(user.id), tier: tipo, membershipId: String(plan.id) },
+          metadata: { strapiUserId: String(user.id), tier: tipo, membershipId: plan.documentId },
         },
         // NO puede ser /success: esa pagina vacía el carrito y busca una orden
         // por session_id, que para una suscripción no existe.
