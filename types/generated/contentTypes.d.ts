@@ -1162,6 +1162,8 @@ export interface ApiMembershipMembership extends Struct.CollectionTypeSchema {
     priceF: Schema.Attribute.Decimal & Schema.Attribute.Required;
     priceP: Schema.Attribute.Decimal & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
+    stripePriceIdF: Schema.Attribute.String & Schema.Attribute.Private;
+    stripePriceIdP: Schema.Attribute.String & Schema.Attribute.Private;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

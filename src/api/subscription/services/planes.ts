@@ -79,9 +79,29 @@ export async function buscarPlan(membershipId: number, tipo: Tipo): Promise<Plan
   const fila = filas[0] as any;
   if (!fila) return null;
 
-  const enStrapi = limpiarPriceId(
-    tipo === 'familiar' ? fila.stripePriceIdF : fila.stripePriceIdP
-  );
+  const campo = tipo === 'familiar' ? 'stripePriceIdF' : 'stripePriceIdP';
+  const bruto = fila[campo];
+  const enStrapi = limpiarPriceId(bruto);
+
+  // Diagnostico: sin esto, "no se puede contratar en linea" no distingue entre
+  // el campo vacio, un valor mal pegado, y el caso mas comun de todos — haber
+  // guardado sin publicar, porque aqui se lee la version publicada.
+  if (!enStrapi) {
+    if (bruto == null || String(bruto).trim() === '') {
+      const borrador = await leerBorrador(membershipId, campo);
+      if (borrador) {
+        strapi.log.error(
+          `[planes] la membresía ${membershipId} tiene ${campo} en el BORRADOR pero no en la version publicada: falta darle a Publish`
+        );
+      } else {
+        strapi.log.error(`[planes] la membresía ${membershipId} no tiene ${campo}`);
+      }
+    } else {
+      strapi.log.error(
+        `[planes] ${campo} de la membresía ${membershipId} no parece un price id de Stripe: "${String(bruto).slice(0, 40)}" (debe empezar por price_)`
+      );
+    }
+  }
 
   return {
     id: Number(fila.id),
@@ -89,6 +109,20 @@ export async function buscarPlan(membershipId: number, tipo: Tipo): Promise<Plan
     precio: Number(tipo === 'familiar' ? fila.priceF : fila.priceP) || null,
     priceId: priceIdDeDesarrollo(tipo) ?? enStrapi,
   };
+}
+
+/** Solo para el diagnostico de arriba: dice si el valor existe sin publicar. */
+async function leerBorrador(membershipId: number, campo: string): Promise<string | null> {
+  try {
+    const filas = await strapi.documents(MEMBERSHIP_UID).findMany({
+      filters: { id: membershipId } as any,
+      status: 'draft',
+      limit: 1,
+    });
+    return limpiarPriceId((filas[0] as any)?.[campo]);
+  } catch {
+    return null;
+  }
 }
 
 /**

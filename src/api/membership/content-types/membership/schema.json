@@ -51,6 +51,14 @@
     },
     "order": {
       "type": "integer"
+    },
+    "stripePriceIdP": {
+      "type": "string",
+      "private": true
+    },
+    "stripePriceIdF": {
+      "type": "string",
+      "private": true
     }
   }
 }
