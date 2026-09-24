@@ -147,11 +147,25 @@ export default {
         `[subscription.checkout] usuario ${user.id} → ${session.id} (${tipo}, ${plan.priceId})`
       );
       return { url: session.url, id: session.id };
-    } catch (error) {
+    } catch (error: any) {
       strapi.log.error(
         `[subscription.checkout] fallo al crear la sesión del usuario ${user.id}`,
         error
       );
+
+      // Stripe rechaza la peticion por como esta configurado el plan, no por un
+      // fallo nuestro. El caso mas comun con diferencia: un price id de modo
+      // prueba con la llave de produccion, o al reves — los ids no son
+      // intercambiables entre modos y el mensaje de Stripe es "No such price".
+      if (error?.type === 'StripeInvalidRequestError') {
+        strapi.log.error(
+          `[subscription.checkout] Stripe rechazó la configuración del plan: ${error?.message}`
+        );
+        return ctx.badRequest('Ese plan no está bien configurado. Avísanos para revisarlo.', {
+          code: 'plan_mal_configurado',
+        });
+      }
+
       return ctx.internalServerError('No se pudo iniciar la suscripción. Intenta de nuevo.');
     }
   },
