@@ -1,0 +1,167 @@
+{
+  "kind": "collectionType",
+  "collectionName": "cases",
+  "info": {
+    "singularName": "case",
+    "pluralName": "cases",
+    "displayName": "Case",
+    "description": "Casos de coordinación creados desde el guided intake del paciente"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "caseNumber": {
+      "type": "string",
+      "unique": true,
+      "required": true
+    },
+    "accessToken": {
+      "type": "string",
+      "unique": true,
+      "required": true,
+      "private": true
+    },
+    "estado": {
+      "type": "enumeration",
+      "enum": [
+        "new",
+        "in_coordination",
+        "in_assessment",
+        "in_decision",
+        "scheduled",
+        "in_surgery",
+        "in_follow_up",
+        "closed_won",
+        "closed_lost"
+      ],
+      "default": "new",
+      "required": true
+    },
+    "patientNextStep": {
+      "type": "text"
+    },
+    "priority": {
+      "type": "enumeration",
+      "enum": ["low", "normal", "high", "urgent"],
+      "default": "normal",
+      "private": true
+    },
+    "internalNotes": {
+      "type": "text",
+      "private": true
+    },
+    "narrative": {
+      "type": "text",
+      "required": true,
+      "maxLength": 2000
+    },
+    "reviewedByDoctor": {
+      "type": "enumeration",
+      "enum": ["yes", "no", "unsure"]
+    },
+    "surgeryIndicated": {
+      "type": "enumeration",
+      "enum": ["yes", "no", "unsure"]
+    },
+    "documentsStatus": {
+      "type": "enumeration",
+      "enum": ["upload_now", "send_later", "none"]
+    },
+    "intent": {
+      "type": "enumeration",
+      "enum": [
+        "options",
+        "cost",
+        "assessment",
+        "second_opinion",
+        "schedule",
+        "unsure"
+      ]
+    },
+    "emergencyFlag": {
+      "type": "boolean",
+      "default": false
+    },
+    "fullName": {
+      "type": "string",
+      "required": true
+    },
+    "phone": {
+      "type": "string",
+      "required": true
+    },
+    "city": {
+      "type": "string"
+    },
+    "consent": {
+      "type": "boolean",
+      "default": false
+    },
+    "consentAt": {
+      "type": "datetime"
+    },
+    "source": {
+      "type": "string"
+    },
+    "landingPath": {
+      "type": "string"
+    },
+    "utm": {
+      "type": "json"
+    },
+    "quoteAmount": {
+      "type": "decimal"
+    },
+    "quoteValidUntil": {
+      "type": "date"
+    },
+    "quotePresented": {
+      "type": "boolean",
+      "default": false
+    },
+    "surgeryDate": {
+      "type": "datetime"
+    },
+    "surgeryDateConfirmed": {
+      "type": "boolean",
+      "default": false
+    },
+    "followUpTasks": {
+      "type": "component",
+      "repeatable": true,
+      "component": "case.follow-up-task"
+    },
+    "documents": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": ["images", "files"]
+    },
+    "medical_service": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::medical-service.medical-service"
+    },
+    "selected_doctor": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::doctor.doctor"
+    },
+    "hospital": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::hospital.hospital"
+    },
+    "service_rate": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::service-rate.service-rate"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    }
+  }
+}

@@ -30,6 +30,19 @@ export interface ButtonButton extends Struct.ComponentSchema {
   };
 }
 
+export interface CaseFollowUpTask extends Struct.ComponentSchema {
+  collectionName: 'components_case_follow_up_tasks';
+  info: {
+    description: 'Tarea de seguimiento visible para el paciente';
+    displayName: 'follow-up-task';
+    icon: 'check';
+  };
+  attributes: {
+    done: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
 export interface CompraItemCompraItem extends Struct.ComponentSchema {
   collectionName: 'components_compra_item_compra_items';
   info: {
@@ -652,6 +665,7 @@ declare module '@strapi/strapi' {
     export interface ComponentSchemas {
       'badge.badge': BadgeBadge;
       'button.button': ButtonButton;
+      'case.follow-up-task': CaseFollowUpTask;
       'compra-item.compra-item': CompraItemCompraItem;
       'contact.contact': ContactContact;
       'doctor.doctor': DoctorDoctor;

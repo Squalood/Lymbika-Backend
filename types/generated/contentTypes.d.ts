@@ -514,6 +514,108 @@ export interface ApiCajaPosCajaPos extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiCaseCase extends Struct.CollectionTypeSchema {
+  collectionName: 'cases';
+  info: {
+    description: 'Casos de coordinaci\u00F3n creados desde el guided intake del paciente';
+    displayName: 'Case';
+    pluralName: 'cases';
+    singularName: 'case';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    accessToken: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Private &
+      Schema.Attribute.Unique;
+    caseNumber: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    city: Schema.Attribute.String;
+    consent: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    consentAt: Schema.Attribute.DateTime;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    documents: Schema.Attribute.Media<'images' | 'files', true>;
+    documentsStatus: Schema.Attribute.Enumeration<
+      ['upload_now', 'send_later', 'none']
+    >;
+    emergencyFlag: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    estado: Schema.Attribute.Enumeration<
+      [
+        'new',
+        'in_coordination',
+        'in_assessment',
+        'in_decision',
+        'scheduled',
+        'in_surgery',
+        'in_follow_up',
+        'closed_won',
+        'closed_lost',
+      ]
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'new'>;
+    followUpTasks: Schema.Attribute.Component<'case.follow-up-task', true>;
+    fullName: Schema.Attribute.String & Schema.Attribute.Required;
+    hospital: Schema.Attribute.Relation<'manyToOne', 'api::hospital.hospital'>;
+    intent: Schema.Attribute.Enumeration<
+      ['options', 'cost', 'assessment', 'second_opinion', 'schedule', 'unsure']
+    >;
+    internalNotes: Schema.Attribute.Text & Schema.Attribute.Private;
+    landingPath: Schema.Attribute.String;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::case.case'> &
+      Schema.Attribute.Private;
+    medical_service: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::medical-service.medical-service'
+    >;
+    narrative: Schema.Attribute.Text &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 2000;
+      }>;
+    patientNextStep: Schema.Attribute.Text;
+    phone: Schema.Attribute.String & Schema.Attribute.Required;
+    priority: Schema.Attribute.Enumeration<
+      ['low', 'normal', 'high', 'urgent']
+    > &
+      Schema.Attribute.Private &
+      Schema.Attribute.DefaultTo<'normal'>;
+    publishedAt: Schema.Attribute.DateTime;
+    quoteAmount: Schema.Attribute.Decimal;
+    quotePresented: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
+    quoteValidUntil: Schema.Attribute.Date;
+    reviewedByDoctor: Schema.Attribute.Enumeration<['yes', 'no', 'unsure']>;
+    selected_doctor: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::doctor.doctor'
+    >;
+    service_rate: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::service-rate.service-rate'
+    >;
+    source: Schema.Attribute.String;
+    surgeryDate: Schema.Attribute.DateTime;
+    surgeryDateConfirmed: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
+    surgeryIndicated: Schema.Attribute.Enumeration<['yes', 'no', 'unsure']>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+    utm: Schema.Attribute.JSON;
+  };
+}
+
 export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
   collectionName: 'categories';
   info: {
@@ -2352,6 +2454,7 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::about-page.about-page': ApiAboutPageAboutPage;
       'api::caja-pos.caja-pos': ApiCajaPosCajaPos;
+      'api::case.case': ApiCaseCase;
       'api::category.category': ApiCategoryCategory;
       'api::clinic.clinic': ApiClinicClinic;
       'api::compra-pos.compra-pos': ApiCompraPosCompraPos;

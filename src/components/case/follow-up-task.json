@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_case_follow_up_tasks",
+  "info": {
+    "displayName": "follow-up-task",
+    "icon": "check",
+    "description": "Tarea de seguimiento visible para el paciente"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "done": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}
