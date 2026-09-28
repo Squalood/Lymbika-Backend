@@ -21,16 +21,6 @@ export default ({ strapi }: { strapi: any }) => {
     }
   };
 
-  // Migrar y cambiar de modo afectan todo el inventario: además del JWT piden un token de
-  // administración que solo vive en el servidor (POS_STOCK_ADMIN_TOKEN).
-  const requireAdminToken = (ctx: any) => {
-    const expected = process.env.POS_STOCK_ADMIN_TOKEN;
-    const got = ctx.request.header['x-pos-stock-token'];
-    if (!expected || got !== expected) {
-      throw new StockError(403, 'FORBIDDEN', 'Token de administración de stock inválido o no configurado');
-    }
-  };
-
   const body = (ctx: any) => ctx.request.body ?? {};
   const user = (ctx: any) => ctx.state.user;
 
@@ -75,23 +65,5 @@ export default ({ strapi }: { strapi: any }) => {
     }),
 
     levels: handle((ctx) => core().levels({ pharmacy: parseLocation(ctx.query.pharmacy) })),
-
-    getConfig: handle(async () => ({ mode: await core().getMode() })),
-
-    setConfig: handle(async (ctx) => {
-      requireAdminToken(ctx);
-      const mode = body(ctx).mode;
-      if (mode !== 'legacy' && mode !== 'per_pharmacy') {
-        throw new StockError(400, 'BAD_REQUEST', 'mode debe ser legacy o per_pharmacy');
-      }
-      await core().setMode(mode);
-      return { mode };
-    }),
-
-    migrate: handle((ctx) => {
-      requireAdminToken(ctx);
-      const b = body(ctx);
-      return core().migrate({ pharmacyDocumentId: b.pharmacyDocumentId, dryRun: b.dryRun !== false, user: user(ctx) });
-    }),
   };
 };

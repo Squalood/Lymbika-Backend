@@ -18,8 +18,5 @@ export default {
     route('POST', '/pos-stock/adjust', 'adjust'),
     route('POST', '/pos-stock/discard-lot', 'discardLot'),
     route('GET', '/pos-stock/levels', 'levels'),
-    route('GET', '/pos-stock/config', 'getConfig'),
-    route('POST', '/pos-stock/config', 'setConfig'),
-    route('POST', '/pos-stock/migrate', 'migrate'),
   ],
 };

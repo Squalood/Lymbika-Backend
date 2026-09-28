@@ -2,9 +2,17 @@
  * Stock por ubicación para el POS.
  *
  * Una **ubicación** es el documentId de una farmacia, o `null` para la **bodega central**.
- * La bodega vive en `product.stock_central`; cada farmacia en una fila de `pharmacy-stock`
- * (una por par producto-farmacia, garantizado por `pairKey` + índice único en bootstrap).
- * Los lotes (`inventory-lot`) pertenecen a una ubicación por su relación `pharmacy`.
+ *
+ * - `product.stock_central` es el **total** del producto en todas las ubicaciones.
+ * - Cada farmacia lleva su stock en una fila de `pharmacy-stock` (una por par producto-farmacia,
+ *   garantizado por `pairKey` + índice único en bootstrap).
+ * - La **bodega no se guarda: se calcula** como `total − Σ farmacias`. Así los tres números
+ *   cuadran por construcción.
+ * - Los lotes (`inventory-lot`) pertenecen a una ubicación por su relación `pharmacy`
+ *   (sin farmacia = bodega).
+ *
+ * Un movimiento en una ubicación (venta, compra, devolución, merma, ajuste) mueve esa ubicación
+ * **y** el total. Un traspaso resta del origen y suma al destino: el total no cambia.
  *
  * Reglas que no se pueden romper:
  *
@@ -18,12 +26,11 @@
  *    a la vez la fila borrador y la publicada, sin tocar `publishedAt`.
  * 3. **Cada operación deja una fila en `stock-operation` con `opKey` único.** Reintentar la
  *    misma venta/compra/devolución devuelve el resultado anterior sin volver a aplicarla.
- * 4. En modo `legacy` (antes de migrar) toda operación usa la bodega, que es exactamente el
- *    comportamiento de siempre: un solo stock y lotes sin farmacia.
+ * 4. **Orden de bloqueo fijo: primero las filas del producto, luego las de sus farmacias.**
+ *    Evita interbloqueos entre dos operaciones sobre el mismo producto.
  */
 
 type Loc = string | null;
-type Mode = 'legacy' | 'per_pharmacy';
 
 export const UID = {
   product: 'api::product.product',
@@ -127,22 +134,6 @@ export default ({ strapi }: { strapi: any }) => {
 
   const pairKey = (productDocId: string, pharmacyDocId: string) => `${productDocId}__${pharmacyDocId}`;
 
-  // ── Modo ──────────────────────────────────────────────────────────────────────────
-  const store = () => strapi.store({ type: 'plugin', name: 'pos-stock' });
-
-  async function getMode(): Promise<Mode> {
-    const v = await store().get({ key: 'mode' });
-    return v === 'per_pharmacy' ? 'per_pharmacy' : 'legacy';
-  }
-
-  async function setMode(mode: Mode) {
-    await store().set({ key: 'mode', value: mode });
-  }
-
-  async function effective(loc: Loc): Promise<Loc> {
-    return (await getMode()) === 'legacy' ? null : loc;
-  }
-
   // ── Lecturas de documentos ────────────────────────────────────────────────────────
   async function findDoc(uid: string, documentId: string, populate: any) {
     const docs = strapi.documents(uid);
@@ -161,7 +152,8 @@ export default ({ strapi }: { strapi: any }) => {
   }
 
   // ── Stock por ubicación (siempre con la fila bloqueada) ───────────────────────────
-  async function lockBodega(tx: Tx, productDocId: string) {
+  /** Bloquea las filas del producto (borrador y publicada) y devuelve el total. */
+  async function lockTotal(tx: Tx, productDocId: string) {
     const t = table(UID.product);
     const sc = col(UID.product, 'stock_central');
     const dc = col(UID.product, 'documentId');
@@ -197,22 +189,33 @@ export default ({ strapi }: { strapi: any }) => {
     return { id: row.id as number, stock: Number(row.stock ?? 0) };
   }
 
-  /** Lee el stock bloqueado, aplica `fn` y escribe el resultado. Devuelve antes/después. */
+  /** Σ stock de las farmacias del producto (filas bloqueadas). Se busca por el prefijo del pairKey. */
+  async function sumPharmacies(tx: Tx, productDocId: string, lock = true) {
+    const kc = col(UID.pharmacyStock, 'pairKey');
+    const stc = col(UID.pharmacyStock, 'stock');
+    let q = tx.trx(table(UID.pharmacyStock)).select(`${stc} as stock`).where(kc, 'like', `${productDocId}__%`).orderBy('id');
+    if (lock) q = q.forUpdate();
+    const rows = await q;
+    return rows.reduce((s: number, r: any) => s + Number(r.stock ?? 0), 0);
+  }
+
+  /**
+   * Lee el stock bloqueado de una ubicación, aplica `fn` y escribe el resultado. La diferencia
+   * se aplica también al total, así que la bodega (total − farmacias) solo cambia cuando el
+   * movimiento es en la bodega. Devuelve antes/después de la ubicación.
+   */
   async function mutateStock(
     tx: Tx,
     productDocId: string,
     loc: Loc,
     fn: (before: number) => number
   ): Promise<{ before: number; after: number }> {
+    const total = await lockTotal(tx, productDocId);
     let before: number;
     let after: number;
     if (loc === null) {
-      before = await lockBodega(tx, productDocId);
+      before = total - (await sumPharmacies(tx, productDocId));
       after = fn(before);
-      await tx
-        .trx(table(UID.product))
-        .where(col(UID.product, 'documentId'), productDocId)
-        .update({ [col(UID.product, 'stock_central')]: after });
     } else {
       const row = await lockPharmacyStock(tx, productDocId, loc);
       before = row.stock;
@@ -222,8 +225,13 @@ export default ({ strapi }: { strapi: any }) => {
         .where('id', row.id)
         .update({ [col(UID.pharmacyStock, 'stock')]: after });
     }
-    if (after !== before) {
-      tx.movements.push({ productDocumentId: productDocId, location: label(loc), delta: after - before, before, after });
+    const delta = after - before;
+    if (delta !== 0) {
+      await tx
+        .trx(table(UID.product))
+        .where(col(UID.product, 'documentId'), productDocId)
+        .update({ [col(UID.product, 'stock_central')]: total + delta });
+      tx.movements.push({ productDocumentId: productDocId, location: label(loc), delta, before, after });
     }
     tx.touched.set(`${productDocId}|${label(loc)}`, { productDocumentId: productDocId, location: loc });
     return { before, after };
@@ -328,15 +336,25 @@ export default ({ strapi }: { strapi: any }) => {
   }
 
   // ── Niveles (lo que el POS aplica en lugar de calcular) ───────────────────────────
-  async function readLevel(productDocId: string, loc: Loc) {
+  async function readTotal(productDocId: string) {
+    const rows = await strapi.db.query(UID.product).findMany({
+      where: { documentId: productDocId },
+      select: ['stock_central', 'publishedAt'],
+    });
+    const ref = rows.find((r: any) => r.publishedAt) ?? rows[0];
+    return Number(ref?.stock_central ?? 0);
+  }
+
+  async function readLevel(productDocId: string, loc: Loc, trx?: any) {
     let stock = 0;
+    const total = await readTotal(productDocId);
     if (loc === null) {
-      const rows = await strapi.db.query(UID.product).findMany({
-        where: { documentId: productDocId },
-        select: ['stock_central', 'publishedAt'],
-      });
-      const ref = rows.find((r: any) => r.publishedAt) ?? rows[0];
-      stock = Number(ref?.stock_central ?? 0);
+      // Dentro de una operación hay que leer con su trx: otra conexión vería lo anterior al commit.
+      const knex = trx ?? strapi.db.connection;
+      const rows = await knex(table(UID.pharmacyStock))
+        .select(`${col(UID.pharmacyStock, 'stock')} as stock`)
+        .where(col(UID.pharmacyStock, 'pairKey'), 'like', `${productDocId}__%`);
+      stock = total - rows.reduce((s: number, r: any) => s + Number(r.stock ?? 0), 0);
     } else {
       const row = await strapi.db
         .query(UID.pharmacyStock)
@@ -350,12 +368,12 @@ export default ({ strapi }: { strapi: any }) => {
       },
       select: ['documentId', 'lotNumber', 'expirationDate', 'currentAmount', 'state'],
     });
-    return { productDocumentId: productDocId, location: label(loc), stock, lots };
+    return { productDocumentId: productDocId, location: label(loc), stock, total, lots };
   }
 
-  async function readLevels(touched: Iterable<{ productDocumentId: string; location: Loc }>) {
+  async function readLevels(touched: Iterable<{ productDocumentId: string; location: Loc }>, trx?: any) {
     const out = [];
-    for (const t of touched) out.push(await readLevel(t.productDocumentId, t.location));
+    for (const t of touched) out.push(await readLevel(t.productDocumentId, t.location, trx));
     return out;
   }
 
@@ -425,7 +443,7 @@ export default ({ strapi }: { strapi: any }) => {
           operationId: op.documentId,
           result,
           warnings: tx.warnings,
-          levels: await readLevels(tx.touched.values()),
+          levels: await readLevels(tx.touched.values(), trx),
         };
       });
     } catch (e) {
@@ -449,12 +467,9 @@ export default ({ strapi }: { strapi: any }) => {
     });
     if (!venta) throw new StockError(404, 'VENTA_NOT_FOUND', `No existe la venta ${ventaDocumentId}`);
 
-    const mode = await getMode();
-    const requested = venta.pharmacy?.documentId ?? venta.pharmacies?.[0]?.documentId ?? null;
-    if (mode === 'per_pharmacy' && !requested) {
-      throw new StockError(422, 'NO_PHARMACY', 'La venta no tiene farmacia: no se sabe de dónde descontar');
-    }
-    const loc = mode === 'legacy' ? null : requested;
+    // Sin farmacia (venta vieja o registrada fuera de una caja) se descuenta de la bodega: el
+    // total baja igual, que es lo que cuadra la reconciliación.
+    const loc: Loc = venta.pharmacy?.documentId ?? venta.pharmacies?.[0]?.documentId ?? null;
 
     const byProduct = new Map<string, { name: string; lines: { qty: number; lot: string | null }[] }>();
     for (const line of venta.venta ?? []) {
@@ -470,6 +485,7 @@ export default ({ strapi }: { strapi: any }) => {
       { opKey: `sale:${ventaDocumentId}`, kind: 'sale', refType: 'venta-pos', refDocumentId: ventaDocumentId, location: label(loc), user },
       async (tx) => {
         const today = todayMx();
+        if (!loc) tx.warnings.push({ code: 'NO_PHARMACY', message: 'La venta no tiene farmacia: se descontó de la bodega' });
         for (const [pid, g] of [...byProduct].sort(([a], [b]) => a.localeCompare(b))) {
           const total = g.lines.reduce((s, l) => s + l.qty, 0);
           const { after } = await mutateStock(tx, pid, loc, (b) => b - total);
@@ -523,12 +539,8 @@ export default ({ strapi }: { strapi: any }) => {
     });
     if (!dev) throw new StockError(404, 'DEVOLUCION_NOT_FOUND', `No existe la devolución ${devolucionDocumentId}`);
 
-    const mode = await getMode();
-    const requested = dev.pharmacy?.documentId ?? dev.pharmacies?.[0]?.documentId ?? null;
-    if (mode === 'per_pharmacy' && !requested) {
-      throw new StockError(422, 'NO_PHARMACY', 'La devolución no tiene farmacia');
-    }
-    const loc = mode === 'legacy' ? null : requested;
+    // Sin farmacia, lo devuelto entra a la bodega.
+    const loc: Loc = dev.pharmacy?.documentId ?? dev.pharmacies?.[0]?.documentId ?? null;
 
     const byProduct = new Map<string, number>();
     for (const item of dev.items ?? []) {
@@ -558,7 +570,7 @@ export default ({ strapi }: { strapi: any }) => {
     });
     if (!compra) throw new StockError(404, 'COMPRA_NOT_FOUND', `No existe la compra ${compraDocumentId}`);
 
-    const loc = await effective(compra.destination_pharmacy?.documentId ?? null);
+    const loc: Loc = compra.destination_pharmacy?.documentId ?? null;
 
     const byProduct = new Map<string, { qty: number; lots: { number: string; qty: number; exp: string | null }[] }>();
     for (const item of compra.items ?? []) {
@@ -617,9 +629,6 @@ export default ({ strapi }: { strapi: any }) => {
     idemKey: string;
     user?: any;
   }) {
-    if ((await getMode()) === 'legacy') {
-      throw new StockError(409, 'TRANSFERS_DISABLED', 'Los traspasos se habilitan después de migrar el stock a farmacias');
-    }
     const { from, to, notes, idemKey, user } = input;
     if (!idemKey) throw new StockError(400, 'BAD_REQUEST', 'Falta idemKey');
     if (from === to) throw new StockError(400, 'SAME_LOCATION', 'Origen y destino son la misma ubicación');
@@ -769,7 +778,7 @@ export default ({ strapi }: { strapi: any }) => {
     if (!idemKey) throw new StockError(400, 'BAD_REQUEST', 'Falta idemKey');
     if (mode !== 'set' && mode !== 'delta') throw new StockError(400, 'BAD_REQUEST', 'mode debe ser set o delta');
     if (!Number.isInteger(value)) throw new StockError(400, 'BAD_REQUEST', 'value debe ser entero');
-    const loc = await effective(input.location);
+    const loc = input.location;
     if (loc) await assertPharmacy(loc);
 
     return runOperation(
@@ -799,7 +808,6 @@ export default ({ strapi }: { strapi: any }) => {
     const ids = [...new Set((input.lotDocumentIds ?? []).map(String).filter(Boolean))].sort();
     if (!ids.length) throw new StockError(400, 'BAD_REQUEST', 'No hay lotes que desechar');
     if (!DISCARD_REASONS.includes(input.reason)) throw new StockError(400, 'BAD_REQUEST', 'Motivo de merma inválido');
-    const mode = await getMode();
 
     const found = await strapi.db.query(UID.lot).findMany({
       where: { documentId: { $in: ids } },
@@ -813,7 +821,7 @@ export default ({ strapi }: { strapi: any }) => {
         failed.push(l.documentId);
         continue;
       }
-      const loc = mode === 'legacy' ? null : l.pharmacy?.documentId ?? null;
+      const loc: Loc = l.pharmacy?.documentId ?? null;
       const key = `${l.product.documentId}|${label(loc)}`;
       const g = groups.get(key) ?? { pid: l.product.documentId, loc, lots: [] };
       g.lots.push(l.documentId);
@@ -853,8 +861,9 @@ export default ({ strapi }: { strapi: any }) => {
             discarded += qty;
             discardedLots++;
           }
-          // Mismo piso en 0 que tenía la merma desde el POS.
-          if (discarded > 0) await mutateStock(tx, g.pid, g.loc, (b) => Math.max(0, b - discarded));
+          // Resta exacta: son unidades que existían en los lotes y se dieron de baja. Así el
+          // total baja lo mismo que la suma de lotes y la reconciliación no se descuadra.
+          if (discarded > 0) await mutateStock(tx, g.pid, g.loc, (b) => b - discarded);
         }
         return { discardedLots, failed };
       }
@@ -876,6 +885,15 @@ export default ({ strapi }: { strapi: any }) => {
         // La fila publicada manda sobre el borrador.
         if (cur && !p.publishedAt) continue;
         rows.set(p.documentId, { productDocumentId: p.documentId, productName: p.productName, stock: Number(p.stock_central ?? 0), minStock: null, lotsSum: 0, lotsCount: 0 });
+      }
+      // La bodega es lo que queda del total después de las farmacias.
+      const phRows = await strapi.db
+        .connection(table(UID.pharmacyStock))
+        .select(`${col(UID.pharmacyStock, 'pairKey')} as pk`, `${col(UID.pharmacyStock, 'stock')} as stock`);
+      for (const r of phRows) {
+        const pid = String(r.pk ?? '').split('__')[0];
+        const row = rows.get(pid);
+        if (row) row.stock -= Number(r.stock ?? 0);
       }
     } else {
       const ph = await assertPharmacy(loc);
@@ -913,131 +931,10 @@ export default ({ strapi }: { strapi: any }) => {
       rows.set(pid, r);
     }
 
-    return { location: label(loc), mode: await getMode(), minStockDefault: minDefault, items: [...rows.values()] };
-  }
-
-  /**
-   * Migración única (decisión 5): todo el stock actual y sus lotes están físicamente en la
-   * farmacia que vende. Pasa `stock_central` a su `pharmacy-stock`, deja la bodega en 0 y
-   * asigna los lotes sin farmacia. Es idempotente por construcción: un producto migrado queda
-   * con bodega 0 y sin lotes huérfanos, así que volver a correrla no hace nada.
-   */
-  async function migrate({ pharmacyDocumentId, dryRun, user }: { pharmacyDocumentId: string; dryRun: boolean; user?: any }) {
-    if ((await getMode()) === 'per_pharmacy') {
-      throw new StockError(409, 'ALREADY_MIGRATED', 'El stock ya está por farmacia; la migración no se vuelve a correr');
-    }
-    if (!pharmacyDocumentId) throw new StockError(400, 'BAD_REQUEST', 'Falta pharmacyDocumentId');
-    const pharmacy = await assertPharmacy(pharmacyDocumentId);
-
-    const openCajas = await strapi.db.query(UID.caja).count({ where: { estado: 'Abierta' } });
-
-    const products = await strapi.db.query(UID.product).findMany({
-      select: ['documentId', 'stock_central', 'publishedAt'],
-    });
-    const byDoc = new Map<string, { published: number | null; draft: number | null }>();
-    for (const p of products) {
-      const cur = byDoc.get(p.documentId) ?? { published: null, draft: null };
-      if (p.publishedAt) cur.published = p.stock_central;
-      else cur.draft = p.stock_central;
-      byDoc.set(p.documentId, cur);
-    }
-
-    const orphanLots = await strapi.db.query(UID.lot).findMany({
-      where: { pharmacy: { id: { $null: true } } },
-      select: ['id', 'currentAmount', 'state'],
-      populate: { product: { select: ['documentId'] } },
-    });
-    const lotsByProduct = new Map<string, number[]>();
-    let lotsWithoutProduct = 0;
-    for (const l of orphanLots) {
-      const pid = l.product?.documentId;
-      // Un lote sin producto (o de un producto ya borrado) no tiene stock que mover: se reporta.
-      if (!pid || !byDoc.has(pid)) {
-        lotsWithoutProduct++;
-        continue;
-      }
-      lotsByProduct.set(pid, [...(lotsByProduct.get(pid) ?? []), l.id]);
-    }
-
-    let units = 0;
-    let withStock = 0;
-    let negative = 0;
-    let divergent = 0;
-    let nullStock = 0;
-    for (const v of byDoc.values()) {
-      const base = Number((v.published ?? v.draft) ?? 0);
-      if (v.published !== null && v.draft !== null && Number(v.published ?? 0) !== Number(v.draft ?? 0)) divergent++;
-      if ((v.published ?? v.draft) === null) nullStock++;
-      if (base !== 0) withStock++;
-      if (base < 0) negative++;
-      units += base;
-    }
-
-    const summary = {
-      pharmacy: pharmacy.nombre,
-      products: byDoc.size,
-      productsWithStock: withStock,
-      units,
-      negativeProducts: negative,
-      nullStockProducts: nullStock,
-      divergentDraftRows: divergent,
-      orphanLots: orphanLots.length,
-      lotsWithoutProduct,
-      openCajas,
-    };
-    if (dryRun) return { ok: true, dryRun: true, summary };
-    if (openCajas > 0) throw new StockError(409, 'OPEN_CAJAS', `Hay ${openCajas} caja(s) abiertas: ciérralas antes de migrar`, summary);
-
-    const pending = [...byDoc.keys()].filter((pid) => {
-      const v = byDoc.get(pid)!;
-      return Number((v.published ?? v.draft) ?? 0) !== 0 || lotsByProduct.has(pid);
-    });
-
-    const CHUNK = 50;
-    for (let i = 0; i < pending.length; i += CHUNK) {
-      const chunk = pending.slice(i, i + CHUNK);
-      await strapi.db.transaction(async ({ trx }: any) => {
-        const tx: Tx = { trx, movements: [], warnings: [], touched: new Map() };
-        for (const pid of chunk) {
-          const base = await lockBodega(tx, pid);
-          if (base !== 0) {
-            await mutateStock(tx, pid, pharmacyDocumentId, (b) => b + base);
-            await mutateStock(tx, pid, null, () => 0);
-          }
-          for (const lotId of lotsByProduct.get(pid) ?? []) {
-            await strapi.db.query(UID.lot).update({ where: { id: lotId }, data: { pharmacy: pharmacy.id } });
-          }
-        }
-      });
-    }
-
-    // Los productos que nunca capturaron stock pasan de null a 0: evita NaN en las cuentas.
-    await strapi.db
-      .connection(table(UID.product))
-      .whereNull(col(UID.product, 'stock_central'))
-      .update({ [col(UID.product, 'stock_central')]: 0 });
-
-    await strapi.db.query(UID.operation).create({
-      data: {
-        opKey: `migration:v1:${pharmacyDocumentId}`,
-        kind: 'migration',
-        refType: 'pharmacy',
-        refDocumentId: pharmacyDocumentId,
-        location: pharmacyDocumentId,
-        user: user?.id ?? null,
-        movements: [],
-        warnings: [],
-        notes: JSON.stringify(summary),
-      },
-    });
-    await setMode('per_pharmacy');
-
-    return { ok: true, dryRun: false, migratedProducts: pending.length, summary };
+    return { location: label(loc), minStockDefault: minDefault, items: [...rows.values()] };
   }
 
   return {
-    getMode,
-    setMode,
     sale,
     saleReturn,
     purchase,
@@ -1045,6 +942,5 @@ export default ({ strapi }: { strapi: any }) => {
     adjust,
     discard,
     levels,
-    migrate,
   };
 };
