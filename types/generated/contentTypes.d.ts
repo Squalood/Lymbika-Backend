@@ -492,6 +492,7 @@ export interface ApiCajaPosCajaPos extends Struct.CollectionTypeSchema {
     expectedMXN: Schema.Attribute.Decimal;
     expectedTransfe: Schema.Attribute.Decimal;
     expectedUSD: Schema.Attribute.Decimal;
+    farmacia: Schema.Attribute.Relation<'manyToOne', 'api::pharmacy.pharmacy'>;
     fecha: Schema.Attribute.DateTime;
     finalCard: Schema.Attribute.Decimal;
     finalCashMXN: Schema.Attribute.Decimal;
@@ -748,6 +749,10 @@ export interface ApiCompraPosCompraPos extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    destination_pharmacy: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::pharmacy.pharmacy'
+    >;
     estado: Schema.Attribute.Enumeration<['registrada', 'cancelada']>;
     fecha: Schema.Attribute.DateTime;
     inventory_lots: Schema.Attribute.Relation<
@@ -807,6 +812,7 @@ export interface ApiDevolucionPosDevolucionPos
       'oneToMany',
       'api::pharmacy.pharmacy'
     >;
+    pharmacy: Schema.Attribute.Relation<'manyToOne', 'api::pharmacy.pharmacy'>;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -1092,8 +1098,13 @@ export interface ApiInventoryLotInventoryLot
     > &
       Schema.Attribute.Private;
     lotNumber: Schema.Attribute.String;
+    pharmacy: Schema.Attribute.Relation<'manyToOne', 'api::pharmacy.pharmacy'>;
     product: Schema.Attribute.Relation<'manyToOne', 'api::product.product'>;
     publishedAt: Schema.Attribute.DateTime;
+    source_lot: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::inventory-lot.inventory-lot'
+    >;
     state: Schema.Attribute.Enumeration<['activo', 'agotado', 'vencido']>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -1425,6 +1436,7 @@ export interface ApiPharmacyStockPharmacyStock
     > &
       Schema.Attribute.Private;
     min_stock: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<5>;
+    pairKey: Schema.Attribute.String;
     pharmacy: Schema.Attribute.Relation<'manyToOne', 'api::pharmacy.pharmacy'>;
     product: Schema.Attribute.Relation<'manyToOne', 'api::product.product'>;
     publishedAt: Schema.Attribute.DateTime;
@@ -1449,16 +1461,25 @@ export interface ApiPharmacyPharmacy extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
+    cajas: Schema.Attribute.Relation<'oneToMany', 'api::caja-pos.caja-pos'>;
     clave: Schema.Attribute.UID<'nombre'> & Schema.Attribute.Required;
     contacto_email: Schema.Attribute.Email;
     contacto_tel: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    devoluciones: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::devolucion-pos.devolucion-pos'
+    >;
     direccion: Schema.Attribute.Text;
     estado: Schema.Attribute.Enumeration<['activo', 'inactivo']> &
       Schema.Attribute.DefaultTo<'activo'>;
     facturas: Schema.Attribute.Relation<'oneToMany', 'api::factura.factura'>;
+    inventory_lots: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::inventory-lot.inventory-lot'
+    >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -1477,6 +1498,7 @@ export interface ApiPharmacyPharmacy extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    ventas: Schema.Attribute.Relation<'oneToMany', 'api::venta-pos.venta-pos'>;
   };
 }
 
@@ -1741,6 +1763,58 @@ export interface ApiServiceService extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiStockOperationStockOperation
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'stock_operations';
+  info: {
+    description: 'Bit\u00E1cora de cada movimiento de stock hecho por /pos-stock. opKey es \u00FAnico y hace idempotentes los reintentos.';
+    displayName: 'Stock Operation';
+    pluralName: 'stock-operations';
+    singularName: 'stock-operation';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    kind: Schema.Attribute.Enumeration<
+      [
+        'sale',
+        'return',
+        'purchase',
+        'transfer',
+        'adjust',
+        'discard',
+        'migration',
+      ]
+    > &
+      Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::stock-operation.stock-operation'
+    > &
+      Schema.Attribute.Private;
+    location: Schema.Attribute.String;
+    movements: Schema.Attribute.JSON;
+    notes: Schema.Attribute.Text;
+    opKey: Schema.Attribute.String & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    refDocumentId: Schema.Attribute.String;
+    refType: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+    warnings: Schema.Attribute.JSON;
+  };
+}
+
 export interface ApiStockTransferStockTransfer
   extends Struct.CollectionTypeSchema {
   collectionName: 'stock_transfers';
@@ -1754,9 +1828,14 @@ export interface ApiStockTransferStockTransfer
     draftAndPublish: false;
   };
   attributes: {
+    batchId: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    from_lot: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::inventory-lot.inventory-lot'
+    >;
     from_pharmacy: Schema.Attribute.Relation<
       'manyToOne',
       'api::pharmacy.pharmacy'
@@ -1771,6 +1850,10 @@ export interface ApiStockTransferStockTransfer
     product: Schema.Attribute.Relation<'manyToOne', 'api::product.product'>;
     publishedAt: Schema.Attribute.DateTime;
     quantity: Schema.Attribute.Integer & Schema.Attribute.Required;
+    to_lot: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::inventory-lot.inventory-lot'
+    >;
     to_pharmacy: Schema.Attribute.Relation<
       'manyToOne',
       'api::pharmacy.pharmacy'
@@ -1899,6 +1982,7 @@ export interface ApiVentaPosVentaPos extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::pharmacy.pharmacy'
     >;
+    pharmacy: Schema.Attribute.Relation<'manyToOne', 'api::pharmacy.pharmacy'>;
     publishedAt: Schema.Attribute.DateTime;
     recargoTarjeta: Schema.Attribute.Decimal;
     recibido: Schema.Attribute.Decimal;
@@ -2479,6 +2563,7 @@ declare module '@strapi/strapi' {
       'api::review.review': ApiReviewReview;
       'api::service-rate.service-rate': ApiServiceRateServiceRate;
       'api::service.service': ApiServiceService;
+      'api::stock-operation.stock-operation': ApiStockOperationStockOperation;
       'api::stock-transfer.stock-transfer': ApiStockTransferStockTransfer;
       'api::stripe-event.stripe-event': ApiStripeEventStripeEvent;
       'api::surgery.surgery': ApiSurgerySurgery;
