@@ -52,6 +52,12 @@
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::pharmacy.pharmacy"
+    },
+    "pharmacy": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::pharmacy.pharmacy",
+      "inversedBy": "devoluciones"
     }
   }
 }

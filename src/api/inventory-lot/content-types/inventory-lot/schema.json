@@ -60,6 +60,17 @@
         "theft",
         "other"
       ]
+    },
+    "pharmacy": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::pharmacy.pharmacy",
+      "inversedBy": "inventory_lots"
+    },
+    "source_lot": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::inventory-lot.inventory-lot"
     }
   }
 }

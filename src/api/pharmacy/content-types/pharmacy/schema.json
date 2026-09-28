@@ -59,6 +59,30 @@
     },
     "contacto_tel": {
       "type": "string"
+    },
+    "inventory_lots": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::inventory-lot.inventory-lot",
+      "mappedBy": "pharmacy"
+    },
+    "ventas": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::venta-pos.venta-pos",
+      "mappedBy": "pharmacy"
+    },
+    "devoluciones": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::devolucion-pos.devolucion-pos",
+      "mappedBy": "pharmacy"
+    },
+    "cajas": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::caja-pos.caja-pos",
+      "mappedBy": "farmacia"
     }
   }
 }

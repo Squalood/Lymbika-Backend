@@ -1,0 +1,56 @@
+{
+  "kind": "collectionType",
+  "collectionName": "stock_operations",
+  "info": {
+    "singularName": "stock-operation",
+    "pluralName": "stock-operations",
+    "displayName": "Stock Operation",
+    "description": "Bitácora de cada movimiento de stock hecho por /pos-stock. opKey es único y hace idempotentes los reintentos."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "opKey": {
+      "type": "string",
+      "required": true
+    },
+    "kind": {
+      "type": "enumeration",
+      "enum": [
+        "sale",
+        "return",
+        "purchase",
+        "transfer",
+        "adjust",
+        "discard",
+        "migration"
+      ],
+      "required": true
+    },
+    "refType": {
+      "type": "string"
+    },
+    "refDocumentId": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "notes": {
+      "type": "text"
+    },
+    "movements": {
+      "type": "json"
+    },
+    "warnings": {
+      "type": "json"
+    }
+  }
+}

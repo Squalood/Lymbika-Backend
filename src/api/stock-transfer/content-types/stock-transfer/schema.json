@@ -42,6 +42,19 @@
     },
     "notes": {
       "type": "text"
+    },
+    "from_lot": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::inventory-lot.inventory-lot"
+    },
+    "to_lot": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::inventory-lot.inventory-lot"
+    },
+    "batchId": {
+      "type": "string"
     }
   }
 }

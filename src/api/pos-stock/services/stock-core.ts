@@ -1,0 +1,1050 @@
+/**
+ * Stock por ubicación para el POS.
+ *
+ * Una **ubicación** es el documentId de una farmacia, o `null` para la **bodega central**.
+ * La bodega vive en `product.stock_central`; cada farmacia en una fila de `pharmacy-stock`
+ * (una por par producto-farmacia, garantizado por `pairKey` + índice único en bootstrap).
+ * Los lotes (`inventory-lot`) pertenecen a una ubicación por su relación `pharmacy`.
+ *
+ * Reglas que no se pueden romper:
+ *
+ * 1. **Todo movimiento corre dentro de `strapi.db.transaction`**, con las filas bloqueadas
+ *    (`FOR UPDATE`) antes de leerlas. El cliente nunca manda el valor resultante: manda el
+ *    documento (venta, compra…) o el delta, y el servidor calcula sobre el valor bloqueado.
+ *    Así dos cajas vendiendo el mismo producto ya no se pisan.
+ * 2. **`stock_central` se escribe con SQL sobre `document_id`**, nunca por el Document
+ *    Service: el servicio REST publica por defecto (`status: 'published'`), y un PUT de
+ *    stock re-publicaba el borrador completo del producto. Por `document_id` se actualizan
+ *    a la vez la fila borrador y la publicada, sin tocar `publishedAt`.
+ * 3. **Cada operación deja una fila en `stock-operation` con `opKey` único.** Reintentar la
+ *    misma venta/compra/devolución devuelve el resultado anterior sin volver a aplicarla.
+ * 4. En modo `legacy` (antes de migrar) toda operación usa la bodega, que es exactamente el
+ *    comportamiento de siempre: un solo stock y lotes sin farmacia.
+ */
+
+type Loc = string | null;
+type Mode = 'legacy' | 'per_pharmacy';
+
+export const UID = {
+  product: 'api::product.product',
+  lot: 'api::inventory-lot.inventory-lot',
+  pharmacyStock: 'api::pharmacy-stock.pharmacy-stock',
+  pharmacy: 'api::pharmacy.pharmacy',
+  operation: 'api::stock-operation.stock-operation',
+  transfer: 'api::stock-transfer.stock-transfer',
+  venta: 'api::venta-pos.venta-pos',
+  devolucion: 'api::devolucion-pos.devolucion-pos',
+  compra: 'api::compra-pos.compra-pos',
+  caja: 'api::caja-pos.caja-pos',
+} as const;
+
+const DISCARD_REASONS = ['expired', 'damaged', 'theft', 'other'];
+
+export class StockError extends Error {
+  status: number;
+  code: string;
+  details?: unknown;
+  constructor(status: number, code: string, message: string, details?: unknown) {
+    super(message);
+    this.status = status;
+    this.code = code;
+    this.details = details;
+  }
+}
+
+interface Lot {
+  id: number;
+  documentId: string;
+  lotNumber: string | null;
+  expirationDate: string | null;
+  currentAmount: number;
+  state: string;
+  compraDocumentId: string | null;
+  changed?: boolean;
+}
+
+interface Movement {
+  productDocumentId: string;
+  location: string;
+  delta: number;
+  before: number;
+  after: number;
+  lotDocumentId?: string;
+  lotNumber?: string | null;
+}
+
+interface Warning {
+  code: string;
+  productDocumentId?: string;
+  message: string;
+  [k: string]: unknown;
+}
+
+interface Tx {
+  trx: any;
+  movements: Movement[];
+  warnings: Warning[];
+  touched: Map<string, { productDocumentId: string; location: Loc }>;
+}
+
+export const label = (loc: Loc) => loc ?? 'bodega';
+
+/** "bodega", "" y null son la bodega; cualquier otra cosa es el documentId de una farmacia. */
+export function parseLocation(raw: unknown): Loc {
+  if (raw === null || raw === undefined) return null;
+  const s = String(raw).trim();
+  return s === '' || s === 'bodega' ? null : s;
+}
+
+/** Hoy en México. `new Date().toISOString()` es UTC: después de las 18:00 ya sería mañana. */
+function todayMx(): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Mexico_City',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+}
+
+const FAR_FUTURE = '9999-12-31';
+const fefo = (a: Lot, b: Lot) =>
+  (a.expirationDate ?? FAR_FUTURE).localeCompare(b.expirationDate ?? FAR_FUTURE) || a.id - b.id;
+
+function isSellable(lot: Lot, today: string) {
+  return lot.state === 'activo' && lot.currentAmount > 0 && (lot.expirationDate ?? FAR_FUTURE) >= today;
+}
+
+const isUniqueViolation = (e: any) =>
+  e?.code === '23505' || /unique/i.test(String(e?.message ?? '')) || /unique/i.test(String(e?.detail ?? ''));
+
+const snake = (s: string) => s.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+
+export default ({ strapi }: { strapi: any }) => {
+  // ── Metadata: nombres reales de tablas y columnas ────────────────────────────────
+  const meta = (uid: string) => strapi.db.metadata.get(uid);
+  const table = (uid: string): string => meta(uid).tableName;
+  const col = (uid: string, attr: string): string => meta(uid).attributes?.[attr]?.columnName || snake(attr);
+
+  const pairKey = (productDocId: string, pharmacyDocId: string) => `${productDocId}__${pharmacyDocId}`;
+
+  // ── Modo ──────────────────────────────────────────────────────────────────────────
+  const store = () => strapi.store({ type: 'plugin', name: 'pos-stock' });
+
+  async function getMode(): Promise<Mode> {
+    const v = await store().get({ key: 'mode' });
+    return v === 'per_pharmacy' ? 'per_pharmacy' : 'legacy';
+  }
+
+  async function setMode(mode: Mode) {
+    await store().set({ key: 'mode', value: mode });
+  }
+
+  async function effective(loc: Loc): Promise<Loc> {
+    return (await getMode()) === 'legacy' ? null : loc;
+  }
+
+  // ── Lecturas de documentos ────────────────────────────────────────────────────────
+  async function findDoc(uid: string, documentId: string, populate: any) {
+    const docs = strapi.documents(uid);
+    return (
+      (await docs.findOne({ documentId, status: 'published', populate })) ??
+      (await docs.findOne({ documentId, status: 'draft', populate }))
+    );
+  }
+
+  async function assertPharmacy(documentId: string) {
+    const ph = await strapi.db
+      .query(UID.pharmacy)
+      .findOne({ where: { documentId }, select: ['id', 'documentId', 'nombre', 'estado'] });
+    if (!ph) throw new StockError(404, 'PHARMACY_NOT_FOUND', `No existe la farmacia ${documentId}`);
+    return ph;
+  }
+
+  // ── Stock por ubicación (siempre con la fila bloqueada) ───────────────────────────
+  async function lockBodega(tx: Tx, productDocId: string) {
+    const t = table(UID.product);
+    const sc = col(UID.product, 'stock_central');
+    const dc = col(UID.product, 'documentId');
+    const pc = col(UID.product, 'publishedAt');
+    const rows = await tx
+      .trx(t)
+      .select('id', `${sc} as stock`, `${pc} as published`)
+      .where(dc, productDocId)
+      .orderBy('id')
+      .forUpdate();
+    if (!rows.length) throw new StockError(404, 'PRODUCT_NOT_FOUND', `No existe el producto ${productDocId}`);
+    // La publicada manda; un producto que solo existe como borrador usa el borrador.
+    const ref = rows.find((r: any) => r.published) ?? rows[0];
+    return Number(ref.stock ?? 0);
+  }
+
+  async function lockPharmacyStock(tx: Tx, productDocId: string, pharmacyDocId: string) {
+    const t = table(UID.pharmacyStock);
+    const kc = col(UID.pharmacyStock, 'pairKey');
+    const stc = col(UID.pharmacyStock, 'stock');
+    const key = pairKey(productDocId, pharmacyDocId);
+    const find = () => tx.trx(t).select('id', `${stc} as stock`).where(kc, key).forUpdate().first();
+
+    let row = await find();
+    if (!row) {
+      await assertPharmacy(pharmacyDocId);
+      // Se crea por el Document Service para que queden bien las relaciones; corre en la misma trx.
+      await strapi.documents(UID.pharmacyStock).create({
+        data: { product: productDocId, pharmacy: pharmacyDocId, pairKey: key, stock: 0 },
+      });
+      row = await find();
+    }
+    return { id: row.id as number, stock: Number(row.stock ?? 0) };
+  }
+
+  /** Lee el stock bloqueado, aplica `fn` y escribe el resultado. Devuelve antes/después. */
+  async function mutateStock(
+    tx: Tx,
+    productDocId: string,
+    loc: Loc,
+    fn: (before: number) => number
+  ): Promise<{ before: number; after: number }> {
+    let before: number;
+    let after: number;
+    if (loc === null) {
+      before = await lockBodega(tx, productDocId);
+      after = fn(before);
+      await tx
+        .trx(table(UID.product))
+        .where(col(UID.product, 'documentId'), productDocId)
+        .update({ [col(UID.product, 'stock_central')]: after });
+    } else {
+      const row = await lockPharmacyStock(tx, productDocId, loc);
+      before = row.stock;
+      after = fn(before);
+      await tx
+        .trx(table(UID.pharmacyStock))
+        .where('id', row.id)
+        .update({ [col(UID.pharmacyStock, 'stock')]: after });
+    }
+    if (after !== before) {
+      tx.movements.push({ productDocumentId: productDocId, location: label(loc), delta: after - before, before, after });
+    }
+    tx.touched.set(`${productDocId}|${label(loc)}`, { productDocumentId: productDocId, location: loc });
+    return { before, after };
+  }
+
+  // ── Lotes por ubicación ───────────────────────────────────────────────────────────
+  async function lotsAt(tx: Tx, productDocId: string, loc: Loc): Promise<Lot[]> {
+    const found = await strapi.db.query(UID.lot).findMany({
+      where: {
+        product: { documentId: productDocId },
+        pharmacy: loc ? { documentId: loc } : { id: { $null: true } },
+      },
+      select: ['id', 'documentId', 'lotNumber', 'expirationDate', 'currentAmount', 'state'],
+      populate: { compra: { select: ['documentId'] } },
+    });
+    const byId = new Map<number, any>();
+    for (const l of found) byId.set(l.id, l);
+    if (!byId.size) return [];
+
+    // Bloquear y releer la cantidad: la del findMany pudo cambiar antes del lock.
+    const ca = col(UID.lot, 'currentAmount');
+    const st = col(UID.lot, 'state');
+    const locked = await tx
+      .trx(table(UID.lot))
+      .select('id', `${ca} as amount`, `${st} as state`)
+      .whereIn('id', [...byId.keys()])
+      .orderBy('id')
+      .forUpdate();
+
+    return locked.map((r: any) => {
+      const l = byId.get(r.id);
+      return {
+        id: r.id,
+        documentId: l.documentId,
+        lotNumber: l.lotNumber ?? null,
+        expirationDate: l.expirationDate ?? null,
+        currentAmount: Number(r.amount ?? 0),
+        state: r.state ?? 'activo',
+        compraDocumentId: l.compra?.documentId ?? null,
+      };
+    });
+  }
+
+  /**
+   * Toma `qty` unidades de `lots` (en memoria): primero del lote preferido, luego FEFO entre
+   * los vendibles. Nunca deja un lote negativo. Devuelve las porciones y lo que no alcanzó.
+   */
+  function consume(lots: Lot[], qty: number, preferredDocId: string | null, today: string) {
+    const portions: { lot: Lot; qty: number }[] = [];
+    let remaining = qty;
+    const take = (lot: Lot, n: number) => {
+      if (n <= 0) return;
+      lot.currentAmount -= n;
+      lot.changed = true;
+      remaining -= n;
+      portions.push({ lot, qty: n });
+    };
+
+    let preferredMissing = false;
+    if (preferredDocId) {
+      const lot = lots.find((l) => l.documentId === preferredDocId);
+      if (lot && lot.state === 'activo') take(lot, Math.min(remaining, Math.max(0, lot.currentAmount)));
+      else preferredMissing = true;
+    }
+    for (const lot of lots.filter((l) => isSellable(l, today)).sort(fefo)) {
+      if (remaining <= 0) break;
+      take(lot, Math.min(remaining, lot.currentAmount));
+    }
+    return { portions, remaining, preferredMissing };
+  }
+
+  /** Escribe los lotes marcados como cambiados. Pasa a `agotado` al llegar a 0 y revive si recibe. */
+  async function writeLots(tx: Tx, productDocId: string, loc: Loc, lots: Lot[]) {
+    const ca = col(UID.lot, 'currentAmount');
+    const st = col(UID.lot, 'state');
+    const ua = col(UID.lot, 'updatedAt');
+    for (const lot of lots) {
+      if (!lot.changed) continue;
+      let state = lot.state;
+      if (lot.currentAmount <= 0 && state === 'activo') state = 'agotado';
+      if (lot.currentAmount > 0 && state === 'agotado') state = 'activo';
+      await tx
+        .trx(table(UID.lot))
+        .where('id', lot.id)
+        .update({ [ca]: lot.currentAmount, [st]: state, [ua]: new Date() });
+      lot.state = state;
+      lot.changed = false;
+    }
+    tx.touched.set(`${productDocId}|${label(loc)}`, { productDocumentId: productDocId, location: loc });
+  }
+
+  function recordLot(tx: Tx, productDocId: string, loc: Loc, lot: Lot, delta: number) {
+    tx.movements.push({
+      productDocumentId: productDocId,
+      location: label(loc),
+      delta,
+      before: lot.currentAmount - delta,
+      after: lot.currentAmount,
+      lotDocumentId: lot.documentId,
+      lotNumber: lot.lotNumber,
+    });
+  }
+
+  // ── Niveles (lo que el POS aplica en lugar de calcular) ───────────────────────────
+  async function readLevel(productDocId: string, loc: Loc) {
+    let stock = 0;
+    if (loc === null) {
+      const rows = await strapi.db.query(UID.product).findMany({
+        where: { documentId: productDocId },
+        select: ['stock_central', 'publishedAt'],
+      });
+      const ref = rows.find((r: any) => r.publishedAt) ?? rows[0];
+      stock = Number(ref?.stock_central ?? 0);
+    } else {
+      const row = await strapi.db
+        .query(UID.pharmacyStock)
+        .findOne({ where: { pairKey: pairKey(productDocId, loc) }, select: ['stock'] });
+      stock = Number(row?.stock ?? 0);
+    }
+    const lots = await strapi.db.query(UID.lot).findMany({
+      where: {
+        product: { documentId: productDocId },
+        pharmacy: loc ? { documentId: loc } : { id: { $null: true } },
+      },
+      select: ['documentId', 'lotNumber', 'expirationDate', 'currentAmount', 'state'],
+    });
+    return { productDocumentId: productDocId, location: label(loc), stock, lots };
+  }
+
+  async function readLevels(touched: Iterable<{ productDocumentId: string; location: Loc }>) {
+    const out = [];
+    for (const t of touched) out.push(await readLevel(t.productDocumentId, t.location));
+    return out;
+  }
+
+  // ── Ejecutor de operaciones idempotentes ──────────────────────────────────────────
+  interface OpInfo {
+    opKey: string;
+    kind: string;
+    refType?: string;
+    refDocumentId?: string;
+    location?: string;
+    user?: any;
+    notes?: string;
+  }
+
+  async function duplicateResult(opKey: string) {
+    const prev = await strapi.db.query(UID.operation).findOne({ where: { opKey } });
+    if (!prev) return null;
+    const seen = new Map<string, { productDocumentId: string; location: Loc }>();
+    for (const m of (prev.movements ?? []) as Movement[]) {
+      seen.set(`${m.productDocumentId}|${m.location}`, {
+        productDocumentId: m.productDocumentId,
+        location: parseLocation(m.location),
+      });
+    }
+    return {
+      ok: true,
+      duplicate: true,
+      operationId: prev.documentId,
+      warnings: prev.warnings ?? [],
+      levels: await readLevels(seen.values()),
+    };
+  }
+
+  async function runOperation<T>(info: OpInfo, fn: (tx: Tx) => Promise<T>) {
+    const dup = await duplicateResult(info.opKey);
+    if (dup) return dup;
+
+    try {
+      return await strapi.db.transaction(async ({ trx }: any) => {
+        // La fila va primero: una segunda petición con el mismo opKey choca contra el índice
+        // único y espera a que esta termine, en vez de aplicar el movimiento dos veces.
+        const op = await strapi.db.query(UID.operation).create({
+          data: {
+            opKey: info.opKey,
+            kind: info.kind,
+            refType: info.refType ?? null,
+            refDocumentId: info.refDocumentId ?? null,
+            location: info.location ?? null,
+            notes: info.notes ?? null,
+            user: info.user?.id ?? null,
+            movements: [],
+            warnings: [],
+          },
+        });
+
+        const tx: Tx = { trx, movements: [], warnings: [], touched: new Map() };
+        const result = await fn(tx);
+
+        await strapi.db.query(UID.operation).update({
+          where: { id: op.id },
+          data: { movements: tx.movements, warnings: tx.warnings },
+        });
+
+        return {
+          ok: true,
+          duplicate: false,
+          operationId: op.documentId,
+          result,
+          warnings: tx.warnings,
+          levels: await readLevels(tx.touched.values()),
+        };
+      });
+    } catch (e) {
+      if (isUniqueViolation(e)) {
+        const again = await duplicateResult(info.opKey);
+        if (again) return again;
+      }
+      throw e;
+    }
+  }
+
+  // ── Operaciones ───────────────────────────────────────────────────────────────────
+
+  /** Descuenta una venta ya registrada. Lee líneas y farmacia del servidor, no del cliente. */
+  async function sale({ ventaDocumentId, user }: { ventaDocumentId: string; user?: any }) {
+    if (!ventaDocumentId) throw new StockError(400, 'BAD_REQUEST', 'Falta ventaDocumentId');
+    const venta = await findDoc(UID.venta, ventaDocumentId, {
+      venta: { populate: { product: { fields: ['documentId', 'productName'] } } },
+      pharmacy: { fields: ['documentId'] },
+      pharmacies: { fields: ['documentId'] },
+    });
+    if (!venta) throw new StockError(404, 'VENTA_NOT_FOUND', `No existe la venta ${ventaDocumentId}`);
+
+    const mode = await getMode();
+    const requested = venta.pharmacy?.documentId ?? venta.pharmacies?.[0]?.documentId ?? null;
+    if (mode === 'per_pharmacy' && !requested) {
+      throw new StockError(422, 'NO_PHARMACY', 'La venta no tiene farmacia: no se sabe de dónde descontar');
+    }
+    const loc = mode === 'legacy' ? null : requested;
+
+    const byProduct = new Map<string, { name: string; lines: { qty: number; lot: string | null }[] }>();
+    for (const line of venta.venta ?? []) {
+      const pid = line.product?.documentId;
+      const qty = Number(line.quantity ?? 0);
+      if (line.type === 'service' || !pid || qty <= 0) continue;
+      const g = byProduct.get(pid) ?? { name: line.product.productName ?? line.productName, lines: [] };
+      g.lines.push({ qty, lot: line.lotDocumentId || null });
+      byProduct.set(pid, g);
+    }
+
+    return runOperation(
+      { opKey: `sale:${ventaDocumentId}`, kind: 'sale', refType: 'venta-pos', refDocumentId: ventaDocumentId, location: label(loc), user },
+      async (tx) => {
+        const today = todayMx();
+        for (const [pid, g] of [...byProduct].sort(([a], [b]) => a.localeCompare(b))) {
+          const total = g.lines.reduce((s, l) => s + l.qty, 0);
+          const { after } = await mutateStock(tx, pid, loc, (b) => b - total);
+          if (after < 0) {
+            tx.warnings.push({
+              code: 'NEGATIVE_STOCK',
+              productDocumentId: pid,
+              message: `${g.name}: el stock de ${label(loc)} quedó en ${after}`,
+              stock: after,
+            });
+          }
+
+          const lots = await lotsAt(tx, pid, loc);
+          if (!lots.length) continue; // producto sin lotes: se vende solo por stock, como siempre
+          let uncovered = 0;
+          for (const line of g.lines) {
+            const { portions, remaining, preferredMissing } = consume(lots, line.qty, line.lot, today);
+            portions.forEach((p) => recordLot(tx, pid, loc, p.lot, -p.qty));
+            uncovered += remaining;
+            if (preferredMissing) {
+              tx.warnings.push({
+                code: 'LOT_NOT_AT_LOCATION',
+                productDocumentId: pid,
+                message: `${g.name}: el lote elegido no está disponible en ${label(loc)}; se tomó por caducidad`,
+                lotDocumentId: line.lot,
+              });
+            }
+          }
+          if (uncovered > 0) {
+            tx.warnings.push({
+              code: 'LOTS_INSUFFICIENT',
+              productDocumentId: pid,
+              message: `${g.name}: ${uncovered} unidad(es) vendidas sin lote que las cubra`,
+              quantity: uncovered,
+            });
+          }
+          await writeLots(tx, pid, loc, lots);
+        }
+        return { products: byProduct.size };
+      }
+    );
+  }
+
+  /** Regresa al stock de la farmacia lo devuelto. No toca lotes (decisión vigente). */
+  async function saleReturn({ devolucionDocumentId, user }: { devolucionDocumentId: string; user?: any }) {
+    if (!devolucionDocumentId) throw new StockError(400, 'BAD_REQUEST', 'Falta devolucionDocumentId');
+    const dev = await findDoc(UID.devolucion, devolucionDocumentId, {
+      items: { populate: { product: { fields: ['documentId'] } } },
+      pharmacy: { fields: ['documentId'] },
+      pharmacies: { fields: ['documentId'] },
+    });
+    if (!dev) throw new StockError(404, 'DEVOLUCION_NOT_FOUND', `No existe la devolución ${devolucionDocumentId}`);
+
+    const mode = await getMode();
+    const requested = dev.pharmacy?.documentId ?? dev.pharmacies?.[0]?.documentId ?? null;
+    if (mode === 'per_pharmacy' && !requested) {
+      throw new StockError(422, 'NO_PHARMACY', 'La devolución no tiene farmacia');
+    }
+    const loc = mode === 'legacy' ? null : requested;
+
+    const byProduct = new Map<string, number>();
+    for (const item of dev.items ?? []) {
+      const pid = item.product?.documentId;
+      const qty = Number(item.quantity ?? 0);
+      if (!pid || qty <= 0) continue;
+      byProduct.set(pid, (byProduct.get(pid) ?? 0) + qty);
+    }
+
+    return runOperation(
+      { opKey: `return:${devolucionDocumentId}`, kind: 'return', refType: 'devolucion-pos', refDocumentId: devolucionDocumentId, location: label(loc), user },
+      async (tx) => {
+        for (const [pid, qty] of [...byProduct].sort(([a], [b]) => a.localeCompare(b))) {
+          await mutateStock(tx, pid, loc, (b) => b + qty);
+        }
+        return { products: byProduct.size };
+      }
+    );
+  }
+
+  /** Ingresa una compra al destino elegido y crea sus lotes ahí. */
+  async function purchase({ compraDocumentId, user }: { compraDocumentId: string; user?: any }) {
+    if (!compraDocumentId) throw new StockError(400, 'BAD_REQUEST', 'Falta compraDocumentId');
+    const compra = await findDoc(UID.compra, compraDocumentId, {
+      items: { populate: { product: { fields: ['documentId'] } } },
+      destination_pharmacy: { fields: ['documentId'] },
+    });
+    if (!compra) throw new StockError(404, 'COMPRA_NOT_FOUND', `No existe la compra ${compraDocumentId}`);
+
+    const loc = await effective(compra.destination_pharmacy?.documentId ?? null);
+
+    const byProduct = new Map<string, { qty: number; lots: { number: string; qty: number; exp: string | null }[] }>();
+    for (const item of compra.items ?? []) {
+      const pid = item.product?.documentId;
+      const qty = Number(item.quantity ?? 0);
+      if (!pid || qty <= 0) continue;
+      const g = byProduct.get(pid) ?? { qty: 0, lots: [] };
+      g.qty += qty;
+      const number = String(item.numeroLote ?? '').trim();
+      if (number) g.lots.push({ number, qty, exp: item.fechaCaducidad || null });
+      byProduct.set(pid, g);
+    }
+
+    return runOperation(
+      { opKey: `purchase:${compraDocumentId}`, kind: 'purchase', refType: 'compra-pos', refDocumentId: compraDocumentId, location: label(loc), user },
+      async (tx) => {
+        let lotsCreated = 0;
+        for (const [pid, g] of [...byProduct].sort(([a], [b]) => a.localeCompare(b))) {
+          await mutateStock(tx, pid, loc, (b) => b + g.qty);
+          for (const lot of g.lots) {
+            const created = await strapi.documents(UID.lot).create({
+              data: {
+                product: pid,
+                ...(loc ? { pharmacy: loc } : {}),
+                compra: compraDocumentId,
+                lotNumber: lot.number,
+                ...(lot.exp ? { expirationDate: lot.exp } : {}),
+                initialQuantity: lot.qty,
+                currentAmount: lot.qty,
+                state: 'activo',
+              },
+            });
+            lotsCreated++;
+            tx.movements.push({
+              productDocumentId: pid,
+              location: label(loc),
+              delta: lot.qty,
+              before: 0,
+              after: lot.qty,
+              lotDocumentId: created.documentId,
+              lotNumber: lot.number,
+            });
+          }
+        }
+        return { products: byProduct.size, lotsCreated };
+      }
+    );
+  }
+
+  /** Traspaso inmediato entre ubicaciones, respetando lotes (los parte si es parcial). */
+  async function transfer(input: {
+    from: Loc;
+    to: Loc;
+    lines: { productDocumentId: string; quantity: number; lotDocumentId?: string | null }[];
+    notes?: string;
+    idemKey: string;
+    user?: any;
+  }) {
+    if ((await getMode()) === 'legacy') {
+      throw new StockError(409, 'TRANSFERS_DISABLED', 'Los traspasos se habilitan después de migrar el stock a farmacias');
+    }
+    const { from, to, notes, idemKey, user } = input;
+    if (!idemKey) throw new StockError(400, 'BAD_REQUEST', 'Falta idemKey');
+    if (from === to) throw new StockError(400, 'SAME_LOCATION', 'Origen y destino son la misma ubicación');
+    const lines = (input.lines ?? []).map((l) => ({
+      productDocumentId: String(l.productDocumentId ?? ''),
+      quantity: Number(l.quantity),
+      lotDocumentId: l.lotDocumentId || null,
+    }));
+    if (!lines.length) throw new StockError(400, 'BAD_REQUEST', 'El traspaso no tiene líneas');
+    for (const l of lines) {
+      if (!l.productDocumentId || !Number.isInteger(l.quantity) || l.quantity <= 0) {
+        throw new StockError(400, 'BAD_REQUEST', 'Cada línea necesita producto y cantidad entera positiva');
+      }
+    }
+    for (const loc of [from, to]) {
+      if (loc) {
+        const ph = await assertPharmacy(loc);
+        if (ph.estado === 'inactivo') throw new StockError(409, 'PHARMACY_INACTIVE', `${ph.nombre} está inactiva`);
+      }
+    }
+
+    const byProduct = new Map<string, typeof lines>();
+    for (const l of lines) byProduct.set(l.productDocumentId, [...(byProduct.get(l.productDocumentId) ?? []), l]);
+
+    return runOperation(
+      { opKey: `transfer:${idemKey}`, kind: 'transfer', refType: 'stock-transfer', refDocumentId: idemKey, location: `${label(from)}→${label(to)}`, user, notes },
+      async (tx) => {
+        const today = todayMx();
+        const now = new Date();
+        let records = 0;
+
+        for (const [pid, group] of [...byProduct].sort(([a], [b]) => a.localeCompare(b))) {
+          const need = group.reduce((s, l) => s + l.quantity, 0);
+          // Los traspasos no dejan negativos; solo la venta puede.
+          await mutateStock(tx, pid, from, (b) => {
+            if (b < need) {
+              throw new StockError(409, 'INSUFFICIENT_STOCK', `Stock insuficiente en ${label(from)}: hay ${b}, se piden ${need}`, {
+                productDocumentId: pid,
+                available: b,
+                requested: need,
+              });
+            }
+            return b - need;
+          });
+          await mutateStock(tx, pid, to, (b) => b + need);
+
+          const originLots = await lotsAt(tx, pid, from);
+          const destLots = await lotsAt(tx, pid, to);
+
+          for (const line of group) {
+            const { portions, remaining } = consume(originLots, line.quantity, line.lotDocumentId, today);
+            for (const p of portions) {
+              recordLot(tx, pid, from, p.lot, -p.qty);
+
+              // Mismo número y caducidad en destino = mismo lote físico: se suma ahí.
+              let dest = destLots.find(
+                (d) => d.state !== 'vencido' && d.lotNumber === p.lot.lotNumber && d.expirationDate === p.lot.expirationDate
+              );
+              if (dest) {
+                dest.currentAmount += p.qty;
+                dest.changed = true;
+                recordLot(tx, pid, to, dest, p.qty);
+              } else {
+                const created = await strapi.documents(UID.lot).create({
+                  data: {
+                    product: pid,
+                    ...(to ? { pharmacy: to } : {}),
+                    ...(p.lot.compraDocumentId ? { compra: p.lot.compraDocumentId } : {}),
+                    source_lot: p.lot.documentId,
+                    lotNumber: p.lot.lotNumber,
+                    ...(p.lot.expirationDate ? { expirationDate: p.lot.expirationDate } : {}),
+                    initialQuantity: p.qty,
+                    currentAmount: p.qty,
+                    state: 'activo',
+                  },
+                });
+                dest = {
+                  id: created.id,
+                  documentId: created.documentId,
+                  lotNumber: p.lot.lotNumber,
+                  expirationDate: p.lot.expirationDate,
+                  currentAmount: p.qty,
+                  state: 'activo',
+                  compraDocumentId: p.lot.compraDocumentId,
+                };
+                destLots.push(dest);
+                recordLot(tx, pid, to, dest, p.qty);
+              }
+
+              await strapi.documents(UID.transfer).create({
+                data: {
+                  product: pid,
+                  ...(from ? { from_pharmacy: from } : {}),
+                  ...(to ? { to_pharmacy: to } : {}),
+                  quantity: p.qty,
+                  from_lot: p.lot.documentId,
+                  to_lot: dest.documentId,
+                  batchId: idemKey,
+                  transferred_at: now,
+                  ...(user?.documentId ? { transferred_by: user.documentId } : {}),
+                  ...(notes ? { notes } : {}),
+                },
+              });
+              records++;
+            }
+
+            // Lo que los lotes no cubren viaja sin lote (el stock ya se movió arriba).
+            if (remaining > 0) {
+              await strapi.documents(UID.transfer).create({
+                data: {
+                  product: pid,
+                  ...(from ? { from_pharmacy: from } : {}),
+                  ...(to ? { to_pharmacy: to } : {}),
+                  quantity: remaining,
+                  batchId: idemKey,
+                  transferred_at: now,
+                  ...(user?.documentId ? { transferred_by: user.documentId } : {}),
+                  ...(notes ? { notes } : {}),
+                },
+              });
+              records++;
+            }
+          }
+
+          await writeLots(tx, pid, from, originLots);
+          await writeLots(tx, pid, to, destLots);
+        }
+        return { batchId: idemKey, records };
+      }
+    );
+  }
+
+  /** Ajuste manual: fija o suma el stock de una ubicación, o la cantidad de un lote. */
+  async function adjust(input: {
+    productDocumentId: string;
+    location: Loc;
+    mode: 'set' | 'delta';
+    value: number;
+    reason?: string;
+    lotDocumentId?: string | null;
+    idemKey: string;
+    user?: any;
+  }) {
+    const { productDocumentId: pid, mode, reason, lotDocumentId, idemKey, user } = input;
+    const value = Number(input.value);
+    if (!pid) throw new StockError(400, 'BAD_REQUEST', 'Falta productDocumentId');
+    if (!idemKey) throw new StockError(400, 'BAD_REQUEST', 'Falta idemKey');
+    if (mode !== 'set' && mode !== 'delta') throw new StockError(400, 'BAD_REQUEST', 'mode debe ser set o delta');
+    if (!Number.isInteger(value)) throw new StockError(400, 'BAD_REQUEST', 'value debe ser entero');
+    const loc = await effective(input.location);
+    if (loc) await assertPharmacy(loc);
+
+    return runOperation(
+      { opKey: `adjust:${idemKey}`, kind: 'adjust', refType: lotDocumentId ? 'inventory-lot' : 'product', refDocumentId: lotDocumentId || pid, location: label(loc), user, notes: reason },
+      async (tx) => {
+        if (lotDocumentId) {
+          const lots = await lotsAt(tx, pid, loc);
+          const lot = lots.find((l) => l.documentId === lotDocumentId);
+          if (!lot) throw new StockError(404, 'LOT_NOT_AT_LOCATION', `El lote no está en ${label(loc)}`);
+          const next = mode === 'set' ? value : lot.currentAmount + value;
+          if (next < 0) throw new StockError(400, 'NEGATIVE_LOT', 'Un lote no puede quedar negativo');
+          const delta = next - lot.currentAmount;
+          lot.currentAmount = next;
+          lot.changed = true;
+          recordLot(tx, pid, loc, lot, delta);
+          await writeLots(tx, pid, loc, lots);
+          return { lotDocumentId, currentAmount: next };
+        }
+        const { after } = await mutateStock(tx, pid, loc, (b) => (mode === 'set' ? value : b + value));
+        return { stock: after };
+      }
+    );
+  }
+
+  /** Merma: marca lotes completos como vencidos y descuenta su cantidad del stock de su ubicación. */
+  async function discard(input: { lotDocumentIds: string[]; reason: string; idemKey?: string; user?: any }) {
+    const ids = [...new Set((input.lotDocumentIds ?? []).map(String).filter(Boolean))].sort();
+    if (!ids.length) throw new StockError(400, 'BAD_REQUEST', 'No hay lotes que desechar');
+    if (!DISCARD_REASONS.includes(input.reason)) throw new StockError(400, 'BAD_REQUEST', 'Motivo de merma inválido');
+    const mode = await getMode();
+
+    const found = await strapi.db.query(UID.lot).findMany({
+      where: { documentId: { $in: ids } },
+      select: ['documentId'],
+      populate: { product: { select: ['documentId', 'productName'] }, pharmacy: { select: ['documentId'] } },
+    });
+    const groups = new Map<string, { pid: string; loc: Loc; lots: string[] }>();
+    const failed: string[] = [];
+    for (const l of found) {
+      if (!l.product?.documentId) {
+        failed.push(l.documentId);
+        continue;
+      }
+      const loc = mode === 'legacy' ? null : l.pharmacy?.documentId ?? null;
+      const key = `${l.product.documentId}|${label(loc)}`;
+      const g = groups.get(key) ?? { pid: l.product.documentId, loc, lots: [] };
+      g.lots.push(l.documentId);
+      groups.set(key, g);
+    }
+    for (const id of ids) if (!found.some((l: any) => l.documentId === id)) failed.push(id);
+
+    const discardedBy = input.user?.username ?? 'desconocido';
+    return runOperation(
+      { opKey: `discard:${input.idemKey || ids.join(',')}`, kind: 'discard', refType: 'inventory-lot', location: 'varios', user: input.user, notes: input.reason },
+      async (tx) => {
+        const now = new Date();
+        let discardedLots = 0;
+        for (const g of [...groups.values()].sort((a, b) => a.pid.localeCompare(b.pid))) {
+          const lots = await lotsAt(tx, g.pid, g.loc);
+          let discarded = 0;
+          for (const lot of lots.filter((l) => g.lots.includes(l.documentId))) {
+            if (lot.state !== 'activo' || lot.currentAmount <= 0) {
+              tx.warnings.push({ code: 'LOT_NOT_DISCARDABLE', productDocumentId: g.pid, message: `El lote ${lot.lotNumber ?? ''} ya no está activo`, lotDocumentId: lot.documentId });
+              continue;
+            }
+            const qty = lot.currentAmount;
+            await tx
+              .trx(table(UID.lot))
+              .where('id', lot.id)
+              .update({
+                [col(UID.lot, 'currentAmount')]: 0,
+                [col(UID.lot, 'state')]: 'vencido',
+                [col(UID.lot, 'discardedAt')]: now,
+                [col(UID.lot, 'discardedBy')]: discardedBy,
+                [col(UID.lot, 'discardedQuantity')]: qty,
+                [col(UID.lot, 'discardReason')]: input.reason,
+                [col(UID.lot, 'updatedAt')]: now,
+              });
+            lot.currentAmount = 0;
+            recordLot(tx, g.pid, g.loc, lot, -qty);
+            discarded += qty;
+            discardedLots++;
+          }
+          // Mismo piso en 0 que tenía la merma desde el POS.
+          if (discarded > 0) await mutateStock(tx, g.pid, g.loc, (b) => Math.max(0, b - discarded));
+        }
+        return { discardedLots, failed };
+      }
+    );
+  }
+
+  /** Niveles de una ubicación para las pantallas de administración y reconciliación. */
+  async function levels({ pharmacy }: { pharmacy: Loc }) {
+    const loc = pharmacy;
+    let minDefault = 5;
+    const rows = new Map<string, { productDocumentId: string; productName: string; stock: number; minStock: number | null; lotsSum: number; lotsCount: number }>();
+
+    if (loc === null) {
+      const products = await strapi.db.query(UID.product).findMany({
+        select: ['documentId', 'productName', 'stock_central', 'publishedAt'],
+      });
+      for (const p of products) {
+        const cur = rows.get(p.documentId);
+        // La fila publicada manda sobre el borrador.
+        if (cur && !p.publishedAt) continue;
+        rows.set(p.documentId, { productDocumentId: p.documentId, productName: p.productName, stock: Number(p.stock_central ?? 0), minStock: null, lotsSum: 0, lotsCount: 0 });
+      }
+    } else {
+      const ph = await assertPharmacy(loc);
+      const full = await strapi.db.query(UID.pharmacy).findOne({ where: { id: ph.id }, select: ['min_stock_default'] });
+      minDefault = Number(full?.min_stock_default ?? 5);
+      const stocks = await strapi.db.query(UID.pharmacyStock).findMany({
+        where: { pharmacy: { documentId: loc } },
+        select: ['stock', 'min_stock'],
+        populate: { product: { select: ['documentId', 'productName'] } },
+      });
+      for (const s of stocks) {
+        if (!s.product?.documentId) continue;
+        rows.set(s.product.documentId, {
+          productDocumentId: s.product.documentId,
+          productName: s.product.productName,
+          stock: Number(s.stock ?? 0),
+          minStock: s.min_stock ?? null,
+          lotsSum: 0,
+          lotsCount: 0,
+        });
+      }
+    }
+
+    const lots = await strapi.db.query(UID.lot).findMany({
+      where: { state: 'activo', pharmacy: loc ? { documentId: loc } : { id: { $null: true } } },
+      select: ['currentAmount'],
+      populate: { product: { select: ['documentId', 'productName'] } },
+    });
+    for (const l of lots) {
+      const pid = l.product?.documentId;
+      if (!pid) continue;
+      const r = rows.get(pid) ?? { productDocumentId: pid, productName: l.product.productName, stock: 0, minStock: null, lotsSum: 0, lotsCount: 0 };
+      r.lotsSum += Number(l.currentAmount ?? 0);
+      r.lotsCount++;
+      rows.set(pid, r);
+    }
+
+    return { location: label(loc), mode: await getMode(), minStockDefault: minDefault, items: [...rows.values()] };
+  }
+
+  /**
+   * Migración única (decisión 5): todo el stock actual y sus lotes están físicamente en la
+   * farmacia que vende. Pasa `stock_central` a su `pharmacy-stock`, deja la bodega en 0 y
+   * asigna los lotes sin farmacia. Es idempotente por construcción: un producto migrado queda
+   * con bodega 0 y sin lotes huérfanos, así que volver a correrla no hace nada.
+   */
+  async function migrate({ pharmacyDocumentId, dryRun, user }: { pharmacyDocumentId: string; dryRun: boolean; user?: any }) {
+    if ((await getMode()) === 'per_pharmacy') {
+      throw new StockError(409, 'ALREADY_MIGRATED', 'El stock ya está por farmacia; la migración no se vuelve a correr');
+    }
+    if (!pharmacyDocumentId) throw new StockError(400, 'BAD_REQUEST', 'Falta pharmacyDocumentId');
+    const pharmacy = await assertPharmacy(pharmacyDocumentId);
+
+    const openCajas = await strapi.db.query(UID.caja).count({ where: { estado: 'Abierta' } });
+
+    const products = await strapi.db.query(UID.product).findMany({
+      select: ['documentId', 'stock_central', 'publishedAt'],
+    });
+    const byDoc = new Map<string, { published: number | null; draft: number | null }>();
+    for (const p of products) {
+      const cur = byDoc.get(p.documentId) ?? { published: null, draft: null };
+      if (p.publishedAt) cur.published = p.stock_central;
+      else cur.draft = p.stock_central;
+      byDoc.set(p.documentId, cur);
+    }
+
+    const orphanLots = await strapi.db.query(UID.lot).findMany({
+      where: { pharmacy: { id: { $null: true } } },
+      select: ['id', 'currentAmount', 'state'],
+      populate: { product: { select: ['documentId'] } },
+    });
+    const lotsByProduct = new Map<string, number[]>();
+    let lotsWithoutProduct = 0;
+    for (const l of orphanLots) {
+      const pid = l.product?.documentId;
+      // Un lote sin producto (o de un producto ya borrado) no tiene stock que mover: se reporta.
+      if (!pid || !byDoc.has(pid)) {
+        lotsWithoutProduct++;
+        continue;
+      }
+      lotsByProduct.set(pid, [...(lotsByProduct.get(pid) ?? []), l.id]);
+    }
+
+    let units = 0;
+    let withStock = 0;
+    let negative = 0;
+    let divergent = 0;
+    let nullStock = 0;
+    for (const v of byDoc.values()) {
+      const base = Number((v.published ?? v.draft) ?? 0);
+      if (v.published !== null && v.draft !== null && Number(v.published ?? 0) !== Number(v.draft ?? 0)) divergent++;
+      if ((v.published ?? v.draft) === null) nullStock++;
+      if (base !== 0) withStock++;
+      if (base < 0) negative++;
+      units += base;
+    }
+
+    const summary = {
+      pharmacy: pharmacy.nombre,
+      products: byDoc.size,
+      productsWithStock: withStock,
+      units,
+      negativeProducts: negative,
+      nullStockProducts: nullStock,
+      divergentDraftRows: divergent,
+      orphanLots: orphanLots.length,
+      lotsWithoutProduct,
+      openCajas,
+    };
+    if (dryRun) return { ok: true, dryRun: true, summary };
+    if (openCajas > 0) throw new StockError(409, 'OPEN_CAJAS', `Hay ${openCajas} caja(s) abiertas: ciérralas antes de migrar`, summary);
+
+    const pending = [...byDoc.keys()].filter((pid) => {
+      const v = byDoc.get(pid)!;
+      return Number((v.published ?? v.draft) ?? 0) !== 0 || lotsByProduct.has(pid);
+    });
+
+    const CHUNK = 50;
+    for (let i = 0; i < pending.length; i += CHUNK) {
+      const chunk = pending.slice(i, i + CHUNK);
+      await strapi.db.transaction(async ({ trx }: any) => {
+        const tx: Tx = { trx, movements: [], warnings: [], touched: new Map() };
+        for (const pid of chunk) {
+          const base = await lockBodega(tx, pid);
+          if (base !== 0) {
+            await mutateStock(tx, pid, pharmacyDocumentId, (b) => b + base);
+            await mutateStock(tx, pid, null, () => 0);
+          }
+          for (const lotId of lotsByProduct.get(pid) ?? []) {
+            await strapi.db.query(UID.lot).update({ where: { id: lotId }, data: { pharmacy: pharmacy.id } });
+          }
+        }
+      });
+    }
+
+    // Los productos que nunca capturaron stock pasan de null a 0: evita NaN en las cuentas.
+    await strapi.db
+      .connection(table(UID.product))
+      .whereNull(col(UID.product, 'stock_central'))
+      .update({ [col(UID.product, 'stock_central')]: 0 });
+
+    await strapi.db.query(UID.operation).create({
+      data: {
+        opKey: `migration:v1:${pharmacyDocumentId}`,
+        kind: 'migration',
+        refType: 'pharmacy',
+        refDocumentId: pharmacyDocumentId,
+        location: pharmacyDocumentId,
+        user: user?.id ?? null,
+        movements: [],
+        warnings: [],
+        notes: JSON.stringify(summary),
+      },
+    });
+    await setMode('per_pharmacy');
+
+    return { ok: true, dryRun: false, migratedProducts: pending.length, summary };
+  }
+
+  return {
+    getMode,
+    setMode,
+    sale,
+    saleReturn,
+    purchase,
+    transfer,
+    adjust,
+    discard,
+    levels,
+    migrate,
+  };
+};

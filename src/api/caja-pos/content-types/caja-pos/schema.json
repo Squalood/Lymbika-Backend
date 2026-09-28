@@ -76,6 +76,12 @@
     },
     "diffTransfe": {
       "type": "decimal"
+    },
+    "farmacia": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::pharmacy.pharmacy",
+      "inversedBy": "cajas"
     }
   }
 }

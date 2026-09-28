@@ -37,6 +37,76 @@ async function asegurarVariantes(strapi, file, motivo: string) {
   }
 }
 
+/**
+ * Candados de la base de datos que Strapi no sabe declarar en un schema.
+ *
+ * - `pharmacy_stocks.pair_key` único: una sola fila por par producto-farmacia. Strapi no
+ *   crea índices compuestos sobre relaciones (viven en tablas `_lnk`), así que /pos-stock
+ *   escribe `pairKey = <productDocId>__<pharmacyDocId>` y la unicidad la da este índice.
+ * - `stock_operations.op_key` único: hace idempotentes los reintentos de /pos-stock.
+ *
+ * Antes de crear el primero hay que completar el `pairKey` de las filas hechas a mano y
+ * fusionar duplicados (sumando su stock), o el índice no se podría crear.
+ *
+ * Se corre en cada arranque: el sync de schema de Strapi puede quitar índices que no conoce.
+ * Nunca lanza: sin el índice el stock sigue funcionando, pero se registra como error.
+ */
+async function asegurarIndicesDeStock(strapi) {
+  const PS = 'api::pharmacy-stock.pharmacy-stock';
+  const OP = 'api::stock-operation.stock-operation';
+  const client = strapi.db.dialect?.client;
+  if (client !== 'postgres' && client !== 'sqlite') {
+    strapi.log.warn(`[stock] base "${client}": no se crean los índices únicos de stock`);
+    return;
+  }
+
+  try {
+    const knex = strapi.db.connection;
+    const ps = strapi.db.metadata.get(PS);
+    const op = strapi.db.metadata.get(OP);
+    const pairCol = ps.attributes.pairKey.columnName;
+    const stockCol = ps.attributes.stock.columnName;
+
+    const rows = await strapi.db.query(PS).findMany({
+      select: ['id', 'pairKey', 'stock'],
+      populate: { product: { select: ['documentId'] }, pharmacy: { select: ['documentId'] } },
+      orderBy: { id: 'asc' },
+    });
+    const keep = new Map<string, { id: number; stock: number; changed: boolean }>();
+    const extras: number[] = [];
+    for (const r of rows) {
+      if (!r.product?.documentId || !r.pharmacy?.documentId) continue;
+      const key = `${r.product.documentId}__${r.pharmacy.documentId}`;
+      const k = keep.get(key);
+      if (!k) {
+        keep.set(key, { id: r.id, stock: Number(r.stock ?? 0), changed: r.pairKey !== key });
+      } else {
+        k.stock += Number(r.stock ?? 0);
+        k.changed = true;
+        extras.push(r.id);
+      }
+    }
+    for (const [key, k] of keep) {
+      if (k.changed) await knex(ps.tableName).where('id', k.id).update({ [pairCol]: key, [stockCol]: k.stock });
+    }
+    for (const id of extras) await strapi.db.query(PS).delete({ where: { id } });
+    if (extras.length) strapi.log.warn(`[stock] se fusionaron ${extras.length} fila(s) duplicadas de pharmacy-stock`);
+
+    await knex.raw('CREATE UNIQUE INDEX IF NOT EXISTS pharmacy_stocks_pair_key_uq ON ?? (??) WHERE ?? IS NOT NULL', [
+      ps.tableName,
+      pairCol,
+      pairCol,
+    ]);
+    await knex.raw('CREATE UNIQUE INDEX IF NOT EXISTS stock_operations_op_key_uq ON ?? (??)', [
+      op.tableName,
+      op.attributes.opKey.columnName,
+    ]);
+    strapi.log.info('[stock] índices únicos de pharmacy-stock y stock-operation listos');
+  } catch (error) {
+    strapi.log.error(`[stock] no se pudieron asegurar los índices únicos: ${error.message}`);
+  }
+}
+
 export default {
   /**
    * An asynchronous register function that runs before
@@ -53,7 +123,9 @@ export default {
    * This gives you an opportunity to set up your data model,
    * run jobs, or perform some special logic.
    */
-  bootstrap({ strapi }) {
+  async bootstrap({ strapi }) {
+    await asegurarIndicesDeStock(strapi);
+
     const provider = strapi.config.get('plugin::upload.provider');
     if (provider !== 'aws-s3') {
       strapi.log.info(`[media] provider "${provider}": no se generan variantes WebP`);

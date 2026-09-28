@@ -32,6 +32,9 @@
     "min_stock": {
       "type": "integer",
       "default": 5
+    },
+    "pairKey": {
+      "type": "string"
     }
   }
 }

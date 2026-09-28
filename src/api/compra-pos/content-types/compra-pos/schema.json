@@ -56,6 +56,11 @@
       "relation": "oneToMany",
       "target": "api::inventory-lot.inventory-lot",
       "mappedBy": "compra"
+    },
+    "destination_pharmacy": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::pharmacy.pharmacy"
     }
   }
 }
