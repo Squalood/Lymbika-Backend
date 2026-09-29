@@ -817,6 +817,65 @@ export default ({ strapi }: { strapi: any }) => {
     );
   }
 
+  /**
+   * Conteo físico de un producto en una ubicación ("Cuadrar"). Cada lote queda con lo contado
+   * y el stock de la ubicación queda en la suma de sus lotes más lo contado sin lote. Así stock
+   * y lotes coinciden siempre después de cuadrar; la diferencia contra lo que había se aplica
+   * al total (es una corrección real). Todo en una transacción.
+   */
+  async function count(input: {
+    productDocumentId: string;
+    location: Loc;
+    lots: { lotDocumentId: string; amount: number }[];
+    unlotted: number;
+    reason?: string;
+    idemKey: string;
+    user?: any;
+  }) {
+    const { productDocumentId: pid, idemKey, user } = input;
+    const loc = input.location;
+    const unlotted = Number(input.unlotted ?? 0);
+    const counted = (input.lots ?? []).map((l) => ({ id: String(l.lotDocumentId ?? ''), amount: Number(l.amount) }));
+    if (!pid) throw new StockError(400, 'BAD_REQUEST', 'Falta productDocumentId');
+    if (!idemKey) throw new StockError(400, 'BAD_REQUEST', 'Falta idemKey');
+    if (!Number.isInteger(unlotted) || unlotted < 0) throw new StockError(400, 'BAD_REQUEST', 'Las unidades sin lote deben ser un entero ≥ 0');
+    for (const c of counted) {
+      if (!c.id || !Number.isInteger(c.amount) || c.amount < 0) {
+        throw new StockError(400, 'BAD_REQUEST', 'Cada lote contado necesita una cantidad entera ≥ 0');
+      }
+    }
+    if (loc) await assertPharmacy(loc);
+
+    return runOperation(
+      { opKey: `count:${idemKey}`, kind: 'adjust', refType: 'count', refDocumentId: pid, location: label(loc), user, notes: input.reason || 'Conteo físico' },
+      async (tx) => {
+        // Orden de bloqueo de siempre: producto → farmacias → lotes.
+        await lockTotal(tx, pid);
+        if (loc) await lockPharmacyStock(tx, pid, loc);
+        else await sumPharmacies(tx, pid);
+        const lots = await lotsAt(tx, pid, loc);
+
+        for (const c of counted) {
+          const lot = lots.find((l) => l.documentId === c.id);
+          if (!lot) throw new StockError(404, 'LOT_NOT_AT_LOCATION', `Un lote contado no está en ${label(loc)}`);
+          const delta = c.amount - lot.currentAmount;
+          if (delta === 0) continue;
+          lot.currentAmount = c.amount;
+          lot.changed = true;
+          recordLot(tx, pid, loc, lot, delta);
+        }
+        await writeLots(tx, pid, loc, lots);
+
+        // Lo que hay = lo que tienen los lotes vigentes (los no contados conservan su cantidad)
+        // más lo contado sin lote. Los vencidos ya se dieron de baja y no cuentan.
+        const inLots = lots.filter((l) => l.state !== 'vencido').reduce((s, l) => s + l.currentAmount, 0);
+        const target = inLots + unlotted;
+        const { before, after } = await mutateStock(tx, pid, loc, () => target);
+        return { stock: after, previous: before, inLots, unlotted };
+      }
+    );
+  }
+
   /** Merma: marca lotes completos como vencidos y descuenta su cantidad del stock de su ubicación. */
   async function discard(input: { lotDocumentIds: string[]; reason: string; idemKey?: string; user?: any }) {
     const ids = [...new Set((input.lotDocumentIds ?? []).map(String).filter(Boolean))].sort();
@@ -954,6 +1013,7 @@ export default ({ strapi }: { strapi: any }) => {
     purchase,
     transfer,
     adjust,
+    count,
     discard,
     levels,
   };

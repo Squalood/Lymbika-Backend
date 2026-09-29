@@ -60,6 +60,19 @@ export default ({ strapi }: { strapi: any }) => {
       });
     }),
 
+    count: handle((ctx) => {
+      const b = body(ctx);
+      return core().count({
+        productDocumentId: b.productDocumentId,
+        location: parseLocation(b.location),
+        lots: b.lots,
+        unlotted: b.unlotted,
+        reason: b.reason,
+        idemKey: b.idemKey,
+        user: user(ctx),
+      });
+    }),
+
     discardLot: handle((ctx) => {
       const b = body(ctx);
       return core().discard({ lotDocumentIds: b.lotDocumentIds, reason: b.reason, idemKey: b.idemKey, user: user(ctx) });
