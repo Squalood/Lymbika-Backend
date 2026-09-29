@@ -943,6 +943,136 @@ export default ({ strapi }: { strapi: any }) => {
     );
   }
 
+  /**
+   * Foto de la bodega por producto para "Pasar toda la bodega": bodega (total − farmacias),
+   * stock actual en la farmacia destino y lotes sin farmacia. Sin bloqueos: solo decide qué
+   * productos procesar; cada uno se vuelve a leer bloqueado dentro de la transacción.
+   */
+  async function bodegaSnapshot(to: string) {
+    const rows = new Map<
+      string,
+      { productDocumentId: string; productName: string; bodega: number; toStock: number; lots: number; lotUnits: number }
+    >();
+    const products = await strapi.db.query(UID.product).findMany({
+      select: ['documentId', 'productName', 'stock_central', 'publishedAt'],
+    });
+    for (const p of products) {
+      const cur = rows.get(p.documentId);
+      if (cur && !p.publishedAt) continue; // la publicada manda sobre el borrador
+      rows.set(p.documentId, { productDocumentId: p.documentId, productName: p.productName, bodega: Number(p.stock_central ?? 0), toStock: 0, lots: 0, lotUnits: 0 });
+    }
+    const phRows = await strapi.db
+      .connection(table(UID.pharmacyStock))
+      .select(`${col(UID.pharmacyStock, 'pairKey')} as pk`, `${col(UID.pharmacyStock, 'stock')} as stock`);
+    for (const r of phRows) {
+      const [pid, ph] = String(r.pk ?? '').split('__');
+      const row = rows.get(pid);
+      if (!row) continue;
+      row.bodega -= Number(r.stock ?? 0);
+      if (ph === to) row.toStock = Number(r.stock ?? 0);
+    }
+    const lots = await strapi.db.query(UID.lot).findMany({
+      where: { pharmacy: { id: { $null: true } } },
+      select: ['currentAmount', 'state'],
+      populate: { product: { select: ['documentId'] } },
+    });
+    for (const l of lots) {
+      const row = rows.get(l.product?.documentId);
+      if (!row) continue;
+      row.lots++;
+      if (l.state === 'activo') row.lotUnits += Number(l.currentAmount ?? 0);
+    }
+    return [...rows.values()];
+  }
+
+  /**
+   * Pasa a una farmacia todo lo que hay en la bodega: el stock y **todos** sus lotes (cualquier
+   * estado, porque físicamente estaban ahí). El total no cambia.
+   *
+   * Si la farmacia estaba en negativo, esas unidades se vendieron sin lote antes de que los lotes
+   * llegaran: se descuentan de los lotes recién movidos (por caducidad), sin pasar de lo que los
+   * lotes exceden al stock. Así no aparece un descuadre por cada producto ya vendido.
+   *
+   * Va por tandas (`limit` productos por transacción) para no pasar el tiempo límite de la
+   * petición con miles de productos. No hace falta llave por producto: una segunda corrida
+   * encuentra la bodega en 0 y no mueve nada. Con `dryRun` solo devuelve el resumen.
+   */
+  async function moveAll(input: { to: Loc; dryRun?: boolean; limit?: number; idemKey?: string; user?: any }) {
+    const to = input.to;
+    if (!to) throw new StockError(400, 'BAD_REQUEST', 'Elige la farmacia destino');
+    const ph = await assertPharmacy(to);
+    if (ph.estado === 'inactivo') throw new StockError(409, 'PHARMACY_INACTIVE', `${ph.nombre} está inactiva`);
+
+    const snapshot = await bodegaSnapshot(to);
+    const pending = snapshot
+      .filter((r) => r.bodega > 0 || r.lots > 0)
+      .sort((a, b) => a.productDocumentId.localeCompare(b.productDocumentId));
+    const negatives = snapshot.filter((r) => r.bodega < 0);
+    const summary = {
+      pharmacy: { documentId: ph.documentId, nombre: ph.nombre },
+      products: pending.length,
+      units: pending.reduce((s, r) => s + Math.max(0, r.bodega), 0),
+      lots: pending.reduce((s, r) => s + r.lots, 0),
+      soldUnlotted: pending.reduce((s, r) => s + Math.max(0, -r.toStock), 0),
+      negativeBodega: negatives.length,
+      negativeSamples: negatives.slice(0, 20).map((r) => ({ productDocumentId: r.productDocumentId, productName: r.productName, bodega: r.bodega })),
+    };
+    if (input.dryRun) return { ok: true, dryRun: true, ...summary };
+
+    if (!input.idemKey) throw new StockError(400, 'BAD_REQUEST', 'Falta idemKey');
+    const limit = Math.min(Math.max(Number(input.limit) || 100, 1), 300);
+    const batch = pending.slice(0, limit);
+
+    const res: any = await runOperation(
+      { opKey: `move-all:${input.idemKey}`, kind: 'migration', refType: 'pharmacy', refDocumentId: to, location: `bodega→${label(to)}`, user: input.user, notes: 'Pasar toda la bodega a farmacia' },
+      async (tx) => {
+        const today = todayMx();
+        let units = 0;
+        let lotsMoved = 0;
+        let soldApplied = 0;
+        for (const item of batch) {
+          const pid = item.productDocumentId;
+          // Bodega bloqueada → sale todo lo positivo; un negativo no se mueve (se reporta).
+          let amount = 0;
+          await mutateStock(tx, pid, null, (b) => {
+            amount = Math.max(0, b);
+            return b - amount;
+          });
+          const { before: toBefore, after: toAfter } = await mutateStock(tx, pid, to, (b) => b + amount);
+          units += amount;
+
+          const moved = await lotsAt(tx, pid, null);
+          const there = await lotsAt(tx, pid, to);
+          for (const lot of moved) {
+            await strapi.db.query(UID.lot).update({ where: { id: lot.id }, data: { pharmacy: ph.id } });
+            if (lot.currentAmount > 0) {
+              recordLot(tx, pid, null, { ...lot, currentAmount: 0 }, -lot.currentAmount);
+              recordLot(tx, pid, to, lot, lot.currentAmount);
+            }
+            lotsMoved++;
+          }
+
+          const all = [...there, ...moved];
+          const inLots = all.filter((l) => l.state === 'activo').reduce((s, l) => s + l.currentAmount, 0);
+          const sold = Math.min(Math.max(0, -toBefore), Math.max(0, inLots - toAfter));
+          if (sold > 0) {
+            const { portions } = consume(all, sold, null, today);
+            portions.forEach((p) => recordLot(tx, pid, to, p.lot, -p.qty));
+            await writeLots(tx, pid, to, all);
+            soldApplied += portions.reduce((s, p) => s + p.qty, 0);
+          }
+          if (item.bodega < 0) {
+            tx.warnings.push({ code: 'NEGATIVE_BODEGA', productDocumentId: pid, message: `${item.productName}: la bodega estaba en ${item.bodega}; no se movió stock`, stock: item.bodega });
+          }
+        }
+        // Con cientos de productos, releer cada nivel para la respuesta es caro y nadie lo usa.
+        tx.touched.clear();
+        return { products: batch.length, units, lotsMoved, soldApplied };
+      }
+    );
+    return { ...res, remaining: res.duplicate ? pending.length : pending.length - batch.length };
+  }
+
   /** Niveles de una ubicación para las pantallas de administración y reconciliación. */
   async function levels({ pharmacy }: { pharmacy: Loc }) {
     const loc = pharmacy;
@@ -1015,6 +1145,7 @@ export default ({ strapi }: { strapi: any }) => {
     adjust,
     count,
     discard,
+    moveAll,
     levels,
   };
 };

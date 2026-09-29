@@ -78,6 +78,17 @@ export default ({ strapi }: { strapi: any }) => {
       return core().discard({ lotDocumentIds: b.lotDocumentIds, reason: b.reason, idemKey: b.idemKey, user: user(ctx) });
     }),
 
+    moveAll: handle((ctx) => {
+      const b = body(ctx);
+      return core().moveAll({
+        to: parseLocation(b.to),
+        dryRun: b.dryRun === true,
+        limit: b.limit,
+        idemKey: b.idemKey,
+        user: user(ctx),
+      });
+    }),
+
     levels: handle((ctx) => core().levels({ pharmacy: parseLocation(ctx.query.pharmacy) })),
   };
 };

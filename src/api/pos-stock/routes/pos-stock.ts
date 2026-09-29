@@ -18,6 +18,7 @@ export default {
     route('POST', '/pos-stock/adjust', 'adjust'),
     route('POST', '/pos-stock/count', 'count'),
     route('POST', '/pos-stock/discard-lot', 'discardLot'),
+    route('POST', '/pos-stock/move-all', 'moveAll'),
     route('GET', '/pos-stock/levels', 'levels'),
   ],
 };
