@@ -26,12 +26,12 @@
     },
     "stock": {
       "type": "integer",
-      "default": 0,
-      "required": true
+      "required": true,
+      "default": 0
     },
     "min_stock": {
       "type": "integer",
-      "default": 5
+      "default": 0
     },
     "pairKey": {
       "type": "string"

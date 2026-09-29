@@ -1433,7 +1433,7 @@ export interface ApiPharmacyStockPharmacyStock
       'api::pharmacy-stock.pharmacy-stock'
     > &
       Schema.Attribute.Private;
-    min_stock: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<5>;
+    min_stock: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
     pairKey: Schema.Attribute.String;
     pharmacy: Schema.Attribute.Relation<'manyToOne', 'api::pharmacy.pharmacy'>;
     product: Schema.Attribute.Relation<'manyToOne', 'api::product.product'>;
