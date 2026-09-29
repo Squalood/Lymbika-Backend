@@ -100,12 +100,6 @@
     },
     "managementFee": {
       "type": "decimal"
-    },
-    "pharmacy": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::pharmacy.pharmacy",
-      "inversedBy": "ventas"
     }
   }
 }

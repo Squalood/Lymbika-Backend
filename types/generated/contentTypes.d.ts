@@ -492,7 +492,6 @@ export interface ApiCajaPosCajaPos extends Struct.CollectionTypeSchema {
     expectedMXN: Schema.Attribute.Decimal;
     expectedTransfe: Schema.Attribute.Decimal;
     expectedUSD: Schema.Attribute.Decimal;
-    farmacia: Schema.Attribute.Relation<'manyToOne', 'api::pharmacy.pharmacy'>;
     fecha: Schema.Attribute.DateTime;
     finalCard: Schema.Attribute.Decimal;
     finalCashMXN: Schema.Attribute.Decimal;
@@ -812,7 +811,6 @@ export interface ApiDevolucionPosDevolucionPos
       'oneToMany',
       'api::pharmacy.pharmacy'
     >;
-    pharmacy: Schema.Attribute.Relation<'manyToOne', 'api::pharmacy.pharmacy'>;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -1461,17 +1459,12 @@ export interface ApiPharmacyPharmacy extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
-    cajas: Schema.Attribute.Relation<'oneToMany', 'api::caja-pos.caja-pos'>;
     clave: Schema.Attribute.UID<'nombre'> & Schema.Attribute.Required;
     contacto_email: Schema.Attribute.Email;
     contacto_tel: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    devoluciones: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::devolucion-pos.devolucion-pos'
-    >;
     direccion: Schema.Attribute.Text;
     estado: Schema.Attribute.Enumeration<['activo', 'inactivo']> &
       Schema.Attribute.DefaultTo<'activo'>;
@@ -1498,7 +1491,6 @@ export interface ApiPharmacyPharmacy extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    ventas: Schema.Attribute.Relation<'oneToMany', 'api::venta-pos.venta-pos'>;
   };
 }
 
@@ -1982,7 +1974,6 @@ export interface ApiVentaPosVentaPos extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::pharmacy.pharmacy'
     >;
-    pharmacy: Schema.Attribute.Relation<'manyToOne', 'api::pharmacy.pharmacy'>;
     publishedAt: Schema.Attribute.DateTime;
     recargoTarjeta: Schema.Attribute.Decimal;
     recibido: Schema.Attribute.Decimal;

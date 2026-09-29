@@ -54,6 +54,7 @@ export default ({ strapi }: { strapi: any }) => {
         value: b.value,
         reason: b.reason,
         lotDocumentId: b.lotDocumentId,
+        affectStock: b.affectStock,
         idemKey: b.idemKey,
         user: user(ctx),
       });

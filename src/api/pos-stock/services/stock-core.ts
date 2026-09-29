@@ -462,14 +462,13 @@ export default ({ strapi }: { strapi: any }) => {
     if (!ventaDocumentId) throw new StockError(400, 'BAD_REQUEST', 'Falta ventaDocumentId');
     const venta = await findDoc(UID.venta, ventaDocumentId, {
       venta: { populate: { product: { fields: ['documentId', 'productName'] } } },
-      pharmacy: { fields: ['documentId'] },
       pharmacies: { fields: ['documentId'] },
     });
     if (!venta) throw new StockError(404, 'VENTA_NOT_FOUND', `No existe la venta ${ventaDocumentId}`);
 
     // Sin farmacia (venta vieja o registrada fuera de una caja) se descuenta de la bodega: el
     // total baja igual, que es lo que cuadra la reconciliación.
-    const loc: Loc = venta.pharmacy?.documentId ?? venta.pharmacies?.[0]?.documentId ?? null;
+    const loc: Loc = venta.pharmacies?.[0]?.documentId ?? null;
 
     const byProduct = new Map<string, { name: string; lines: { qty: number; lot: string | null }[] }>();
     for (const line of venta.venta ?? []) {
@@ -534,13 +533,12 @@ export default ({ strapi }: { strapi: any }) => {
     if (!devolucionDocumentId) throw new StockError(400, 'BAD_REQUEST', 'Falta devolucionDocumentId');
     const dev = await findDoc(UID.devolucion, devolucionDocumentId, {
       items: { populate: { product: { fields: ['documentId'] } } },
-      pharmacy: { fields: ['documentId'] },
       pharmacies: { fields: ['documentId'] },
     });
     if (!dev) throw new StockError(404, 'DEVOLUCION_NOT_FOUND', `No existe la devolución ${devolucionDocumentId}`);
 
     // Sin farmacia, lo devuelto entra a la bodega.
-    const loc: Loc = dev.pharmacy?.documentId ?? dev.pharmacies?.[0]?.documentId ?? null;
+    const loc: Loc = dev.pharmacies?.[0]?.documentId ?? null;
 
     const byProduct = new Map<string, number>();
     for (const item of dev.items ?? []) {
@@ -769,10 +767,17 @@ export default ({ strapi }: { strapi: any }) => {
     value: number;
     reason?: string;
     lotDocumentId?: string | null;
+    /**
+     * Solo con lote. `true` (por defecto): el lote y el stock de la ubicación se mueven juntos
+     * (rotura, pérdida de ese lote). `false`: solo el lote, para cuadrar lotes contra el stock
+     * sin tocar el total (lo que marca la reconciliación).
+     */
+    affectStock?: boolean;
     idemKey: string;
     user?: any;
   }) {
     const { productDocumentId: pid, mode, reason, lotDocumentId, idemKey, user } = input;
+    const affectStock = input.affectStock !== false;
     const value = Number(input.value);
     if (!pid) throw new StockError(400, 'BAD_REQUEST', 'Falta productDocumentId');
     if (!idemKey) throw new StockError(400, 'BAD_REQUEST', 'Falta idemKey');
@@ -785,6 +790,13 @@ export default ({ strapi }: { strapi: any }) => {
       { opKey: `adjust:${idemKey}`, kind: 'adjust', refType: lotDocumentId ? 'inventory-lot' : 'product', refDocumentId: lotDocumentId || pid, location: label(loc), user, notes: reason },
       async (tx) => {
         if (lotDocumentId) {
+          // Mismo orden de bloqueo que la venta (producto → farmacias → lotes): sin esto, una
+          // corrección y una venta simultáneas del mismo producto podrían interbloquearse.
+          if (affectStock) {
+            await lockTotal(tx, pid);
+            if (loc) await lockPharmacyStock(tx, pid, loc);
+            else await sumPharmacies(tx, pid);
+          }
           const lots = await lotsAt(tx, pid, loc);
           const lot = lots.find((l) => l.documentId === lotDocumentId);
           if (!lot) throw new StockError(404, 'LOT_NOT_AT_LOCATION', `El lote no está en ${label(loc)}`);
@@ -795,7 +807,9 @@ export default ({ strapi }: { strapi: any }) => {
           lot.changed = true;
           recordLot(tx, pid, loc, lot, delta);
           await writeLots(tx, pid, loc, lots);
-          return { lotDocumentId, currentAmount: next };
+          let stock: number | undefined;
+          if (affectStock && delta !== 0) ({ after: stock } = await mutateStock(tx, pid, loc, (b) => b + delta));
+          return { lotDocumentId, currentAmount: next, stock };
         }
         const { after } = await mutateStock(tx, pid, loc, (b) => (mode === 'set' ? value : b + value));
         return { stock: after };
