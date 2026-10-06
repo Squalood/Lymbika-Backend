@@ -527,12 +527,9 @@ export interface ApiCaseCase extends Struct.CollectionTypeSchema {
   };
   attributes: {
     accessToken: Schema.Attribute.String &
-      Schema.Attribute.Required &
       Schema.Attribute.Private &
       Schema.Attribute.Unique;
-    caseNumber: Schema.Attribute.String &
-      Schema.Attribute.Required &
-      Schema.Attribute.Unique;
+    caseNumber: Schema.Attribute.String & Schema.Attribute.Unique;
     city: Schema.Attribute.String;
     consent: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     consentAt: Schema.Attribute.DateTime;
@@ -565,7 +562,7 @@ export interface ApiCaseCase extends Struct.CollectionTypeSchema {
     intent: Schema.Attribute.Enumeration<
       ['options', 'cost', 'assessment', 'second_opinion', 'schedule', 'unsure']
     >;
-    internalNotes: Schema.Attribute.Text & Schema.Attribute.Private;
+    internalNotes: Schema.Attribute.Text;
     landingPath: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::case.case'> &
@@ -579,12 +576,12 @@ export interface ApiCaseCase extends Struct.CollectionTypeSchema {
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 2000;
       }>;
+    patientLink: Schema.Attribute.String;
     patientNextStep: Schema.Attribute.Text;
     phone: Schema.Attribute.String & Schema.Attribute.Required;
     priority: Schema.Attribute.Enumeration<
       ['low', 'normal', 'high', 'urgent']
     > &
-      Schema.Attribute.Private &
       Schema.Attribute.DefaultTo<'normal'>;
     publishedAt: Schema.Attribute.DateTime;
     quoteAmount: Schema.Attribute.Decimal;

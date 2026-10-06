@@ -14,14 +14,15 @@
   "attributes": {
     "caseNumber": {
       "type": "string",
-      "unique": true,
-      "required": true
+      "unique": true
     },
     "accessToken": {
       "type": "string",
       "unique": true,
-      "required": true,
       "private": true
+    },
+    "patientLink": {
+      "type": "string"
     },
     "estado": {
       "type": "enumeration",
@@ -44,13 +45,16 @@
     },
     "priority": {
       "type": "enumeration",
-      "enum": ["low", "normal", "high", "urgent"],
-      "default": "normal",
-      "private": true
+      "enum": [
+        "low",
+        "normal",
+        "high",
+        "urgent"
+      ],
+      "default": "normal"
     },
     "internalNotes": {
-      "type": "text",
-      "private": true
+      "type": "text"
     },
     "narrative": {
       "type": "text",
@@ -59,15 +63,27 @@
     },
     "reviewedByDoctor": {
       "type": "enumeration",
-      "enum": ["yes", "no", "unsure"]
+      "enum": [
+        "yes",
+        "no",
+        "unsure"
+      ]
     },
     "surgeryIndicated": {
       "type": "enumeration",
-      "enum": ["yes", "no", "unsure"]
+      "enum": [
+        "yes",
+        "no",
+        "unsure"
+      ]
     },
     "documentsStatus": {
       "type": "enumeration",
-      "enum": ["upload_now", "send_later", "none"]
+      "enum": [
+        "upload_now",
+        "send_later",
+        "none"
+      ]
     },
     "intent": {
       "type": "enumeration",
@@ -136,7 +152,10 @@
     "documents": {
       "type": "media",
       "multiple": true,
-      "allowedTypes": ["images", "files"]
+      "allowedTypes": [
+        "images",
+        "files"
+      ]
     },
     "medical_service": {
       "type": "relation",

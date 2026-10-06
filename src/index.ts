@@ -1,6 +1,7 @@
 // import type { Core } from '@strapi/strapi';
 
 import path from 'path';
+import { configurarPanelDeCasos, completarEnlacesDePaciente } from './api/case/utils/panel-admin';
 
 // Se resuelve desde la raiz del proyecto y no con una ruta relativa: este
 // archivo vive en src/index.ts en desarrollo y en dist/src/index.js una vez
@@ -125,6 +126,8 @@ export default {
    */
   async bootstrap({ strapi }) {
     await asegurarIndicesDeStock(strapi);
+    await configurarPanelDeCasos(strapi);
+    await completarEnlacesDePaciente(strapi);
 
     const provider = strapi.config.get('plugin::upload.provider');
     if (provider !== 'aws-s3') {

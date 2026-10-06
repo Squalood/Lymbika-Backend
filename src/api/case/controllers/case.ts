@@ -1,6 +1,11 @@
 "use strict";
 
-import crypto from "node:crypto";
+import { notificarCasoNuevo } from "../utils/notificar-caso";
+import {
+  enlacePaciente,
+  generarToken,
+  siguienteNumeroDeCaso,
+} from "../utils/identidad-caso";
 
 const { createCoreController } = require("@strapi/strapi").factories;
 
@@ -129,25 +134,14 @@ module.exports = createCoreController("api::case.case", ({ strapi }) => {
     }
   }
 
-  /** LYM-<año>-<consecutivo de 6 dígitos>, reiniciando cada año. */
-  async function siguienteNumeroDeCaso() {
-    const anio = new Date().getFullYear();
-    const prefijo = `LYM-${anio}-`;
-    const ultimo = await strapi.documents("api::case.case").findFirst({
-      filters: { caseNumber: { $startsWith: prefijo } },
-      sort: "caseNumber:desc",
-      fields: ["caseNumber"],
-    });
-    const consecutivo = ultimo
-      ? Number(String(ultimo.caseNumber).slice(prefijo.length)) + 1
-      : 1;
-    return `${prefijo}${String(consecutivo).padStart(6, "0")}`;
-  }
-
   async function buscarPorToken(token: unknown) {
     if (typeof token !== "string" || !FORMATO_TOKEN.test(token)) return null;
     return strapi.documents("api::case.case").findFirst({
       filters: { accessToken: { $eq: token } },
+      // `case` no tiene borradores, pero doctor, hospital y medical-service sí.
+      // Sin esto el populate trae la versión borrador del relacionado y las
+      // relaciones guardadas (que apuntan a la publicada) salen en null.
+      status: "published",
       populate: {
         medical_service: { fields: ["name", "slug"] },
         selected_doctor: {
@@ -203,26 +197,29 @@ module.exports = createCoreController("api::case.case", ({ strapi }) => {
       }
 
       let medicalServiceId: number | undefined;
+      let procedimiento: string | null = null;
       const slug = textoCorto(body.medicalServiceSlug);
       if (slug) {
         const servicio = await strapi
           .documents("api::medical-service.medical-service")
           .findFirst({
             filters: { slug: { $eq: slug } },
-            fields: ["id"],
+            fields: ["id", "name"],
             status: "published",
           });
         if (!servicio) {
           return ctx.badRequest("El procedimiento indicado no existe.");
         }
         medicalServiceId = servicio.id;
+        procedimiento = servicio.name;
       }
 
       const userId = await usuarioOpcional(ctx);
-      const accessToken = crypto.randomBytes(24).toString("base64url");
+      const accessToken = generarToken();
 
       const data = {
         accessToken,
+        patientLink: enlacePaciente(accessToken),
         estado: "new",
         narrative,
         reviewedByDoctor: enumOpcional(body.reviewedByDoctor, RESPUESTAS_SI_NO),
@@ -245,12 +242,20 @@ module.exports = createCoreController("api::case.case", ({ strapi }) => {
       // Dos intakes simultáneos pueden calcular el mismo consecutivo; el unique
       // de caseNumber hace fallar al segundo y aquí se reintenta.
       for (let intento = 0; intento < 3; intento++) {
-        const caseNumber = await siguienteNumeroDeCaso();
+        const caseNumber = await siguienteNumeroDeCaso(strapi);
         try {
-          await strapi.documents("api::case.case").create({
+          const creado = await strapi.documents("api::case.case").create({
             data: { ...data, caseNumber } as any,
           });
           ctx.body = { caseNumber, token: accessToken };
+
+          // Sin await: el paciente no espera a que salga el correo.
+          void notificarCasoNuevo(strapi, {
+            ...data,
+            documentId: creado.documentId,
+            caseNumber,
+            procedimiento,
+          });
           return;
         } catch (error) {
           strapi.log.warn(
