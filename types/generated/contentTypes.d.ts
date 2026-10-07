@@ -593,10 +593,6 @@ export interface ApiCaseCase extends Struct.CollectionTypeSchema {
       'manyToOne',
       'api::doctor.doctor'
     >;
-    service_rate: Schema.Attribute.Relation<
-      'manyToOne',
-      'api::service-rate.service-rate'
-    >;
     source: Schema.Attribute.String;
     surgeryDate: Schema.Attribute.DateTime;
     surgeryDateConfirmed: Schema.Attribute.Boolean &

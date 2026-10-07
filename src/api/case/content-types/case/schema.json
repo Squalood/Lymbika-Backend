@@ -172,11 +172,6 @@
       "relation": "manyToOne",
       "target": "api::hospital.hospital"
     },
-    "service_rate": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::service-rate.service-rate"
-    },
     "user": {
       "type": "relation",
       "relation": "manyToOne",
