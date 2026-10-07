@@ -107,37 +107,6 @@ async function asegurarIndicesDeStock(strapi) {
   }
 }
 
-/**
- * TEMPORAL — borrar en el siguiente despliegue.
- *
- * Un despliegue anterior guardó en la base una vista en español del panel de
- * Strapi para la colección Case. Esto la borra y deja que Strapi regenere su
- * vista por defecto. Solo actúa si encuentra la marca que dejó ese despliegue,
- * así que después de correr una vez ya no hace nada.
- */
-async function restaurarVistaDeCasos(strapi) {
-  const marca = { type: 'core', name: 'lymbika', key: 'case-panel-version' };
-  try {
-    if ((await strapi.store.get(marca)) == null) return;
-    await strapi.db.query('strapi::core-store').deleteMany({
-      where: {
-        key: {
-          $in: [
-            'plugin_content_manager_configuration_content_types::api::case.case',
-            'plugin_content_manager_configuration_components::case.follow-up-task',
-          ],
-        },
-      },
-    });
-    await strapi.plugin('content-manager').service('content-types').syncConfigurations();
-    await strapi.plugin('content-manager').service('components').syncConfigurations();
-    await strapi.store.delete(marca);
-    strapi.log.info('[case] vista del panel de Casos restaurada a la de Strapi');
-  } catch (error) {
-    strapi.log.error(`[case] no se pudo restaurar la vista del panel: ${error.message}`);
-  }
-}
-
 export default {
   /**
    * An asynchronous register function that runs before
@@ -156,7 +125,6 @@ export default {
    */
   async bootstrap({ strapi }) {
     await asegurarIndicesDeStock(strapi);
-    await restaurarVistaDeCasos(strapi);
 
     const provider = strapi.config.get('plugin::upload.provider');
     if (provider !== 'aws-s3') {
