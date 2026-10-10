@@ -1,0 +1,89 @@
+{
+  "kind": "singleType",
+  "collectionName": "schedules_pages",
+  "info": {
+    "singularName": "schedules-page",
+    "pluralName": "schedules-pages",
+    "displayName": "Schedules Page",
+    "description": "Landing de consulta de Farmacia+ (/schedules)"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "seoTitle": {
+      "type": "string"
+    },
+    "seoDescription": {
+      "type": "text"
+    },
+    "branchName": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "priceLabel": {
+      "type": "string"
+    },
+    "price": {
+      "type": "decimal"
+    },
+    "doctor": {
+      "type": "component",
+      "component": "doctor.doctor",
+      "repeatable": false
+    },
+    "benefits": {
+      "type": "component",
+      "component": "item.pill",
+      "repeatable": true
+    },
+    "includes": {
+      "type": "component",
+      "component": "plus.plus",
+      "repeatable": true
+    },
+    "tip": {
+      "type": "component",
+      "component": "badge.badge",
+      "repeatable": false
+    },
+    "prices": {
+      "type": "component",
+      "component": "pricing.plan",
+      "repeatable": true
+    },
+    "pricesNote": {
+      "type": "text"
+    },
+    "reasons": {
+      "type": "component",
+      "component": "item.pill",
+      "repeatable": true
+    },
+    "steps": {
+      "type": "component",
+      "component": "feature.features",
+      "repeatable": true
+    },
+    "promise": {
+      "type": "string"
+    },
+    "contact": {
+      "type": "component",
+      "component": "contact.contact",
+      "repeatable": false
+    },
+    "sanitaryLicense": {
+      "type": "string"
+    }
+  }
+}

@@ -1646,6 +1646,53 @@ export interface ApiReviewReview extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiSchedulesPageSchedulesPage extends Struct.SingleTypeSchema {
+  collectionName: 'schedules_pages';
+  info: {
+    description: 'Landing de consulta de Farmacia+ (/schedules)';
+    displayName: 'Schedules Page';
+    pluralName: 'schedules-pages';
+    singularName: 'schedules-page';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    benefits: Schema.Attribute.Component<'item.pill', true>;
+    branchName: Schema.Attribute.String;
+    city: Schema.Attribute.String;
+    contact: Schema.Attribute.Component<'contact.contact', false>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text;
+    doctor: Schema.Attribute.Component<'doctor.doctor', false>;
+    includes: Schema.Attribute.Component<'plus.plus', true>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::schedules-page.schedules-page'
+    > &
+      Schema.Attribute.Private;
+    price: Schema.Attribute.Decimal;
+    priceLabel: Schema.Attribute.String;
+    prices: Schema.Attribute.Component<'pricing.plan', true>;
+    pricesNote: Schema.Attribute.Text;
+    promise: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    reasons: Schema.Attribute.Component<'item.pill', true>;
+    sanitaryLicense: Schema.Attribute.String;
+    seoDescription: Schema.Attribute.Text;
+    seoTitle: Schema.Attribute.String;
+    steps: Schema.Attribute.Component<'feature.features', true>;
+    tip: Schema.Attribute.Component<'badge.badge', false>;
+    title: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiServiceRateServiceRate extends Struct.CollectionTypeSchema {
   collectionName: 'service_rates';
   info: {
@@ -2545,6 +2592,7 @@ declare module '@strapi/strapi' {
       'api::product.product': ApiProductProduct;
       'api::proveedor.proveedor': ApiProveedorProveedor;
       'api::review.review': ApiReviewReview;
+      'api::schedules-page.schedules-page': ApiSchedulesPageSchedulesPage;
       'api::service-rate.service-rate': ApiServiceRateServiceRate;
       'api::service.service': ApiServiceService;
       'api::stock-operation.stock-operation': ApiStockOperationStockOperation;
