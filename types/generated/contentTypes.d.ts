@@ -1674,6 +1674,7 @@ export interface ApiSchedulesPageSchedulesPage extends Struct.SingleTypeSchema {
       'api::schedules-page.schedules-page'
     > &
       Schema.Attribute.Private;
+    logo: Schema.Attribute.Media<'images'>;
     price: Schema.Attribute.Decimal;
     priceLabel: Schema.Attribute.String;
     prices: Schema.Attribute.Component<'pricing.plan', true>;

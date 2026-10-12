@@ -24,6 +24,13 @@
     "city": {
       "type": "string"
     },
+    "logo": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
     "title": {
       "type": "string"
     },
