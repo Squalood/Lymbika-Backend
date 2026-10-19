@@ -1,0 +1,42 @@
+{
+  "kind": "singleType",
+  "collectionName": "site_configs",
+  "info": {
+    "singularName": "site-config",
+    "pluralName": "site-configs",
+    "displayName": "Site Config",
+    "description": "Constantes globales del frontend: contacto, redes, nombre de la membresia y tipo de cambio"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "membershipName": {
+      "type": "string"
+    },
+    "whatsappNumber": {
+      "type": "string",
+      "regex": "^[0-9 +()-]{10,20}$"
+    },
+    "address": {
+      "type": "text"
+    },
+    "mapsUrl": {
+      "type": "string"
+    },
+    "instagramUrl": {
+      "type": "string"
+    },
+    "facebookUrl": {
+      "type": "string"
+    },
+    "tiktokUrl": {
+      "type": "string"
+    },
+    "exchangeRateUsd": {
+      "type": "decimal",
+      "min": 1
+    }
+  }
+}

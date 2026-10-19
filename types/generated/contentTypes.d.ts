@@ -1796,6 +1796,48 @@ export interface ApiServiceService extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiSiteConfigSiteConfig extends Struct.SingleTypeSchema {
+  collectionName: 'site_configs';
+  info: {
+    description: 'Constantes globales del frontend: contacto, redes, nombre de la membresia y tipo de cambio';
+    displayName: 'Site Config';
+    pluralName: 'site-configs';
+    singularName: 'site-config';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    address: Schema.Attribute.Text;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    exchangeRateUsd: Schema.Attribute.Decimal &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1;
+        },
+        number
+      >;
+    facebookUrl: Schema.Attribute.String;
+    instagramUrl: Schema.Attribute.String;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::site-config.site-config'
+    > &
+      Schema.Attribute.Private;
+    mapsUrl: Schema.Attribute.String;
+    membershipName: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    tiktokUrl: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    whatsappNumber: Schema.Attribute.String;
+  };
+}
+
 export interface ApiStockOperationStockOperation
   extends Struct.CollectionTypeSchema {
   collectionName: 'stock_operations';
@@ -2596,6 +2638,7 @@ declare module '@strapi/strapi' {
       'api::schedules-page.schedules-page': ApiSchedulesPageSchedulesPage;
       'api::service-rate.service-rate': ApiServiceRateServiceRate;
       'api::service.service': ApiServiceService;
+      'api::site-config.site-config': ApiSiteConfigSiteConfig;
       'api::stock-operation.stock-operation': ApiStockOperationStockOperation;
       'api::stock-transfer.stock-transfer': ApiStockTransferStockTransfer;
       'api::stripe-event.stripe-event': ApiStripeEventStripeEvent;
