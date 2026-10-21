@@ -5,6 +5,7 @@ import {
   generarToken,
   siguienteNumeroDeCaso,
 } from "../utils/identidad-caso";
+import { notificarCasoNuevo } from "../utils/notificar-caso";
 
 const { createCoreController } = require("@strapi/strapi").factories;
 
@@ -196,19 +197,21 @@ module.exports = createCoreController("api::case.case", ({ strapi }) => {
       }
 
       let medicalServiceId: number | undefined;
+      let procedimiento: string | null = null;
       const slug = textoCorto(body.medicalServiceSlug);
       if (slug) {
         const servicio = await strapi
           .documents("api::medical-service.medical-service")
           .findFirst({
             filters: { slug: { $eq: slug } },
-            fields: ["id"],
+            fields: ["id", "name"],
             status: "published",
           });
         if (!servicio) {
           return ctx.badRequest("El procedimiento indicado no existe.");
         }
         medicalServiceId = servicio.id;
+        procedimiento = servicio.name;
       }
 
       const userId = await usuarioOpcional(ctx);
@@ -241,10 +244,19 @@ module.exports = createCoreController("api::case.case", ({ strapi }) => {
       for (let intento = 0; intento < 3; intento++) {
         const caseNumber = await siguienteNumeroDeCaso(strapi);
         try {
-          await strapi.documents("api::case.case").create({
+          const creado = await strapi.documents("api::case.case").create({
             data: { ...data, caseNumber } as any,
           });
           ctx.body = { caseNumber, token: accessToken };
+
+          // Sin await: el paciente no espera a que salga el correo.
+          void notificarCasoNuevo(strapi, {
+            documentId: creado.documentId,
+            caseNumber,
+            fullName,
+            procedimiento,
+            emergencyFlag: data.emergencyFlag,
+          });
           return;
         } catch (error) {
           strapi.log.warn(

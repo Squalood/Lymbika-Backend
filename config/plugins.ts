@@ -1,4 +1,30 @@
 export default ({ env }) => ({
+  // Correo saliente: aviso a coordinación de cada caso nuevo
+  // (src/api/case/utils/notificar-caso.ts). Va por el SMTP de Resend:
+  // SMTP_HOST=smtp.resend.com, SMTP_USERNAME=resend, SMTP_PASSWORD=<API key>.
+  // Sin SMTP_HOST no se configura y el aviso no se envía.
+  ...(env('SMTP_HOST')
+    ? {
+        email: {
+          config: {
+            provider: 'nodemailer',
+            providerOptions: {
+              host: env('SMTP_HOST'),
+              port: env.int('SMTP_PORT', 465),
+              secure: env.int('SMTP_PORT', 465) === 465,
+              auth: {
+                user: env('SMTP_USERNAME'),
+                pass: env('SMTP_PASSWORD'),
+              },
+            },
+            settings: {
+              defaultFrom: env('EMAIL_FROM'),
+              defaultReplyTo: env('EMAIL_FROM'),
+            },
+          },
+        },
+      }
+    : {}),
   upload: {
     config: {
       provider: 'aws-s3',
