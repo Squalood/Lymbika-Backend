@@ -125,6 +125,11 @@
     "membershipActive": {
       "type": "boolean",
       "default": false
+    },
+    "doctor": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::doctor.doctor"
     }
   }
 }

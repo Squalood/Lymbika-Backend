@@ -155,7 +155,102 @@ module.exports = createCoreController("api::case.case", ({ strapi }) => {
     });
   }
 
+  type DoctorAsignado = { documentId: string; doctorName: string };
+
+  /**
+   * Doctor ligado al usuario del JWT (campo `doctor` del user). Si existe, el
+   * usuario es un especialista y solo opera sus casos; si no, es coordinación
+   * y ve todo. No depende del nombre del rol.
+   */
+  async function doctorDelUsuario(ctx): Promise<DoctorAsignado | null> {
+    const userId = ctx.state.user?.id;
+    if (!userId) return null;
+    const usuario = await strapi.db.query("plugin::users-permissions.user").findOne({
+      where: { id: userId },
+      populate: { doctor: { select: ["documentId", "doctorName"] } },
+    });
+    return usuario?.doctor ?? null;
+  }
+
+  // Por documentId y no por id: doctor tiene borrador y publicado, y la
+  // relación puede apuntar a cualquiera de las dos filas.
+  function filtroDeDoctor(doctor: DoctorAsignado) {
+    return { selected_doctor: { documentId: { $eq: doctor.documentId } } };
+  }
+
+  async function esCasoDelDoctor(documentId: unknown, doctor: DoctorAsignado) {
+    if (typeof documentId !== "string") return false;
+    const caso = await strapi.documents("api::case.case").findFirst({
+      filters: { documentId: { $eq: documentId }, ...filtroDeDoctor(doctor) },
+      fields: ["id"],
+    });
+    return Boolean(caso);
+  }
+
   return {
+    // ── Core REST (/dashboard/operations del frontend) ──────────────────────
+    // El permiso del rol decide quién entra; estos overrides deciden qué casos
+    // ve un especialista. Strapi ya validó el JWT antes de llegar aquí.
+
+    // GET /cases — al especialista se le fuerza el filtro por su doctor. En
+    // `meta.doctorAsignado` va su doctor para que el frontend ajuste la vista.
+    // `this: any`: el factory viene de require() y sus helpers no están tipados.
+    async find(this: any, ctx) {
+      const doctor = await doctorDelUsuario(ctx);
+      if (!doctor) return super.find(ctx);
+
+      await this.validateQuery(ctx);
+      const query = await this.sanitizeQuery(ctx);
+      const { results, pagination } = await strapi.service("api::case.case").find({
+        ...query,
+        filters: { $and: [query.filters ?? {}, filtroDeDoctor(doctor)] },
+      });
+      const datos = await this.sanitizeOutput(results, ctx);
+      const respuesta = this.transformResponse(datos, { pagination });
+      return { ...respuesta, meta: { ...respuesta.meta, doctorAsignado: doctor } };
+    },
+
+    // GET /cases/:id — un caso ajeno responde 404, igual que uno inexistente.
+    async findOne(ctx) {
+      const doctor = await doctorDelUsuario(ctx);
+      if (doctor && !(await esCasoDelDoctor(ctx.params.id, doctor))) {
+        return ctx.notFound("Caso no encontrado.");
+      }
+      return super.findOne(ctx);
+    },
+
+    // POST /cases — el caso que da de alta un especialista queda asignado a él.
+    async create(ctx) {
+      const doctor = await doctorDelUsuario(ctx);
+      const data = ctx.request.body?.data;
+      if (doctor && data && typeof data === "object") {
+        data.selected_doctor = { set: [doctor.documentId] };
+      }
+      return super.create(ctx);
+    },
+
+    // PUT /cases/:id — el especialista no reasigna: se descarta `selected_doctor`
+    // (si lo cambiara, el caso saldría de su bandeja).
+    async update(ctx) {
+      const doctor = await doctorDelUsuario(ctx);
+      if (doctor) {
+        if (!(await esCasoDelDoctor(ctx.params.id, doctor))) {
+          return ctx.notFound("Caso no encontrado.");
+        }
+        const data = ctx.request.body?.data;
+        if (data && typeof data === "object") delete data.selected_doctor;
+      }
+      return super.update(ctx);
+    },
+
+    async delete(ctx) {
+      const doctor = await doctorDelUsuario(ctx);
+      if (doctor && !(await esCasoDelDoctor(ctx.params.id, doctor))) {
+        return ctx.notFound("Caso no encontrado.");
+      }
+      return super.delete(ctx);
+    },
+
     // POST /cases/intake — crea el caso desde el guided intake (sin archivos).
     async intake(ctx) {
       if (excedeRateLimit(ctx.request.ip)) {
