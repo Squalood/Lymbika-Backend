@@ -206,7 +206,9 @@ module.exports = createCoreController("api::case.case", ({ strapi }) => {
         filters: { $and: [query.filters ?? {}, filtroDeDoctor(doctor)] },
       });
       const datos = await this.sanitizeOutput(results, ctx);
-      const respuesta = this.transformResponse(datos, { pagination });
+      // transformResponse es async en Strapi 5: sin await, el spread de abajo
+      // copia una Promise y la respuesta sale sin `data` ni `pagination`.
+      const respuesta = await this.transformResponse(datos, { pagination });
       return { ...respuesta, meta: { ...respuesta.meta, doctorAsignado: doctor } };
     },
 
