@@ -40,6 +40,7 @@ export const UID = {
   operation: 'api::stock-operation.stock-operation',
   transfer: 'api::stock-transfer.stock-transfer',
   venta: 'api::venta-pos.venta-pos',
+  ventaItem: 'venta-item.venta-item',
   devolucion: 'api::devolucion-pos.devolucion-pos',
   compra: 'api::compra-pos.compra-pos',
   caja: 'api::caja-pos.caja-pos',
@@ -78,6 +79,17 @@ interface Movement {
   after: number;
   lotDocumentId?: string;
   lotNumber?: string | null;
+}
+
+/**
+ * Porción de una línea de venta surtida de un lote. `lotDocumentId: null` = unidades vendidas
+ * sin lote que las cubra (producto sin lotes, o lotes insuficientes).
+ */
+interface DispensedLot {
+  lotDocumentId: string | null;
+  lotNumber: string | null;
+  expirationDate: string | null;
+  quantity: number;
 }
 
 interface Warning {
@@ -470,17 +482,28 @@ export default ({ strapi }: { strapi: any }) => {
     // total baja igual, que es lo que cuadra la reconciliación.
     const loc: Loc = venta.pharmacies?.[0]?.documentId ?? null;
 
-    const byProduct = new Map<string, { name: string; lines: { qty: number; lot: string | null }[] }>();
-    for (const line of venta.venta ?? []) {
+    const lines: any[] = venta.venta ?? [];
+    const byProduct = new Map<string, { name: string; lines: { idx: number; qty: number; lot: string | null }[] }>();
+    lines.forEach((line, idx) => {
       const pid = line.product?.documentId;
       const qty = Number(line.quantity ?? 0);
-      if (line.type === 'service' || !pid || qty <= 0) continue;
+      if (line.type === 'service' || !pid || qty <= 0) return;
       const g = byProduct.get(pid) ?? { name: line.product.productName ?? line.productName, lines: [] };
-      g.lines.push({ qty, lot: line.lotDocumentId || null });
+      g.lines.push({ idx, qty, lot: line.lotDocumentId || null });
       byProduct.set(pid, g);
-    }
+    });
 
-    return runOperation(
+    // De qué lotes salió de verdad cada línea, por posición. La venta solo guarda el lote que
+    // eligió el cajero; si no alcanzaba, `consume` completa por caducidad o vende sin lote.
+    const dispensed: (DispensedLot[] | null)[] = lines.map(() => null);
+    const unlotted = (quantity: number): DispensedLot => ({
+      lotDocumentId: null,
+      lotNumber: null,
+      expirationDate: null,
+      quantity,
+    });
+
+    const res = await runOperation(
       { opKey: `sale:${ventaDocumentId}`, kind: 'sale', refType: 'venta-pos', refDocumentId: ventaDocumentId, location: label(loc), user },
       async (tx) => {
         const today = todayMx();
@@ -498,11 +521,24 @@ export default ({ strapi }: { strapi: any }) => {
           }
 
           const lots = await lotsAt(tx, pid, loc);
-          if (!lots.length) continue; // producto sin lotes: se vende solo por stock, como siempre
+          if (!lots.length) {
+            // Producto sin lotes: se vende solo por stock, como siempre.
+            for (const line of g.lines) dispensed[line.idx] = [unlotted(line.qty)];
+            continue;
+          }
           let uncovered = 0;
           for (const line of g.lines) {
             const { portions, remaining, preferredMissing } = consume(lots, line.qty, line.lot, today);
             portions.forEach((p) => recordLot(tx, pid, loc, p.lot, -p.qty));
+            dispensed[line.idx] = [
+              ...portions.map((p) => ({
+                lotDocumentId: p.lot.documentId,
+                lotNumber: p.lot.lotNumber,
+                expirationDate: p.lot.expirationDate,
+                quantity: p.qty,
+              })),
+              ...(remaining > 0 ? [unlotted(remaining)] : []),
+            ];
             uncovered += remaining;
             if (preferredMissing) {
               tx.warnings.push({
@@ -523,9 +559,55 @@ export default ({ strapi }: { strapi: any }) => {
           }
           await writeLots(tx, pid, loc, lots);
         }
-        return { products: byProduct.size };
+        return { products: byProduct.size, dispensed };
       }
     );
+
+    // Un reintento (duplicate) no recalcula nada: el reparto ya se guardó la primera vez.
+    if (!res.duplicate) {
+      try {
+        await writeDispensed(ventaDocumentId, lines, dispensed);
+      } catch (e) {
+        // Fuera de la transacción a propósito: el stock ya quedó descontado y no debe revertirse
+        // por esto. La venta se queda sin reparto (el POS cae al lote elegido) y la bitácora
+        // `stock-operation` conserva los movimientos por lote.
+        strapi.log.warn(`[pos-stock] No se guardó el reparto por lote de la venta ${ventaDocumentId}: ${e}`);
+        res.warnings.push({
+          code: 'DISPENSED_NOT_SAVED',
+          message: 'El stock se descontó, pero no se guardó en la venta de qué lotes salió',
+        });
+      }
+    }
+    return res;
+  }
+
+  /**
+   * Guarda el reparto en `dispensedLots` de cada línea. La venta tiene borrador y publicada, cada
+   * una con su copia del componente, y se escriben las dos. Se empata por posición y se confirma
+   * con producto y cantidad: si una versión no coincide, esa versión no se toca.
+   */
+  async function writeDispensed(ventaDocumentId: string, lines: any[], dispensed: (DispensedLot[] | null)[]) {
+    if (!dispensed.some(Boolean)) return;
+    const versions = await strapi.db.query(UID.venta).findMany({
+      where: { documentId: ventaDocumentId },
+      select: ['id'],
+      populate: { venta: { populate: { product: { select: ['documentId'] } } } },
+    });
+    for (const v of versions) {
+      const rows: any[] = v.venta ?? [];
+      const aligned =
+        rows.length === lines.length &&
+        rows.every(
+          (r, i) =>
+            Number(r.quantity) === Number(lines[i].quantity) &&
+            (r.product?.documentId ?? null) === (lines[i].product?.documentId ?? null)
+        );
+      if (!aligned) throw new Error(`las líneas de la versión ${v.id} no coinciden con la venta`);
+      for (let i = 0; i < rows.length; i++) {
+        if (!dispensed[i]) continue;
+        await strapi.db.query(UID.ventaItem).update({ where: { id: rows[i].id }, data: { dispensedLots: dispensed[i] } });
+      }
+    }
   }
 
   /** Regresa al stock de la farmacia lo devuelto. No toca lotes (decisión vigente). */

@@ -49,6 +49,9 @@
     },
     "tax": {
       "type": "string"
+    },
+    "dispensedLots": {
+      "type": "json"
     }
   }
 }
