@@ -90,5 +90,7 @@ export default ({ strapi }: { strapi: any }) => {
     }),
 
     levels: handle((ctx) => core().levels({ pharmacy: parseLocation(ctx.query.pharmacy) })),
+
+    lotTrace: handle((ctx) => core().lotTrace({ lotDocumentId: String(ctx.query.lot ?? '') })),
   };
 };

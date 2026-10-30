@@ -20,5 +20,6 @@ export default {
     route('POST', '/pos-stock/discard-lot', 'discardLot'),
     route('POST', '/pos-stock/move-all', 'moveAll'),
     route('GET', '/pos-stock/levels', 'levels'),
+    route('GET', '/pos-stock/lot-trace', 'lotTrace'),
   ],
 };

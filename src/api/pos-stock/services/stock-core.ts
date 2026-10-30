@@ -1219,6 +1219,208 @@ export default ({ strapi }: { strapi: any }) => {
     return { location: label(loc), minStockDefault: minDefault, items: [...rows.values()] };
   }
 
+  // ── Rastreo de un lote ────────────────────────────────────────────────────────────
+
+  /** De varias versiones (borrador/publicada) de un documento, la publicada: su id es el folio. */
+  function byDocumentPreferPublished(rows: any[]) {
+    const map = new Map<string, any>();
+    for (const r of rows) {
+      const cur = map.get(r.documentId);
+      if (!cur || (!cur.publishedAt && r.publishedAt)) map.set(r.documentId, r);
+    }
+    return map;
+  }
+
+  /**
+   * Historia de un lote físico: dónde queda existencia, qué operaciones lo movieron y en qué
+   * ventas salió. Es la consulta de un retiro de lote.
+   *
+   * "Lote físico" = mismo producto y mismo número: un traspaso parcial parte el lote en dos
+   * registros (uno por ubicación) y los dos son la misma mercancía.
+   *
+   * La fuente es la bitácora `stock-operation` (existe desde el stock por farmacia,
+   * 28-sep-2026): sus movimientos traen el lote exacto que movió cada operación. Las ventas
+   * sin operación (anteriores) se completan con el lote que eligió el cajero, marcadas
+   * `exact: false`.
+   */
+  async function lotTrace({ lotDocumentId }: { lotDocumentId: string }) {
+    if (!lotDocumentId) throw new StockError(400, 'BAD_REQUEST', 'Falta el lote');
+    const lot = await strapi.db.query(UID.lot).findOne({
+      where: { documentId: lotDocumentId },
+      select: ['documentId', 'lotNumber', 'expirationDate'],
+      populate: { product: { select: ['documentId', 'productName'] } },
+    });
+    if (!lot) throw new StockError(404, 'LOT_NOT_FOUND', `No existe el lote ${lotDocumentId}`);
+
+    const productDocId: string | null = lot.product?.documentId ?? null;
+    const siblings: any[] = await strapi.db.query(UID.lot).findMany({
+      where:
+        lot.lotNumber && productDocId
+          ? { lotNumber: lot.lotNumber, product: { documentId: productDocId } }
+          : { documentId: lotDocumentId },
+      select: ['documentId', 'lotNumber', 'expirationDate', 'initialQuantity', 'currentAmount', 'state', 'discardedQuantity'],
+      populate: { pharmacy: { select: ['documentId', 'nombre'] } },
+      orderBy: { id: 'asc' },
+    });
+    const ids: string[] = siblings.map((l) => l.documentId);
+    const idSet = new Set(ids);
+
+    const pharmacies = await strapi.db.query(UID.pharmacy).findMany({ select: ['documentId', 'nombre'] });
+    const pharmacyName = new Map<string, string>(pharmacies.map((p: any) => [p.documentId, p.nombre]));
+    const placeName = (location: string) =>
+      location === 'bodega' ? 'Bodega central' : pharmacyName.get(location) ?? location;
+
+    // Operaciones que tocaron alguno de esos lotes. `movements` es jsonb: `@>` encuentra el lote
+    // dentro del arreglo en la base, sin traer la bitácora entera. Solo Postgres (local y prod).
+    const opCol = (attr: string) => col(UID.operation, attr);
+    const mc = opCol('movements');
+    const ops: any[] = await strapi.db
+      .connection(table(UID.operation))
+      .select(
+        `${opCol('opKey')} as opKey`,
+        `${opCol('kind')} as kind`,
+        `${opCol('refType')} as refType`,
+        `${opCol('refDocumentId')} as refDocumentId`,
+        `${opCol('notes')} as notes`,
+        `${mc} as movements`,
+        `${opCol('createdAt')} as createdAt`
+      )
+      .where((q: any) => {
+        for (const id of ids) q.orWhereRaw('??::jsonb @> ?::jsonb', [mc, JSON.stringify([{ lotDocumentId: id }])]);
+      })
+      .orderBy(opCol('createdAt'), 'asc');
+
+    const movements = ops
+      .map((op) => {
+        const raw: Movement[] = (typeof op.movements === 'string' ? JSON.parse(op.movements) : op.movements) ?? [];
+        const moves = raw
+          .filter((m) => m.lotDocumentId && idSet.has(m.lotDocumentId))
+          .map((m) => ({
+            lotDocumentId: m.lotDocumentId as string,
+            location: m.location,
+            locationName: placeName(m.location),
+            delta: Number(m.delta ?? 0),
+          }));
+        return {
+          opKey: op.opKey as string,
+          kind: op.kind as string,
+          refType: (op.refType ?? null) as string | null,
+          refDocumentId: (op.refDocumentId ?? null) as string | null,
+          notes: (op.notes ?? null) as string | null,
+          fecha: new Date(op.createdAt).toISOString(),
+          moves,
+          delta: moves.reduce((s, m) => s + m.delta, 0),
+          folio: null as number | null,
+          refLabel: null as string | null,
+        };
+      })
+      .filter((m) => m.moves.length > 0);
+
+    // Ventas anteriores a la bitácora: solo se sabe el lote que eligió el cajero. Las que sí
+    // tienen operación se excluyen aunque el lote elegido coincida: la operación manda.
+    const chosen: any[] = await strapi.documents(UID.venta).findMany({
+      filters: { venta: { lotDocumentId: { $in: ids } } },
+      fields: ['documentId'],
+      populate: { venta: { fields: ['lotDocumentId', 'quantity'] } },
+      limit: 5000,
+    });
+    const chosenIds = [...new Set(chosen.map((v) => v.documentId as string))];
+    const withOp = new Set(
+      chosenIds.length
+        ? (
+            await strapi.db.query(UID.operation).findMany({
+              where: { opKey: { $in: chosenIds.map((d) => `sale:${d}`) } },
+              select: ['refDocumentId'],
+            })
+          ).map((o: any) => o.refDocumentId)
+        : []
+    );
+    const fallbackQty = new Map<string, number>();
+    for (const v of chosen) {
+      if (withOp.has(v.documentId)) continue;
+      const qty = (v.venta ?? [])
+        .filter((l: any) => l.lotDocumentId && idSet.has(l.lotDocumentId))
+        .reduce((s: number, l: any) => s + Number(l.quantity ?? 0), 0);
+      // Draft y publicada traen las mismas líneas: se toma una vez por documento.
+      if (qty > 0 && !fallbackQty.has(v.documentId)) fallbackQty.set(v.documentId, qty);
+    }
+
+    const saleOps = movements.filter((m) => m.kind === 'sale' && m.refDocumentId);
+    const ventaIds = [...new Set([...saleOps.map((m) => m.refDocumentId as string), ...fallbackQty.keys()])];
+    const ventas = ventaIds.length
+      ? byDocumentPreferPublished(
+          await strapi.db.query(UID.venta).findMany({
+            where: { documentId: { $in: ventaIds } },
+            select: ['id', 'documentId', 'fecha', 'estado', 'operador', 'publishedAt'],
+            populate: { pharmacies: { select: ['nombre'] } },
+          })
+        )
+      : new Map();
+
+    const compraIds = [...new Set(movements.filter((m) => m.kind === 'purchase' && m.refDocumentId).map((m) => m.refDocumentId as string))];
+    const compras = compraIds.length
+      ? byDocumentPreferPublished(
+          await strapi.db.query(UID.compra).findMany({
+            where: { documentId: { $in: compraIds } },
+            select: ['id', 'documentId', 'publishedAt'],
+            populate: { proveedor: { select: ['name'] } },
+          })
+        )
+      : new Map();
+
+    for (const m of movements) {
+      if (m.kind === 'sale') m.folio = ventas.get(m.refDocumentId)?.id ?? null;
+      if (m.kind === 'purchase') {
+        const c = compras.get(m.refDocumentId);
+        m.folio = c?.id ?? null;
+        m.refLabel = c?.proveedor?.name ?? null;
+      }
+    }
+
+    const saleRow = (documentId: string, quantity: number, exact: boolean, fallbackFecha: string | null) => {
+      const v = ventas.get(documentId);
+      return {
+        ventaDocumentId: documentId,
+        folio: (v?.id ?? null) as number | null,
+        fecha: (v?.fecha ?? fallbackFecha) as string | null,
+        estado: (v?.estado ?? null) as string | null,
+        operador: (v?.operador ?? null) as string | null,
+        pharmacyName: (v?.pharmacies?.[0]?.nombre ?? null) as string | null,
+        quantity,
+        exact,
+      };
+    };
+    const sales = [
+      // Hay una sola operación por venta (`sale:<id>`) aunque el producto vaya en varias
+      // líneas, así que cada venta aparece una vez con el total que salió del lote.
+      ...saleOps.map((m) => saleRow(m.refDocumentId as string, -m.delta, true, m.fecha)),
+      ...[...fallbackQty].map(([docId, qty]) => saleRow(docId, qty, false, null)),
+    ].sort((a, b) => String(b.fecha ?? '').localeCompare(String(a.fecha ?? '')));
+
+    return {
+      lot: {
+        documentId: lot.documentId,
+        lotNumber: lot.lotNumber ?? null,
+        expirationDate: lot.expirationDate ?? null,
+        product: lot.product ? { documentId: lot.product.documentId, productName: lot.product.productName } : null,
+      },
+      locations: siblings.map((l) => {
+        const location = l.pharmacy?.documentId ?? 'bodega';
+        return {
+          documentId: l.documentId,
+          location,
+          locationName: placeName(location),
+          currentAmount: Number(l.currentAmount ?? 0),
+          initialQuantity: l.initialQuantity ?? null,
+          discardedQuantity: l.discardedQuantity ?? null,
+          state: l.state,
+        };
+      }),
+      sales,
+      movements: movements.reverse(),
+    };
+  }
+
   return {
     sale,
     saleReturn,
@@ -1229,5 +1431,6 @@ export default ({ strapi }: { strapi: any }) => {
     discard,
     moveAll,
     levels,
+    lotTrace,
   };
 };
