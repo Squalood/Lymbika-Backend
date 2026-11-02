@@ -868,7 +868,6 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
     services: Schema.Attribute.Relation<'oneToMany', 'api::service.service'>;
     slug: Schema.Attribute.UID<'doctorName'>;
     startAvailability: Schema.Attribute.Time;
-    surgeries: Schema.Attribute.Relation<'oneToMany', 'api::surgery.surgery'>;
     tiktok: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -1981,38 +1980,6 @@ export interface ApiStripeEventStripeEvent extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiSurgerySurgery extends Struct.CollectionTypeSchema {
-  collectionName: 'surgeries';
-  info: {
-    description: '';
-    displayName: 'Surgery';
-    pluralName: 'surgeries';
-    singularName: 'surgery';
-  };
-  options: {
-    draftAndPublish: true;
-  };
-  attributes: {
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    description: Schema.Attribute.Text;
-    image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::surgery.surgery'
-    > &
-      Schema.Attribute.Private;
-    publishedAt: Schema.Attribute.DateTime;
-    slug: Schema.Attribute.UID<'surgeryName'>;
-    surgeryName: Schema.Attribute.String;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-  };
-}
-
 export interface ApiVentaPosVentaPos extends Struct.CollectionTypeSchema {
   collectionName: 'ventas_pos';
   info: {
@@ -2643,7 +2610,6 @@ declare module '@strapi/strapi' {
       'api::stock-operation.stock-operation': ApiStockOperationStockOperation;
       'api::stock-transfer.stock-transfer': ApiStockTransferStockTransfer;
       'api::stripe-event.stripe-event': ApiStripeEventStripeEvent;
-      'api::surgery.surgery': ApiSurgerySurgery;
       'api::venta-pos.venta-pos': ApiVentaPosVentaPos;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;

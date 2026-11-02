@@ -35,11 +35,6 @@
       "relation": "oneToMany",
       "target": "api::service.service"
     },
-    "surgeries": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::surgery.surgery"
-    },
     "review": {
       "type": "integer"
     },
