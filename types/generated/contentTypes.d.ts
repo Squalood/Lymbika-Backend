@@ -1667,7 +1667,6 @@ export interface ApiSchedulesPageSchedulesPage extends Struct.SingleTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     description: Schema.Attribute.Text;
-    doctor: Schema.Attribute.Component<'doctor.doctor', false>;
     doctors: Schema.Attribute.Relation<'oneToMany', 'api::doctor.doctor'>;
     includes: Schema.Attribute.Component<'plus.plus', true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;

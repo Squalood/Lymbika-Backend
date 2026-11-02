@@ -43,11 +43,6 @@
     "price": {
       "type": "decimal"
     },
-    "doctor": {
-      "type": "component",
-      "component": "doctor.doctor",
-      "repeatable": false
-    },
     "doctors": {
       "type": "relation",
       "relation": "oneToMany",
