@@ -71,6 +71,12 @@
     "priceCon": {
       "type": "decimal"
     },
+    "credentials": {
+      "type": "string"
+    },
+    "calendarLink": {
+      "type": "string"
+    },
     "facebook": {
       "type": "string"
     },

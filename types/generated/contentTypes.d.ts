@@ -828,6 +828,7 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
     bannerImage: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios'
     >;
+    calendarLink: Schema.Attribute.String;
     clinic: Schema.Attribute.Relation<'oneToOne', 'api::clinic.clinic'>;
     closedAvailability: Schema.Attribute.Time;
     contactButton: Schema.Attribute.String &
@@ -835,6 +836,7 @@ export interface ApiDoctorDoctor extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    credentials: Schema.Attribute.String;
     dayAvailable: Schema.Attribute.Text;
     doctorName: Schema.Attribute.String;
     experience: Schema.Attribute.Blocks;
@@ -1666,6 +1668,7 @@ export interface ApiSchedulesPageSchedulesPage extends Struct.SingleTypeSchema {
       Schema.Attribute.Private;
     description: Schema.Attribute.Text;
     doctor: Schema.Attribute.Component<'doctor.doctor', false>;
+    doctors: Schema.Attribute.Relation<'oneToMany', 'api::doctor.doctor'>;
     includes: Schema.Attribute.Component<'plus.plus', true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<

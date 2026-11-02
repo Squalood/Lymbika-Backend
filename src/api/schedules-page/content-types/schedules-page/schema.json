@@ -48,6 +48,11 @@
       "component": "doctor.doctor",
       "repeatable": false
     },
+    "doctors": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::doctor.doctor"
+    },
     "benefits": {
       "type": "component",
       "component": "item.pill",
