@@ -79,18 +79,28 @@ interface Movement {
   after: number;
   lotDocumentId?: string;
   lotNumber?: string | null;
+  /** Solo en devoluciones: lote del que salió la pieza al venderse (puede ser otro registro). */
+  fromLotDocumentId?: string;
 }
 
 /**
- * Porción de una línea de venta surtida de un lote. `lotDocumentId: null` = unidades vendidas
- * sin lote que las cubra (producto sin lotes, o lotes insuficientes).
+ * Porción de una línea surtida de un lote. `lotDocumentId: null` = sin lote. En una venta es de
+ * dónde salió; en una devolución, a dónde regresó, con `fromLotDocumentId` = de dónde salió.
  */
 interface DispensedLot {
   lotDocumentId: string | null;
   lotNumber: string | null;
   expirationDate: string | null;
   quantity: number;
+  fromLotDocumentId?: string | null;
 }
+
+const unlotted = (quantity: number): DispensedLot => ({
+  lotDocumentId: null,
+  lotNumber: null,
+  expirationDate: null,
+  quantity,
+});
 
 interface Warning {
   code: string;
@@ -496,12 +506,6 @@ export default ({ strapi }: { strapi: any }) => {
     // De qué lotes salió de verdad cada línea, por posición. La venta solo guarda el lote que
     // eligió el cajero; si no alcanzaba, `consume` completa por caducidad o vende sin lote.
     const dispensed: (DispensedLot[] | null)[] = lines.map(() => null);
-    const unlotted = (quantity: number): DispensedLot => ({
-      lotDocumentId: null,
-      lotNumber: null,
-      expirationDate: null,
-      quantity,
-    });
 
     const res = await runOperation(
       { opKey: `sale:${ventaDocumentId}`, kind: 'sale', refType: 'venta-pos', refDocumentId: ventaDocumentId, location: label(loc), user },
@@ -566,7 +570,7 @@ export default ({ strapi }: { strapi: any }) => {
     // Un reintento (duplicate) no recalcula nada: el reparto ya se guardó la primera vez.
     if (!res.duplicate) {
       try {
-        await writeDispensed(ventaDocumentId, lines, dispensed);
+        await writeDispensed(UID.venta, 'venta', ventaDocumentId, lines, dispensed);
       } catch (e) {
         // Fuera de la transacción a propósito: el stock ya quedó descontado y no debe revertirse
         // por esto. La venta se queda sin reparto (el POS cae al lote elegido) y la bitácora
@@ -582,19 +586,26 @@ export default ({ strapi }: { strapi: any }) => {
   }
 
   /**
-   * Guarda el reparto en `dispensedLots` de cada línea. La venta tiene borrador y publicada, cada
-   * una con su copia del componente, y se escriben las dos. Se empata por posición y se confirma
-   * con producto y cantidad: si una versión no coincide, esa versión no se toca.
+   * Guarda el reparto en `dispensedLots` de cada línea (`venta-item`) de una venta o devolución.
+   * Las dos tienen borrador y publicada, cada una con su copia del componente, y se escriben las
+   * dos. Se empata por posición y se confirma con producto y cantidad: si una versión no coincide
+   * se lanza error en vez de escribir el reparto en la línea equivocada.
    */
-  async function writeDispensed(ventaDocumentId: string, lines: any[], dispensed: (DispensedLot[] | null)[]) {
+  async function writeDispensed(
+    uid: string,
+    field: string,
+    documentId: string,
+    lines: any[],
+    dispensed: (DispensedLot[] | null)[]
+  ) {
     if (!dispensed.some(Boolean)) return;
-    const versions = await strapi.db.query(UID.venta).findMany({
-      where: { documentId: ventaDocumentId },
+    const versions = await strapi.db.query(uid).findMany({
+      where: { documentId },
       select: ['id'],
-      populate: { venta: { populate: { product: { select: ['documentId'] } } } },
+      populate: { [field]: { populate: { product: { select: ['documentId'] } } } },
     });
     for (const v of versions) {
-      const rows: any[] = v.venta ?? [];
+      const rows: any[] = v[field] ?? [];
       const aligned =
         rows.length === lines.length &&
         rows.every(
@@ -602,7 +613,7 @@ export default ({ strapi }: { strapi: any }) => {
             Number(r.quantity) === Number(lines[i].quantity) &&
             (r.product?.documentId ?? null) === (lines[i].product?.documentId ?? null)
         );
-      if (!aligned) throw new Error(`las líneas de la versión ${v.id} no coinciden con la venta`);
+      if (!aligned) throw new Error(`las líneas de la versión ${v.id} no coinciden con el documento`);
       for (let i = 0; i < rows.length; i++) {
         if (!dispensed[i]) continue;
         await strapi.db.query(UID.ventaItem).update({ where: { id: rows[i].id }, data: { dispensedLots: dispensed[i] } });
@@ -610,35 +621,225 @@ export default ({ strapi }: { strapi: any }) => {
     }
   }
 
-  /** Regresa al stock de la farmacia lo devuelto. No toca lotes (decisión vigente). */
+  /**
+   * Lotes de los que salió cada producto de una venta y cuánto falta por regresar a cada uno.
+   * `pid → (lote vendido → piezas)`, en el orden en que se vendieron.
+   *
+   * La fuente es la bitácora de la venta (`sale:<venta>`), exacta desde el 28-sep-2026; una
+   * venta anterior no tiene y devuelve un mapa vacío. A lo vendido se le resta lo que ya
+   * regresaron otras devoluciones de la misma venta, por el `fromLotDocumentId` de sus
+   * movimientos. Las devoluciones de antes de este cambio no lo tienen: entraron sin lote y no
+   * descuentan de ningún lote, pero el tope de piezas por devolver lo pone el POS.
+   */
+  async function returnableLots(ventaDocumentId: string, exceptDevolucion: string) {
+    const available = new Map<string, Map<string, number>>();
+    const saleOp = await strapi.db
+      .query(UID.operation)
+      .findOne({ where: { opKey: `sale:${ventaDocumentId}` }, select: ['movements'] });
+    for (const m of (saleOp?.movements ?? []) as Movement[]) {
+      if (!m.lotDocumentId || Number(m.delta) >= 0) continue;
+      const byLot = available.get(m.productDocumentId) ?? new Map<string, number>();
+      byLot.set(m.lotDocumentId, (byLot.get(m.lotDocumentId) ?? 0) - Number(m.delta));
+      available.set(m.productDocumentId, byLot);
+    }
+    if (!available.size) return available;
+
+    const prev = await strapi.db
+      .query(UID.devolucion)
+      .findMany({ where: { venta: { documentId: ventaDocumentId } }, select: ['documentId'] });
+    const prevIds = [...new Set<string>(prev.map((d: any) => d.documentId))].filter((d) => d !== exceptDevolucion);
+    if (!prevIds.length) return available;
+    const prevOps = await strapi.db
+      .query(UID.operation)
+      .findMany({ where: { opKey: { $in: prevIds.map((d) => `return:${d}`) } }, select: ['movements'] });
+    for (const op of prevOps) {
+      for (const m of (op.movements ?? []) as Movement[]) {
+        const byLot = m.fromLotDocumentId ? available.get(m.productDocumentId) : undefined;
+        if (!byLot || !byLot.has(m.fromLotDocumentId!)) continue;
+        byLot.set(m.fromLotDocumentId!, Math.max(0, (byLot.get(m.fromLotDocumentId!) ?? 0) - Number(m.delta)));
+      }
+    }
+    return available;
+  }
+
+  /**
+   * Regresa lo devuelto al stock de la farmacia de la devolución y, cuando se sabe de qué lote
+   * salió, a ese lote. Antes no tocaba lotes: el stock subía y el lote no, y quedaba descuadre.
+   *
+   * - Si la venta salió de varios lotes, el renglón puede pedir uno (`lotDocumentId`, lo elige el
+   *   cajero); lo demás va en el orden en que se vendió. Lo que no cubren los lotes entra sin lote.
+   * - El lote está en otra ubicación → se suma al registro con el mismo número y caducidad en la
+   *   que recibe, o se crea uno (igual que un traspaso parcial, con `source_lot`).
+   * - El lote ya se mermó (`vencido`) → esas piezas entran sin lote, con aviso `LOT_DISCARDED`.
+   * - El lote ya caducó → regresan a él igual: no se pueden vender y el aviso `LOT_EXPIRED` pide
+   *   desecharlas en Caducidades.
+   */
   async function saleReturn({ devolucionDocumentId, user }: { devolucionDocumentId: string; user?: any }) {
     if (!devolucionDocumentId) throw new StockError(400, 'BAD_REQUEST', 'Falta devolucionDocumentId');
     const dev = await findDoc(UID.devolucion, devolucionDocumentId, {
-      items: { populate: { product: { fields: ['documentId'] } } },
+      items: { populate: { product: { fields: ['documentId', 'productName'] } } },
       pharmacies: { fields: ['documentId'] },
+      venta: { fields: ['documentId'] },
     });
     if (!dev) throw new StockError(404, 'DEVOLUCION_NOT_FOUND', `No existe la devolución ${devolucionDocumentId}`);
 
     // Sin farmacia, lo devuelto entra a la bodega.
     const loc: Loc = dev.pharmacies?.[0]?.documentId ?? null;
+    const ventaDocId: string | null = dev.venta?.documentId ?? null;
 
-    const byProduct = new Map<string, number>();
-    for (const item of dev.items ?? []) {
+    const items: any[] = dev.items ?? [];
+    const byProduct = new Map<string, { name: string; qty: number; lines: { idx: number; qty: number; lot: string | null }[] }>();
+    items.forEach((item, idx) => {
       const pid = item.product?.documentId;
       const qty = Number(item.quantity ?? 0);
-      if (!pid || qty <= 0) continue;
-      byProduct.set(pid, (byProduct.get(pid) ?? 0) + qty);
-    }
+      if (!pid || qty <= 0) return;
+      const g = byProduct.get(pid) ?? { name: item.product.productName ?? item.productName, qty: 0, lines: [] };
+      g.qty += qty;
+      g.lines.push({ idx, qty, lot: item.lotDocumentId || null });
+      byProduct.set(pid, g);
+    });
 
-    return runOperation(
+    const available = ventaDocId ? await returnableLots(ventaDocId, devolucionDocumentId) : new Map<string, Map<string, number>>();
+    const soldIds = [...available.values()].flatMap((m) => [...m.keys()]);
+    const soldLots = new Map<string, any>(
+      soldIds.length
+        ? (
+            await strapi.db.query(UID.lot).findMany({
+              where: { documentId: { $in: soldIds } },
+              select: ['documentId', 'lotNumber', 'expirationDate', 'state'],
+              populate: { pharmacy: { select: ['documentId'] }, compra: { select: ['documentId'] } },
+            })
+          ).map((l: any) => [l.documentId, l])
+        : []
+    );
+
+    // A qué lote regresó cada renglón, por posición (`null` en servicios).
+    const dispensed: (DispensedLot[] | null)[] = items.map(() => null);
+
+    const res = await runOperation(
       { opKey: `return:${devolucionDocumentId}`, kind: 'return', refType: 'devolucion-pos', refDocumentId: devolucionDocumentId, location: label(loc), user },
       async (tx) => {
-        for (const [pid, qty] of [...byProduct].sort(([a], [b]) => a.localeCompare(b))) {
-          await mutateStock(tx, pid, loc, (b) => b + qty);
+        const today = todayMx();
+        for (const [pid, g] of [...byProduct].sort(([a], [b]) => a.localeCompare(b))) {
+          await mutateStock(tx, pid, loc, (b) => b + g.qty);
+
+          const byLot = available.get(pid);
+          if (!byLot?.size) {
+            for (const line of g.lines) dispensed[line.idx] = [unlotted(line.qty)];
+            continue;
+          }
+          const destLots = await lotsAt(tx, pid, loc);
+
+          for (const line of g.lines) {
+            const portions: DispensedLot[] = [];
+            let remaining = line.qty;
+            // El lote que pidió el cajero va primero; los demás, en el orden en que se vendieron.
+            const order = [...byLot.keys()].sort((a, b) => Number(b === line.lot) - Number(a === line.lot));
+            for (const soldId of order) {
+              if (remaining <= 0) break;
+              const n = Math.min(remaining, byLot.get(soldId) ?? 0);
+              if (n <= 0) continue;
+              byLot.set(soldId, (byLot.get(soldId) ?? 0) - n);
+              remaining -= n;
+
+              const sold = soldLots.get(soldId);
+              if (!sold || sold.state === 'vencido') {
+                tx.warnings.push({
+                  code: 'LOT_DISCARDED',
+                  productDocumentId: pid,
+                  message: `${g.name}: el lote ${sold?.lotNumber ?? ''} ya se mermó; ${n} pieza(s) entran sin lote`,
+                  lotDocumentId: soldId,
+                });
+                portions.push({ ...unlotted(n), fromLotDocumentId: soldId });
+                continue;
+              }
+
+              const soldLoc: Loc = sold.pharmacy?.documentId ?? null;
+              // Mismo registro si el lote está donde se recibe; si no, el de mismo número y
+              // caducidad en esa ubicación (= mismo lote físico), o uno nuevo.
+              let target =
+                soldLoc === loc
+                  ? destLots.find((d) => d.documentId === soldId)
+                  : destLots.find(
+                      (d) => d.state !== 'vencido' && d.lotNumber === sold.lotNumber && d.expirationDate === sold.expirationDate
+                    );
+              if (target) {
+                target.currentAmount += n;
+                target.changed = true;
+              } else {
+                const created = await strapi.documents(UID.lot).create({
+                  data: {
+                    product: pid,
+                    ...(loc ? { pharmacy: loc } : {}),
+                    ...(sold.compra?.documentId ? { compra: sold.compra.documentId } : {}),
+                    source_lot: soldId,
+                    lotNumber: sold.lotNumber,
+                    ...(sold.expirationDate ? { expirationDate: sold.expirationDate } : {}),
+                    initialQuantity: n,
+                    currentAmount: n,
+                    state: 'activo',
+                  },
+                });
+                target = {
+                  id: created.id,
+                  documentId: created.documentId,
+                  lotNumber: sold.lotNumber ?? null,
+                  expirationDate: sold.expirationDate ?? null,
+                  currentAmount: n,
+                  state: 'activo',
+                  compraDocumentId: sold.compra?.documentId ?? null,
+                };
+                destLots.push(target);
+              }
+              tx.movements.push({
+                productDocumentId: pid,
+                location: label(loc),
+                delta: n,
+                before: target.currentAmount - n,
+                after: target.currentAmount,
+                lotDocumentId: target.documentId,
+                lotNumber: target.lotNumber,
+                fromLotDocumentId: soldId,
+              });
+              if ((target.expirationDate ?? FAR_FUTURE) < today) {
+                tx.warnings.push({
+                  code: 'LOT_EXPIRED',
+                  productDocumentId: pid,
+                  message: `${g.name}: el lote ${target.lotNumber ?? ''} ya caducó; ${n} pieza(s) regresaron a él sin poder venderse, deséchalas en Caducidades`,
+                  lotDocumentId: target.documentId,
+                });
+              }
+              portions.push({
+                lotDocumentId: target.documentId,
+                lotNumber: target.lotNumber,
+                expirationDate: target.expirationDate,
+                quantity: n,
+                fromLotDocumentId: soldId,
+              });
+            }
+            if (remaining > 0) portions.push(unlotted(remaining));
+            dispensed[line.idx] = portions;
+          }
+          await writeLots(tx, pid, loc, destLots);
         }
-        return { products: byProduct.size };
+        return { products: byProduct.size, dispensed };
       }
     );
+
+    if (!res.duplicate) {
+      try {
+        await writeDispensed(UID.devolucion, 'items', devolucionDocumentId, items, dispensed);
+      } catch (e) {
+        // Igual que en la venta: el stock y los lotes ya quedaron; solo falta el registro en la
+        // devolución, y la bitácora tiene los movimientos.
+        strapi.log.warn(`[pos-stock] No se guardó a qué lote regresó la devolución ${devolucionDocumentId}: ${e}`);
+        res.warnings.push({
+          code: 'DISPENSED_NOT_SAVED',
+          message: 'El stock regresó, pero no se guardó en la devolución a qué lotes',
+        });
+      }
+    }
+    return res;
   }
 
   /** Ingresa una compra al destino elegido y crea sus lotes ahí. */
@@ -1345,8 +1546,27 @@ export default ({ strapi }: { strapi: any }) => {
       if (qty > 0 && !fallbackQty.has(v.documentId)) fallbackQty.set(v.documentId, qty);
     }
 
+    // Devoluciones que regresaron piezas a este lote, con la venta de la que vienen.
+    const returnIds = [...new Set(movements.filter((m) => m.kind === 'return' && m.refDocumentId).map((m) => m.refDocumentId as string))];
+    const devoluciones = returnIds.length
+      ? byDocumentPreferPublished(
+          await strapi.db.query(UID.devolucion).findMany({
+            where: { documentId: { $in: returnIds } },
+            select: ['id', 'documentId', 'publishedAt'],
+            populate: { venta: { select: ['documentId'] } },
+          })
+        )
+      : new Map();
+    const returnedByVenta = new Map<string, number>();
+    for (const m of movements) {
+      const ventaDoc = m.kind === 'return' ? devoluciones.get(m.refDocumentId)?.venta?.documentId : null;
+      if (ventaDoc) returnedByVenta.set(ventaDoc, (returnedByVenta.get(ventaDoc) ?? 0) + m.delta);
+    }
+
     const saleOps = movements.filter((m) => m.kind === 'sale' && m.refDocumentId);
-    const ventaIds = [...new Set([...saleOps.map((m) => m.refDocumentId as string), ...fallbackQty.keys()])];
+    const ventaIds = [
+      ...new Set([...saleOps.map((m) => m.refDocumentId as string), ...fallbackQty.keys(), ...returnedByVenta.keys()]),
+    ];
     const ventas = ventaIds.length
       ? byDocumentPreferPublished(
           await strapi.db.query(UID.venta).findMany({
@@ -1375,6 +1595,12 @@ export default ({ strapi }: { strapi: any }) => {
         m.folio = c?.id ?? null;
         m.refLabel = c?.proveedor?.name ?? null;
       }
+      if (m.kind === 'return') {
+        const d = devoluciones.get(m.refDocumentId);
+        m.folio = d?.id ?? null;
+        const vid = d?.venta?.documentId ? ventas.get(d.venta.documentId)?.id : null;
+        m.refLabel = vid ? `de la venta #${String(vid).padStart(5, '0')}` : null;
+      }
     }
 
     const saleRow = (documentId: string, quantity: number, exact: boolean, fallbackFecha: string | null) => {
@@ -1387,6 +1613,8 @@ export default ({ strapi }: { strapi: any }) => {
         operador: (v?.operador ?? null) as string | null,
         pharmacyName: (v?.pharmacies?.[0]?.nombre ?? null) as string | null,
         quantity,
+        /** Piezas de esa venta que regresaron a este lote por devolución. */
+        returned: returnedByVenta.get(documentId) ?? 0,
         exact,
       };
     };
