@@ -29,6 +29,13 @@
       "type": "relation",
       "relation": "oneToOne",
       "target": "api::product.product"
+    },
+    "pagado": {
+      "type": "boolean",
+      "default": false
+    },
+    "fechaPago": {
+      "type": "date"
     }
   },
   "config": {}

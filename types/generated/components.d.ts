@@ -107,8 +107,10 @@ export interface FacturaItemItems extends Struct.ComponentSchema {
   attributes: {
     cantidad: Schema.Attribute.Decimal;
     descripcion: Schema.Attribute.Text & Schema.Attribute.Required;
+    fechaPago: Schema.Attribute.Date;
     impuesto: Schema.Attribute.Enumeration<['iva16', 'iva8', 'exento']> &
       Schema.Attribute.Required;
+    pagado: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     precioUnitario: Schema.Attribute.Decimal;
     product: Schema.Attribute.Relation<'oneToOne', 'api::product.product'>;
   };
