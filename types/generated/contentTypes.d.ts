@@ -529,10 +529,32 @@ export interface ApiCaseCase extends Struct.CollectionTypeSchema {
     accessToken: Schema.Attribute.String &
       Schema.Attribute.Private &
       Schema.Attribute.Unique;
+    blocker: Schema.Attribute.Text &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 500;
+      }>;
     caseNumber: Schema.Attribute.String & Schema.Attribute.Unique;
+    channel: Schema.Attribute.Enumeration<
+      ['whatsapp', 'web', 'phone', 'in_person']
+    >;
     city: Schema.Attribute.String;
+    closeReason: Schema.Attribute.Enumeration<
+      [
+        'no_contact',
+        'not_candidate',
+        'price',
+        'chose_other',
+        'not_interested',
+        'postponed',
+        'other',
+      ]
+    >;
     consent: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     consentAt: Schema.Attribute.DateTime;
+    coordinator: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -563,6 +585,7 @@ export interface ApiCaseCase extends Struct.CollectionTypeSchema {
       ['options', 'cost', 'assessment', 'second_opinion', 'schedule', 'unsure']
     >;
     internalNotes: Schema.Attribute.Text;
+    isTest: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     landingPath: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::case.case'> &
@@ -572,10 +595,32 @@ export interface ApiCaseCase extends Struct.CollectionTypeSchema {
       'api::medical-service.medical-service'
     >;
     narrative: Schema.Attribute.Text &
-      Schema.Attribute.Required &
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 2000;
       }>;
+    nextAction: Schema.Attribute.Text &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 500;
+      }>;
+    nextActionDue: Schema.Attribute.Date;
+    nextActionOwner: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+    nextReviewDate: Schema.Attribute.Date;
+    originDetail: Schema.Attribute.String;
+    originType: Schema.Attribute.Enumeration<
+      [
+        'campaign',
+        'node',
+        'company',
+        'community',
+        'doctor',
+        'referral',
+        'other',
+        'pending',
+      ]
+    >;
     patientLink: Schema.Attribute.String;
     patientNextStep: Schema.Attribute.Text;
     phone: Schema.Attribute.String & Schema.Attribute.Required;
@@ -588,6 +633,7 @@ export interface ApiCaseCase extends Struct.CollectionTypeSchema {
     quotePresented: Schema.Attribute.Boolean &
       Schema.Attribute.DefaultTo<false>;
     quoteValidUntil: Schema.Attribute.Date;
+    referredBy: Schema.Attribute.Enumeration<['lymbika', 'doctor']>;
     reviewedByDoctor: Schema.Attribute.Enumeration<['yes', 'no', 'unsure']>;
     selected_doctor: Schema.Attribute.Relation<
       'manyToOne',

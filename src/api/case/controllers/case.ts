@@ -103,6 +103,29 @@ function excedeRateLimit(ip: string) {
   return false;
 }
 
+// utm_source que identifican un tipo de origen. Convención para los enlaces y
+// QR que se reparten: ?utm_source=empresa&utm_campaign=<nombre de la empresa>.
+const ORIGEN_POR_UTM_SOURCE: Record<string, string> = {
+  empresa: "company",
+  comunidad: "community",
+  nodo: "node",
+  medico: "doctor",
+};
+
+/**
+ * Origen del caso a partir de los utm ya limpios. Sin utm queda "pending": no
+ * se inventa una atribución, coordinación la completa.
+ */
+function origenDesdeUtm(utm: Record<string, string> | null) {
+  const fuente = utm?.utm_source?.toLowerCase();
+  const campana = utm?.utm_campaign?.slice(0, MAX_CAMPO_CORTO);
+  if (fuente && ORIGEN_POR_UTM_SOURCE[fuente]) {
+    return { originType: ORIGEN_POR_UTM_SOURCE[fuente], originDetail: campana || undefined };
+  }
+  if (campana) return { originType: "campaign", originDetail: campana };
+  return { originType: "pending" };
+}
+
 /** Solo deja pasar strings cortos con claves utm_*. */
 function limpiarUtm(utm: unknown) {
   if (!utm || typeof utm !== "object" || Array.isArray(utm)) return null;
@@ -187,6 +210,131 @@ module.exports = createCoreController("api::case.case", ({ strapi }) => {
     return Boolean(caso);
   }
 
+  // ── Equipo: coordinador y responsable ──────────────────────────────────────
+  // `coordinator` y `nextActionOwner` apuntan a users-permissions user. El core
+  // REST rechaza escribirlas o filtrarlas ("Invalid key") y las quita del
+  // populate si el rol no tiene `user.find`, que no se da porque expondría a
+  // todos los usuarios. Por eso entran, salen y se filtran por aquí.
+
+  type MiembroEquipo = { documentId: string; nombre: string };
+
+  const RELACIONES_DE_EQUIPO = ["coordinator", "nextActionOwner"] as const;
+  const CAMPOS_USUARIO = ["documentId", "firstName", "lastName", "username"];
+
+  function nombreDeUsuario(u): string {
+    const completo = [u.firstName, u.lastName].filter(Boolean).join(" ").trim();
+    return completo || u.username;
+  }
+
+  /** Usuarios activos cuyo rol puede ver casos (coordinación y especialistas). */
+  async function miembrosDelEquipo(): Promise<MiembroEquipo[]> {
+    const permisos = await strapi.db.query("plugin::users-permissions.permission").findMany({
+      where: { action: "api::case.case.find" },
+      populate: { role: { select: ["id"] } },
+    });
+    const roles = permisos.map((p) => p.role?.id).filter(Boolean);
+    if (roles.length === 0) return [];
+    const usuarios = await strapi.db.query("plugin::users-permissions.user").findMany({
+      where: { role: { id: { $in: roles } }, blocked: { $ne: true } },
+      select: CAMPOS_USUARIO,
+    });
+    return usuarios
+      .map((u) => ({ documentId: u.documentId, nombre: nombreDeUsuario(u) }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+  }
+
+  /**
+   * Saca del body las relaciones de equipo (el frontend manda el documentId del
+   * usuario o null) y las valida contra el equipo. Se aplican después con
+   * `aplicarRelaciones`, ya fuera del core.
+   */
+  async function tomarRelacionesDeEquipo(
+    data,
+    doctor: DoctorAsignado | null
+  ): Promise<{ relaciones: Record<string, { set: string[] }> } | { error: string }> {
+    const relaciones: Record<string, { set: string[] }> = {};
+    if (!data || typeof data !== "object") return { relaciones };
+    let equipo: MiembroEquipo[] | null = null;
+
+    for (const campo of RELACIONES_DE_EQUIPO) {
+      if (!(campo in data)) continue;
+      const valor = data[campo];
+      delete data[campo];
+      // El coordinador del caso lo decide coordinación, no el especialista.
+      if (doctor && campo === "coordinator") continue;
+      if (valor === null || valor === "") {
+        relaciones[campo] = { set: [] };
+        continue;
+      }
+      equipo ??= await miembrosDelEquipo();
+      if (typeof valor !== "string" || !equipo.some((m) => m.documentId === valor)) {
+        return { error: "El usuario elegido no es parte del equipo." };
+      }
+      relaciones[campo] = { set: [valor] };
+    }
+    return { relaciones };
+  }
+
+  async function aplicarRelaciones(documentId: unknown, relaciones: Record<string, unknown>) {
+    if (typeof documentId !== "string" || Object.keys(relaciones).length === 0) return;
+    await strapi.documents("api::case.case").update({ documentId, data: relaciones as any });
+  }
+
+  // Lo económico y las notas internas no son para el especialista.
+  const CAMPOS_RESERVADOS = ["internalNotes", "quoteAmount", "quoteValidUntil", "quotePresented"];
+
+  function quitarReservados(objeto) {
+    if (!objeto || typeof objeto !== "object") return;
+    for (const campo of CAMPOS_RESERVADOS) delete objeto[campo];
+  }
+
+  /**
+   * Prepara la salida para el equipo: anexa coordinador y responsable como
+   * `{ documentId, nombre }` y, si es especialista, quita los campos reservados.
+   */
+  async function completarParaEquipo(datos, doctor: DoctorAsignado | null) {
+    const casos = (Array.isArray(datos) ? datos : [datos]).filter(
+      (c) => c && typeof c.documentId === "string"
+    );
+    if (casos.length === 0) return;
+    if (doctor) casos.forEach(quitarReservados);
+
+    const filas = await strapi.db.query("api::case.case").findMany({
+      where: { documentId: { $in: casos.map((c) => c.documentId) } },
+      select: ["documentId"],
+      populate: {
+        coordinator: { select: CAMPOS_USUARIO },
+        nextActionOwner: { select: CAMPOS_USUARIO },
+      },
+    });
+    const porId = new Map<string, any>(filas.map((f) => [f.documentId, f]));
+    const miembro = (u) => (u ? { documentId: u.documentId, nombre: nombreDeUsuario(u) } : null);
+    for (const caso of casos) {
+      const fila = porId.get(caso.documentId);
+      caso.coordinator = miembro(fila?.coordinator);
+      caso.nextActionOwner = miembro(fila?.nextActionOwner);
+    }
+  }
+
+  /**
+   * Filtros de equipo que Strapi no acepta en `filters`: `?coordinador=` y
+   * `?responsable=` con `yo`, `ninguno` o el documentId de un usuario. Se
+   * quitan del query antes de validarlo.
+   */
+  function tomarFiltrosDeEquipo(ctx) {
+    const filtros = [];
+    const parametros = { coordinador: "coordinator", responsable: "nextActionOwner" };
+    for (const [parametro, campo] of Object.entries(parametros)) {
+      const valor = ctx.query?.[parametro];
+      if (valor === undefined) continue;
+      delete ctx.query[parametro];
+      if (valor === "yo") filtros.push({ [campo]: { id: { $eq: ctx.state.user.id } } });
+      else if (valor === "ninguno") filtros.push({ [campo]: { id: { $null: true } } });
+      else if (typeof valor === "string") filtros.push({ [campo]: { documentId: { $eq: valor } } });
+    }
+    return filtros;
+  }
+
   return {
     // ── Core REST (/dashboard/operations del frontend) ──────────────────────
     // El permiso del rol decide quién entra; estos overrides deciden qué casos
@@ -197,18 +345,21 @@ module.exports = createCoreController("api::case.case", ({ strapi }) => {
     // `this: any`: el factory viene de require() y sus helpers no están tipados.
     async find(this: any, ctx) {
       const doctor = await doctorDelUsuario(ctx);
-      if (!doctor) return super.find(ctx);
+      const extra = tomarFiltrosDeEquipo(ctx);
+      if (doctor) extra.push(filtroDeDoctor(doctor));
 
       await this.validateQuery(ctx);
       const query = await this.sanitizeQuery(ctx);
       const { results, pagination } = await strapi.service("api::case.case").find({
         ...query,
-        filters: { $and: [query.filters ?? {}, filtroDeDoctor(doctor)] },
+        filters: extra.length ? { $and: [query.filters ?? {}, ...extra] } : query.filters,
       });
       const datos = await this.sanitizeOutput(results, ctx);
+      await completarParaEquipo(datos, doctor);
       // transformResponse es async en Strapi 5: sin await, el spread de abajo
       // copia una Promise y la respuesta sale sin `data` ni `pagination`.
       const respuesta = await this.transformResponse(datos, { pagination });
+      if (!doctor) return respuesta;
       return { ...respuesta, meta: { ...respuesta.meta, doctorAsignado: doctor } };
     },
 
@@ -218,31 +369,62 @@ module.exports = createCoreController("api::case.case", ({ strapi }) => {
       if (doctor && !(await esCasoDelDoctor(ctx.params.id, doctor))) {
         return ctx.notFound("Caso no encontrado.");
       }
-      return super.findOne(ctx);
+      const respuesta = await super.findOne(ctx);
+      await completarParaEquipo(respuesta?.data, doctor);
+      return respuesta;
     },
 
-    // POST /cases — el caso que da de alta un especialista queda asignado a él.
+    // POST /cases — alta manual del equipo. Sin coordinador explícito queda
+    // quien lo crea; el de un especialista queda asignado a él.
     async create(ctx) {
       const doctor = await doctorDelUsuario(ctx);
       const data = ctx.request.body?.data;
-      if (doctor && data && typeof data === "object") {
-        data.selected_doctor = { set: [doctor.documentId] };
+      const tomadas = await tomarRelacionesDeEquipo(data, doctor);
+      if ("error" in tomadas) return ctx.badRequest(tomadas.error);
+      const { relaciones } = tomadas;
+
+      if (data && typeof data === "object") {
+        if (doctor) {
+          data.selected_doctor = { set: [doctor.documentId] };
+          quitarReservados(data);
+        } else if (!relaciones.coordinator) {
+          relaciones.coordinator = { set: [ctx.state.user.documentId] };
+        }
+        data.originType ??= "pending";
       }
-      return super.create(ctx);
+
+      const respuesta = await super.create(ctx);
+      await aplicarRelaciones(respuesta?.data?.documentId, relaciones);
+      await completarParaEquipo(respuesta?.data, doctor);
+      return respuesta;
     },
 
     // PUT /cases/:id — el especialista no reasigna: se descarta `selected_doctor`
     // (si lo cambiara, el caso saldría de su bandeja).
     async update(ctx) {
       const doctor = await doctorDelUsuario(ctx);
+      const data = ctx.request.body?.data;
       if (doctor) {
         if (!(await esCasoDelDoctor(ctx.params.id, doctor))) {
           return ctx.notFound("Caso no encontrado.");
         }
-        const data = ctx.request.body?.data;
-        if (data && typeof data === "object") delete data.selected_doctor;
+        if (data && typeof data === "object") {
+          delete data.selected_doctor;
+          quitarReservados(data);
+        }
       }
-      return super.update(ctx);
+      const tomadas = await tomarRelacionesDeEquipo(data, doctor);
+      if ("error" in tomadas) return ctx.badRequest(tomadas.error);
+
+      const respuesta = await super.update(ctx);
+      await aplicarRelaciones(respuesta?.data?.documentId, tomadas.relaciones);
+      await completarParaEquipo(respuesta?.data, doctor);
+      return respuesta;
+    },
+
+    // GET /cases/equipo/miembros — opciones de coordinador y responsable.
+    async equipo(ctx) {
+      ctx.body = { data: await miembrosDelEquipo() };
     },
 
     async delete(ctx) {
@@ -313,6 +495,7 @@ module.exports = createCoreController("api::case.case", ({ strapi }) => {
 
       const userId = await usuarioOpcional(ctx);
       const accessToken = generarToken();
+      const utm = limpiarUtm(body.utm);
 
       const data = {
         accessToken,
@@ -331,7 +514,9 @@ module.exports = createCoreController("api::case.case", ({ strapi }) => {
         consentAt: new Date().toISOString(),
         source: textoCorto(body.source, 40) || "procedure_page",
         landingPath: textoCorto(body.landingPath, 300) || undefined,
-        utm: limpiarUtm(body.utm),
+        utm,
+        channel: "web",
+        ...origenDesdeUtm(utm),
         ...(medicalServiceId && { medical_service: medicalServiceId }),
         ...(userId && { user: userId }),
       };

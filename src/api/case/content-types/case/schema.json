@@ -58,7 +58,6 @@
     },
     "narrative": {
       "type": "text",
-      "required": true,
       "maxLength": 2000
     },
     "reviewedByDoctor": {
@@ -176,6 +175,78 @@
       "type": "relation",
       "relation": "manyToOne",
       "target": "plugin::users-permissions.user"
+    },
+    "coordinator": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "nextAction": {
+      "type": "text",
+      "maxLength": 500
+    },
+    "nextActionOwner": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "nextActionDue": {
+      "type": "date"
+    },
+    "blocker": {
+      "type": "text",
+      "maxLength": 500
+    },
+    "nextReviewDate": {
+      "type": "date"
+    },
+    "originType": {
+      "type": "enumeration",
+      "enum": [
+        "campaign",
+        "node",
+        "company",
+        "community",
+        "doctor",
+        "referral",
+        "other",
+        "pending"
+      ]
+    },
+    "originDetail": {
+      "type": "string"
+    },
+    "channel": {
+      "type": "enumeration",
+      "enum": [
+        "whatsapp",
+        "web",
+        "phone",
+        "in_person"
+      ]
+    },
+    "referredBy": {
+      "type": "enumeration",
+      "enum": [
+        "lymbika",
+        "doctor"
+      ]
+    },
+    "closeReason": {
+      "type": "enumeration",
+      "enum": [
+        "no_contact",
+        "not_candidate",
+        "price",
+        "chose_other",
+        "not_interested",
+        "postponed",
+        "other"
+      ]
+    },
+    "isTest": {
+      "type": "boolean",
+      "default": false
     }
   }
 }
