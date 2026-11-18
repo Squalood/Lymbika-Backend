@@ -1,0 +1,67 @@
+{
+  "kind": "collectionType",
+  "collectionName": "principios_activos",
+  "info": {
+    "singularName": "principio-activo",
+    "pluralName": "principios-activos",
+    "displayName": "Principio activo",
+    "description": "Información clínica por sustancia; la comparten todos los productos que la contienen"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "nombre": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "nombre"
+    },
+    "sinonimos": {
+      "type": "text"
+    },
+    "codigoAtc": {
+      "type": "string"
+    },
+    "embarazo": {
+      "type": "enumeration",
+      "enum": [
+        "compatible",
+        "precaucion",
+        "contraindicado",
+        "sinDatos"
+      ]
+    },
+    "lactancia": {
+      "type": "enumeration",
+      "enum": [
+        "compatible",
+        "precaucion",
+        "contraindicado",
+        "sinDatos"
+      ]
+    },
+    "causaSomnolencia": {
+      "type": "boolean"
+    },
+    "esAntibiotico": {
+      "type": "boolean"
+    },
+    "contraindicaciones": {
+      "type": "text"
+    },
+    "advertencias": {
+      "type": "text"
+    },
+    "interacciones": {
+      "type": "text"
+    },
+    "efectosAdversos": {
+      "type": "text"
+    }
+  }
+}

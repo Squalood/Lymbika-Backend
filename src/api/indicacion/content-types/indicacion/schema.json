@@ -1,0 +1,46 @@
+{
+  "kind": "collectionType",
+  "collectionName": "indicaciones",
+  "info": {
+    "singularName": "indicacion",
+    "pluralName": "indicaciones",
+    "displayName": "Indicación",
+    "description": "Padecimiento o síntoma que trata un producto; base de la búsqueda por síntoma del bot"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "nombre": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "nombre"
+    },
+    "sinonimos": {
+      "type": "text"
+    },
+    "descripcion": {
+      "type": "text"
+    },
+    "senalesAlarma": {
+      "type": "text"
+    },
+    "especialidades": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::service.service",
+      "inversedBy": "indicaciones"
+    },
+    "products": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::product.product",
+      "mappedBy": "indicaciones"
+    }
+  }
+}

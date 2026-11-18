@@ -1,0 +1,44 @@
+{
+  "collectionName": "components_producto_composicions",
+  "info": {
+    "displayName": "composicion",
+    "icon": "puzzle",
+    "description": "Un principio activo del producto con su concentración"
+  },
+  "options": {},
+  "attributes": {
+    "principioActivo": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::principio-activo.principio-activo"
+    },
+    "cantidad": {
+      "type": "decimal"
+    },
+    "unidad": {
+      "type": "enumeration",
+      "enum": [
+        "mg",
+        "g",
+        "mcg",
+        "UI",
+        "mEq",
+        "UFC",
+        "ml",
+        "porcentaje"
+      ]
+    },
+    "porCantidad": {
+      "type": "decimal"
+    },
+    "porUnidad": {
+      "type": "enumeration",
+      "enum": [
+        "ml",
+        "g",
+        "dosis",
+        "gota"
+      ]
+    }
+  }
+}

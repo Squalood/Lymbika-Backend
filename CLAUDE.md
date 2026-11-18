@@ -21,6 +21,9 @@ Casi todos usan controller/service/router de fábrica (`factories.createCore*`, 
 
 **Catálogo / tienda en línea**
 - `product` (precio, `priceMember`, `priceInpatient`, `impuesto`, `stock_central`, lotes, stock por farmacia), `category`, `laboratorio`, `review` ★ (`create` fuerza `user` = usuario del JWT).
+- **Ficha clínica** (base del futuro chatbot): `product` tiene `tipoProducto`, `composicion` (componente `producto.composicion` → `principio-activo`), forma, vía, contenido, `fraccion` COFEPRIS, `edadMinimaMeses`, `indicaciones`, posología, `estadoFicha` (`pendiente`/`revisada`; null en productos anteriores = sin capturar) y `fuenteInfo`. Lo que depende de la sustancia (embarazo, lactancia, contraindicaciones, interacciones, `causaSomnolencia`, `esAntibiotico`, ATC) vive en `principio-activo` y se captura una vez. `indicacion` (síntomas, `senalesAlarma`, relación con `service`/especialidades). Ambas sin draft.
+  - ★ `sal` y `conReceta` se **derivan** de `composicion` y `fraccion` (I–IV = receta) cuando hay datos; si no, se respetan los manuales. Middleware del Document Service en `src/api/product/utils/derivar-ficha.ts` (registrado en `register()`), escribe por SQL por fila. Editarlos a mano en un producto con ficha no sirve: se recalculan al guardar.
+  - Pre-llenado con IA (pendiente): solo campos vacíos de fichas `pendiente`, con `fuenteInfo = ia`; nunca tocar fichas `revisada`. El bot solo debe recomendar fichas `revisada` de fracción V–VI o no medicamentos.
 - `order` ★ — `create`: acepta solo `{id, quantity}`, precios desde Strapi (`status: 'published'`), precio de miembro si `membershipActive`, envío `DELIVERY_COST_MXN`, crea sesión de Stripe Checkout; **no valida stock** (el stock es del POS). Ruta extra `GET /orders/by-session/:sessionId` (`routes/order-consulta.ts`).
 - `stripe` ★ (sin content type) — `POST /api/stripe/webhook` (`auth: false`, única ruta pública por firma). Verifica firma con el cuerpo crudo, idempotencia con `stripe-event` (`eventId` único, estados recibido/procesado/ignorado/fallido) y despacha a `handlers/orders.ts` (marca órdenes pagadas) y `handlers/subscriptions.ts`.
 - `export` ★ (sin content type) — `GET /export/products` (CSV), `POST /export/products/import`, `POST /export/products/reset-stock`.
@@ -68,7 +71,7 @@ Casi todos usan controller/service/router de fábrica (`factories.createCore*`, 
 ## Gotchas
 - `strapi develop` sincroniza el esquema: renombrar/borrar un campo borra la columna y sus datos. **Nunca** correr local contra la BD de producción (usar branch Neon `dev-local`).
 - Cambios de estructura se hacen en el admin local (Content-Type Builder escribe `schema.json`), se commitean y Render los aplica en prod. Avisar antes de renombrar/borrar campos que el frontend o el POS consuman.
-- Permisos de rutas nuevas (users-permissions) no viven en el código: hay que habilitarlos en el admin de cada entorno.
-- `order` nace publicada (no borrador). `stripe-event`, `case`, `factura`, `pharmacy*`, `inventory-lot`, `stock-*`, `service-rate`, `site-config` no tienen draft & publish.
+- Permisos de rutas nuevas (users-permissions) no viven en el código: hay que habilitarlos en el admin de cada entorno (p. ej. `find`/`findOne` públicos de `principio-activo` e `indicacion`).
+- `order` nace publicada (no borrador). `stripe-event`, `case`, `factura`, `pharmacy*`, `inventory-lot`, `stock-*`, `service-rate`, `site-config`, `principio-activo`, `indicacion` no tienen draft & publish.
 - Para OXXO/SPEI habría que añadir `checkout.session.async_payment_*` al webhook (ver comentario en `src/api/stripe/controllers/stripe.ts`).
 - Local: sin llaves AWS no se sube/borra media; sin `SMTP_HOST` no salen correos; Stripe con `sk_test_`.

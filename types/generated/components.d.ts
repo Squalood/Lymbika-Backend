@@ -596,6 +596,27 @@ export interface PricingPlan extends Struct.ComponentSchema {
   };
 }
 
+export interface ProductoComposicion extends Struct.ComponentSchema {
+  collectionName: 'components_producto_composicions';
+  info: {
+    description: 'Un principio activo del producto con su concentraci\u00F3n';
+    displayName: 'composicion';
+    icon: 'puzzle';
+  };
+  attributes: {
+    cantidad: Schema.Attribute.Decimal;
+    porCantidad: Schema.Attribute.Decimal;
+    porUnidad: Schema.Attribute.Enumeration<['ml', 'g', 'dosis', 'gota']>;
+    principioActivo: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::principio-activo.principio-activo'
+    >;
+    unidad: Schema.Attribute.Enumeration<
+      ['mg', 'g', 'mcg', 'UI', 'mEq', 'UFC', 'ml', 'porcentaje']
+    >;
+  };
+}
+
 export interface PromoPromo extends Struct.ComponentSchema {
   collectionName: 'components_promo_promos';
   info: {
@@ -700,6 +721,7 @@ declare module '@strapi/strapi' {
       'modal.trust-modal': ModalTrustModal;
       'plus.plus': PlusPlus;
       'pricing.plan': PricingPlan;
+      'producto.composicion': ProductoComposicion;
       'promo.promo': PromoPromo;
       'testimonial.testimonials': TestimonialTestimonials;
       'venta-item.venta-item': VentaItemVentaItem;

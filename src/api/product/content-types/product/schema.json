@@ -143,6 +143,158 @@
         "iva8",
         "iva16"
       ]
+    },
+    "tipoProducto": {
+      "type": "enumeration",
+      "enum": [
+        "medicamento",
+        "suplemento",
+        "dermocosmetico",
+        "dispositivoMedico",
+        "higienePersonal",
+        "otro"
+      ]
+    },
+    "composicion": {
+      "type": "component",
+      "component": "producto.composicion",
+      "repeatable": true
+    },
+    "formaFarmaceutica": {
+      "type": "enumeration",
+      "enum": [
+        "tableta",
+        "tabletaMasticable",
+        "tabletaEfervescente",
+        "tabletaSublingual",
+        "capsula",
+        "jarabe",
+        "suspension",
+        "solucionOral",
+        "gotasOrales",
+        "polvo",
+        "crema",
+        "gel",
+        "unguento",
+        "locion",
+        "solucionTopica",
+        "spray",
+        "inhalador",
+        "solucionNebulizar",
+        "solucionNasal",
+        "gotasOftalmicas",
+        "gotasOticas",
+        "ovulo",
+        "supositorio",
+        "inyectable",
+        "parche",
+        "otro"
+      ]
+    },
+    "viaAdministracion": {
+      "type": "enumeration",
+      "enum": [
+        "oral",
+        "sublingual",
+        "topica",
+        "oftalmica",
+        "otica",
+        "nasal",
+        "inhalada",
+        "vaginal",
+        "rectal",
+        "intramuscular",
+        "intravenosa",
+        "subcutanea",
+        "otra"
+      ]
+    },
+    "contenidoCantidad": {
+      "type": "decimal"
+    },
+    "contenidoUnidad": {
+      "type": "enumeration",
+      "enum": [
+        "tabletas",
+        "capsulas",
+        "ml",
+        "g",
+        "sobres",
+        "piezas",
+        "ampolletas",
+        "ovulos",
+        "supositorios",
+        "parches",
+        "dosis"
+      ]
+    },
+    "fraccion": {
+      "type": "enumeration",
+      "enum": [
+        "I",
+        "II",
+        "III",
+        "IV",
+        "V",
+        "VI"
+      ]
+    },
+    "edadMinimaMeses": {
+      "type": "integer",
+      "min": 0
+    },
+    "indicaciones": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::indicacion.indicacion",
+      "inversedBy": "products"
+    },
+    "posologia": {
+      "type": "text"
+    },
+    "advertenciasAdicionales": {
+      "type": "text"
+    },
+    "registroSanitario": {
+      "type": "string"
+    },
+    "prospecto": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "files"
+      ]
+    },
+    "requiereRefrigeracion": {
+      "type": "boolean"
+    },
+    "sinAzucar": {
+      "type": "boolean"
+    },
+    "fuenteInfo": {
+      "type": "enumeration",
+      "enum": [
+        "empaque",
+        "ipp",
+        "plm",
+        "ia",
+        "otra"
+      ]
+    },
+    "estadoFicha": {
+      "type": "enumeration",
+      "default": "pendiente",
+      "enum": [
+        "pendiente",
+        "revisada"
+      ]
+    },
+    "revisadoPor": {
+      "type": "string"
+    },
+    "fechaRevision": {
+      "type": "date"
     }
   }
 }

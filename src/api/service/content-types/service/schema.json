@@ -62,6 +62,12 @@
         "Droplet",
         "Wind"
       ]
+    },
+    "indicaciones": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::indicacion.indicacion",
+      "mappedBy": "especialidades"
     }
   }
 }

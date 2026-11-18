@@ -2,6 +2,8 @@
 
 import path from 'path';
 
+import { registrarDerivadosDeFicha } from './api/product/utils/derivar-ficha';
+
 // Se resuelve desde la raiz del proyecto y no con una ruta relativa: este
 // archivo vive en src/index.ts en desarrollo y en dist/src/index.js una vez
 // compilado, asi que "../lib" no apuntaria al mismo sitio en los dos casos.
@@ -114,7 +116,10 @@ export default {
    *
    * This gives you an opportunity to extend code.
    */
-  register(/* { strapi }: { strapi: Core.Strapi } */) {},
+  register({ strapi }) {
+    // `sal` y `conReceta` se calculan desde la ficha clínica (ver derivar-ficha.ts).
+    registrarDerivadosDeFicha(strapi);
+  },
 
   /**
    * An asynchronous bootstrap function that runs before

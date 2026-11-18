@@ -1101,6 +1101,46 @@ export interface ApiHospitalHospital extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiIndicacionIndicacion extends Struct.CollectionTypeSchema {
+  collectionName: 'indicaciones';
+  info: {
+    description: 'Padecimiento o s\u00EDntoma que trata un producto; base de la b\u00FAsqueda por s\u00EDntoma del bot';
+    displayName: 'Indicaci\u00F3n';
+    pluralName: 'indicaciones';
+    singularName: 'indicacion';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    descripcion: Schema.Attribute.Text;
+    especialidades: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::service.service'
+    >;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::indicacion.indicacion'
+    > &
+      Schema.Attribute.Private;
+    nombre: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    products: Schema.Attribute.Relation<'manyToMany', 'api::product.product'>;
+    publishedAt: Schema.Attribute.DateTime;
+    senalesAlarma: Schema.Attribute.Text;
+    sinonimos: Schema.Attribute.Text;
+    slug: Schema.Attribute.UID<'nombre'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiInventoryLotInventoryLot
   extends Struct.CollectionTypeSchema {
   collectionName: 'inventory_lots';
@@ -1534,6 +1574,53 @@ export interface ApiPharmacyPharmacy extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiPrincipioActivoPrincipioActivo
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'principios_activos';
+  info: {
+    description: 'Informaci\u00F3n cl\u00EDnica por sustancia; la comparten todos los productos que la contienen';
+    displayName: 'Principio activo';
+    pluralName: 'principios-activos';
+    singularName: 'principio-activo';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    advertencias: Schema.Attribute.Text;
+    causaSomnolencia: Schema.Attribute.Boolean;
+    codigoAtc: Schema.Attribute.String;
+    contraindicaciones: Schema.Attribute.Text;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    efectosAdversos: Schema.Attribute.Text;
+    embarazo: Schema.Attribute.Enumeration<
+      ['compatible', 'precaucion', 'contraindicado', 'sinDatos']
+    >;
+    esAntibiotico: Schema.Attribute.Boolean;
+    interacciones: Schema.Attribute.Text;
+    lactancia: Schema.Attribute.Enumeration<
+      ['compatible', 'precaucion', 'contraindicado', 'sinDatos']
+    >;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::principio-activo.principio-activo'
+    > &
+      Schema.Attribute.Private;
+    nombre: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    publishedAt: Schema.Attribute.DateTime;
+    sinonimos: Schema.Attribute.Text;
+    slug: Schema.Attribute.UID<'nombre'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiProductProduct extends Struct.CollectionTypeSchema {
   collectionName: 'products';
   info: {
@@ -1547,21 +1634,87 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
   };
   attributes: {
     active: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    advertenciasAdicionales: Schema.Attribute.Text;
     barCode: Schema.Attribute.String;
     category: Schema.Attribute.Relation<'oneToOne', 'api::category.category'>;
     clinics: Schema.Attribute.Relation<'manyToMany', 'api::clinic.clinic'>;
+    composicion: Schema.Attribute.Component<'producto.composicion', true>;
     conReceta: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    contenidoCantidad: Schema.Attribute.Decimal;
+    contenidoUnidad: Schema.Attribute.Enumeration<
+      [
+        'tabletas',
+        'capsulas',
+        'ml',
+        'g',
+        'sobres',
+        'piezas',
+        'ampolletas',
+        'ovulos',
+        'supositorios',
+        'parches',
+        'dosis',
+      ]
+    >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     descriptionPro: Schema.Attribute.Blocks;
     drug_type: Schema.Attribute.Enumeration<['generic', 'branded']>;
+    edadMinimaMeses: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    estadoFicha: Schema.Attribute.Enumeration<['pendiente', 'revisada']> &
+      Schema.Attribute.DefaultTo<'pendiente'>;
+    fechaRevision: Schema.Attribute.Date;
+    formaFarmaceutica: Schema.Attribute.Enumeration<
+      [
+        'tableta',
+        'tabletaMasticable',
+        'tabletaEfervescente',
+        'tabletaSublingual',
+        'capsula',
+        'jarabe',
+        'suspension',
+        'solucionOral',
+        'gotasOrales',
+        'polvo',
+        'crema',
+        'gel',
+        'unguento',
+        'locion',
+        'solucionTopica',
+        'spray',
+        'inhalador',
+        'solucionNebulizar',
+        'solucionNasal',
+        'gotasOftalmicas',
+        'gotasOticas',
+        'ovulo',
+        'supositorio',
+        'inyectable',
+        'parche',
+        'otro',
+      ]
+    >;
+    fraccion: Schema.Attribute.Enumeration<['I', 'II', 'III', 'IV', 'V', 'VI']>;
+    fuenteInfo: Schema.Attribute.Enumeration<
+      ['empaque', 'ipp', 'plm', 'ia', 'otra']
+    >;
     images: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios',
       true
     >;
     impuesto: Schema.Attribute.Enumeration<['iva0', 'iva8', 'iva16']> &
       Schema.Attribute.DefaultTo<'iva0'>;
+    indicaciones: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::indicacion.indicacion'
+    >;
     inventory_lots: Schema.Attribute.Relation<
       'oneToMany',
       'api::inventory-lot.inventory-lot'
@@ -1581,13 +1734,19 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::pharmacy-stock.pharmacy-stock'
     >;
+    posologia: Schema.Attribute.Text;
     price: Schema.Attribute.Decimal;
     priceInpatient: Schema.Attribute.Decimal;
     priceMember: Schema.Attribute.Decimal;
     productName: Schema.Attribute.String;
+    prospecto: Schema.Attribute.Media<'files'>;
     publishedAt: Schema.Attribute.DateTime;
+    registroSanitario: Schema.Attribute.String;
+    requiereRefrigeracion: Schema.Attribute.Boolean;
     reviews: Schema.Attribute.Relation<'oneToMany', 'api::review.review'>;
+    revisadoPor: Schema.Attribute.String;
     sal: Schema.Attribute.Text;
+    sinAzucar: Schema.Attribute.Boolean;
     sku: Schema.Attribute.String;
     slug: Schema.Attribute.UID<'productName'>;
     stock_central: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
@@ -1612,9 +1771,36 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
         ' Cuidado Infantil y Pedi\u00E1trico',
       ]
     >;
+    tipoProducto: Schema.Attribute.Enumeration<
+      [
+        'medicamento',
+        'suplemento',
+        'dermocosmetico',
+        'dispositivoMedico',
+        'higienePersonal',
+        'otro',
+      ]
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    viaAdministracion: Schema.Attribute.Enumeration<
+      [
+        'oral',
+        'sublingual',
+        'topica',
+        'oftalmica',
+        'otica',
+        'nasal',
+        'inhalada',
+        'vaginal',
+        'rectal',
+        'intramuscular',
+        'intravenosa',
+        'subcutanea',
+        'otra',
+      ]
+    >;
     videos: Schema.Attribute.Component<'video-id.youtube-video', true>;
   };
 }
@@ -1828,6 +2014,10 @@ export interface ApiServiceService extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.DefaultTo<'Stethoscope'>;
     image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    indicaciones: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::indicacion.indicacion'
+    >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -2638,6 +2828,7 @@ declare module '@strapi/strapi' {
       'api::faq-group.faq-group': ApiFaqGroupFaqGroup;
       'api::home-page.home-page': ApiHomePageHomePage;
       'api::hospital.hospital': ApiHospitalHospital;
+      'api::indicacion.indicacion': ApiIndicacionIndicacion;
       'api::inventory-lot.inventory-lot': ApiInventoryLotInventoryLot;
       'api::laboratorio.laboratorio': ApiLaboratorioLaboratorio;
       'api::medical-service.medical-service': ApiMedicalServiceMedicalService;
@@ -2648,6 +2839,7 @@ declare module '@strapi/strapi' {
       'api::page.page': ApiPagePage;
       'api::pharmacy-stock.pharmacy-stock': ApiPharmacyStockPharmacyStock;
       'api::pharmacy.pharmacy': ApiPharmacyPharmacy;
+      'api::principio-activo.principio-activo': ApiPrincipioActivoPrincipioActivo;
       'api::product.product': ApiProductProduct;
       'api::proveedor.proveedor': ApiProveedorProveedor;
       'api::review.review': ApiReviewReview;
