@@ -51,7 +51,8 @@ function cantidadConUnidad(cantidad: unknown, unidad: string | null): string {
   return etiqueta ? `${n}${etiqueta}` : `${n} ${unidad}`;
 }
 
-function renglonDeSal(renglon: any): string | null {
+/** "Paracetamol 250 mg / 5 ml". Lo usa también el export CSV, que lo vuelve a leer al importar. */
+export function renglonDeSal(renglon: any): string | null {
   const nombre = renglon?.principioActivo?.nombre?.trim();
   if (!nombre) return null;
   const dosis = cantidadConUnidad(renglon.cantidad, renglon.unidad ?? null);

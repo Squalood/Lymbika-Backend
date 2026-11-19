@@ -26,7 +26,7 @@ Casi todos usan controller/service/router de fábrica (`factories.createCore*`, 
   - Pre-llenado con IA (pendiente): solo campos vacíos de fichas `pendiente`, con `fuenteInfo = ia`; nunca tocar fichas `revisada`. El bot solo debe recomendar fichas `revisada` de fracción V–VI o no medicamentos.
 - `order` ★ — `create`: acepta solo `{id, quantity}`, precios desde Strapi (`status: 'published'`), precio de miembro si `membershipActive`, envío `DELIVERY_COST_MXN`, crea sesión de Stripe Checkout; **no valida stock** (el stock es del POS). Ruta extra `GET /orders/by-session/:sessionId` (`routes/order-consulta.ts`).
 - `stripe` ★ (sin content type) — `POST /api/stripe/webhook` (`auth: false`, única ruta pública por firma). Verifica firma con el cuerpo crudo, idempotencia con `stripe-event` (`eventId` único, estados recibido/procesado/ignorado/fallido) y despacha a `handlers/orders.ts` (marca órdenes pagadas) y `handlers/subscriptions.ts`.
-- `export` ★ (sin content type) — `GET /export/products` (CSV), `POST /export/products/import`, `POST /export/products/reset-stock`.
+- `export` ★ (sin content type) — `GET /export/products` (CSV con BOM, incluye la ficha clínica; lo usa el botón del POS), `POST /export/products/import[?dryRun=true]`, `POST /export/products/reset-stock`. Import: celda vacía = no cambia, `-` = borra, fila con cualquier error se salta entera, principios activos/indicaciones/categorías se resuelven por nombre y deben existir, **nunca importa `stock_central`**. Reglas completas en `docs/ficha-clinica-productos.md` §5.4.
 
 **Membresía / usuarios**
 - `membership` (planes; `stripePriceIdP`/`F` = personal/familiar), `membership-page` (single).

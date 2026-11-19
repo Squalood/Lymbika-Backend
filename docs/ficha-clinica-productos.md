@@ -219,6 +219,43 @@ Con 1,925 productos no hay que llenarlo todo de golpe. Para que el bot sirva pro
 - **Cosméticos y dispositivos**: no llevan `composicion` ni `fraccion`. Su descripción de ingredientes se queda en `sal`.
 - **Sustancias que no son fármaco** (vitaminas, probióticos): pueden ir en `composicion` si quieres poder buscarlas por sustancia, por ejemplo "Vitamina D3 · 1000 · UI".
 
+### 5.4 Carga masiva con CSV (Excel)
+
+Para llenar muchas fichas a la vez, sin ir producto por producto:
+
+1. **Exportar.** Usa el botón *Exportar CSV* del POS (admin → productos) o `GET /api/export/products`. El archivo trae todas las columnas, incluidas las de la ficha, y abre con acentos correctos en Excel.
+2. **Editar en Excel.** Puedes borrar las columnas que no vayas a tocar. Lo mínimo es `documentId` más las columnas que cambias.
+3. **Crear antes en el admin** los principios activos e indicaciones que vayas a usar. El import no los crea: un nombre que no existe es un error, así un error de dedo no genera duplicados.
+4. **Simular.** `POST /api/export/products/import?dryRun=true` con el archivo en el campo `file`. Devuelve el mismo reporte que la importación real, sin escribir nada.
+5. **Importar** sin `dryRun` cuando la simulación salga sin errores.
+
+Reglas del import:
+
+| Situación | Qué pasa |
+|---|---|
+| Columna ausente o celda vacía | Ese campo **no se cambia** |
+| Celda con `-` | Se **borra** el valor (incluye relaciones y composición) |
+| Algo no se reconoce en la fila | **La fila entera se salta** y se reporta (`Fila 12 (Grimeral): fraccion: "VII" no es válido…`). No quedan filas a medias |
+| Columna con nombre desconocido | Se ignora y se avisa en `warnings` |
+| `stock_central` | **No se importa**: el stock solo se mueve con compras, ajustes y conteos del POS |
+| `sal` / `conReceta` en producto con ficha | Se recalculan desde `composicion` / `fraccion` (§3) |
+| `status = published` | Actualiza y publica. `draft` o vacío solo actualiza el borrador (no despublica) |
+| Sin `documentId` | Crea un producto nuevo (requiere `productName`) |
+
+Formato de las columnas de la ficha:
+
+| Columna | Formato | Ejemplo |
+|---|---|---|
+| `composicion` | Renglones separados por `;`. Nombre (o sinónimo) + cantidad + unidad + `/ por` opcional | `Paracetamol 250 mg / 5 ml; Cafeína 65 mg` · `Sulfadiazina de plata 1%` · `Omega 3` (sin dosis) |
+| `indicaciones` | Nombres separados por `;` | `Rinitis alérgica; Urticaria` |
+| Listas (`tipoProducto`, `formaFarmaceutica`, `fraccion`…) | El valor de la §2, sin importar mayúsculas, acentos ni espacios | `Solución oral` = `solucionOral`; `v` = `V` |
+| `drug_type` | También acepta `genérico` y `marca` | |
+| Sí/no | `true`/`false`, `VERDADERO`/`FALSO`, `sí`/`no`, `1`/`0` | |
+| `fechaRevision` | `AAAA-MM-DD` o `DD/MM/AAAA` | `19/11/2026` |
+| `category`, `laboratorio` | Nombre exacto (sin importar mayúsculas ni acentos); tiene que existir | |
+
+La ruta requiere autenticación (token de API o JWT con permiso sobre `export`).
+
 ---
 
 ## 6. Cómo consultarla (API)
@@ -293,7 +330,7 @@ La estructura se crea sola al desplegar, pero los permisos y los datos no.
 | Fase | Qué | Notas |
 |---|---|---|
 | Pre-llenado con IA | Script que lea `productName` y `sal`, proponga tipo, composición, forma y contenido, y genere un CSV para revisión | Requiere API key. Respetar la regla de §4 |
-| Import/export CSV | Agregar las columnas nuevas | Antes hay que arreglar tres fallas del import actual: arma mal el `connect` de categoría; escribe `fecha_caducidad`, que ya no existe; y sobrescribe `stock_central` por Document Service, contra la regla de stock |
+| ~~Import/export CSV~~ | Hecho: columnas de la ficha y fallas del import corregidas (§5.4) | |
 | Frontend | Mostrar la ficha en la página del producto | Ningún consumidor actual se rompe: frontend y POS piden campos explícitos |
 | Chatbot | Ruta de candidatos en el backend + bot en el frontend | Ver §6.3 |
 | Limpieza de `tipo` | El enum tiene valores con espacios al inicio y mezcla categorías | El frontend lo usa en el filtro de categorías: coordinar el cambio |
