@@ -57,14 +57,16 @@ const BOM = '﻿';
 function escapeCsv(val: unknown): string {
   if (val === null || val === undefined) return '';
   const str = String(val);
-  if (/[",\r\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+  // ";" también va entre comillas: composición e indicaciones lo usan dentro del valor, y
+  // así el archivo sigue siendo válido si un Excel con separador ";" lo vuelve a guardar.
+  if (/[",;\r\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
   return str;
 }
 
 /**
  * Parser de CSV carácter por carácter. Tiene que respetar saltos de línea dentro de
  * comillas: `sal` y `posologia` los traen, y partir por renglones primero corría las
- * columnas de todo lo que seguía.
+ * columnas de todo lo que seguía. Acepta "," o ";" como separador.
  */
 function parseCSV(text: string): Record<string, string>[] {
   const filas: string[][] = [];
@@ -73,6 +75,10 @@ function parseCSV(text: string): Record<string, string>[] {
   let enComillas = false;
   // Excel escribe \r\n también dentro de las celdas; se guardan como \n.
   const src = text.replace(/^﻿/, '').replace(/\r\n?/g, '\n');
+  // Excel separa con ";" cuando la configuración regional de Windows usa coma decimal
+  // (España, por ejemplo). El encabezado no lleva comillas, así que basta contar ahí.
+  const encabezado = src.slice(0, src.indexOf('\n') === -1 ? undefined : src.indexOf('\n'));
+  const sep = (encabezado.match(/;/g)?.length ?? 0) > (encabezado.match(/,/g)?.length ?? 0) ? ';' : ',';
 
   for (let i = 0; i < src.length; i++) {
     const c = src[i];
@@ -81,7 +87,7 @@ function parseCSV(text: string): Record<string, string>[] {
       else if (c === '"') enComillas = false;
       else celda += c;
     } else if (c === '"') enComillas = true;
-    else if (c === ',') { fila.push(celda); celda = ''; }
+    else if (c === sep) { fila.push(celda); celda = ''; }
     else if (c === '\n') {
       fila.push(celda); filas.push(fila); fila = []; celda = '';
     } else celda += c;

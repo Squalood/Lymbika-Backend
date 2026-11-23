@@ -223,11 +223,12 @@ Con 1,925 productos no hay que llenarlo todo de golpe. Para que el bot sirva pro
 
 Para llenar muchas fichas a la vez, sin ir producto por producto:
 
-1. **Exportar.** Usa el botón *Exportar CSV* del POS (admin → productos) o `GET /api/export/products`. El archivo trae todas las columnas, incluidas las de la ficha, y abre con acentos correctos en Excel.
-2. **Editar en Excel.** Puedes borrar las columnas que no vayas a tocar. Lo mínimo es `documentId` más las columnas que cambias.
+1. **Exportar.** En el POS, *Admin → Productos → Exportar CSV* (o `GET /api/export/products`). El archivo trae todas las columnas, incluidas las de la ficha, y abre con acentos correctos en Excel.
+2. **Editar en Excel.** Puedes borrar las columnas que no vayas a tocar. Lo mínimo es `documentId` más las columnas que cambias. Se puede guardar como "CSV UTF-8" o como "CSV (delimitado por comas)", con separador `,` o `;`: el POS y el backend aceptan las dos codificaciones y los dos separadores.
 3. **Crear antes en el admin** los principios activos e indicaciones que vayas a usar. El import no los crea: un nombre que no existe es un error, así un error de dedo no genera duplicados.
-4. **Simular.** `POST /api/export/products/import?dryRun=true` con el archivo en el campo `file`. Devuelve el mismo reporte que la importación real, sin escribir nada.
-5. **Importar** sin `dryRun` cuando la simulación salga sin errores.
+4. **Importar.** En el POS, *Admin → Productos → Importar CSV*. El diálogo primero **revisa** el archivo sin guardar nada (`?dryRun=true`) y muestra cuántos productos se actualizarán, crearán y publicarán, más las filas con error. Después se confirma con *Importar N filas*. Las filas con error se saltan; las válidas se aplican.
+
+**Permisos.** Los dos botones usan la sesión del usuario del POS (JWT), no un token. En *Settings → Users & Permissions → Roles → Operador* hay que marcar `export.exportProducts` y `export.importProducts`. **No** se dan al rol Authenticated: ese rol es el de los clientes de la tienda. `reset-stock` no se le da a ningún rol.
 
 Reglas del import:
 
@@ -254,7 +255,7 @@ Formato de las columnas de la ficha:
 | `fechaRevision` | `AAAA-MM-DD` o `DD/MM/AAAA` | `19/11/2026` |
 | `category`, `laboratorio` | Nombre exacto (sin importar mayúsculas ni acentos); tiene que existir | |
 
-La ruta requiere autenticación (token de API o JWT con permiso sobre `export`).
+La ruta también se puede llamar a mano (Postman/curl) con el archivo en el campo `file` de un multipart, usando el JWT de un usuario Operador.
 
 ---
 
