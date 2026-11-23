@@ -30,6 +30,21 @@
     "senalesAlarma": {
       "type": "text"
     },
+    "fuenteInfo": {
+      "type": "enumeration",
+      "enum": [
+        "ia",
+        "manual"
+      ]
+    },
+    "estadoFicha": {
+      "type": "enumeration",
+      "default": "pendiente",
+      "enum": [
+        "pendiente",
+        "revisada"
+      ]
+    },
     "especialidades": {
       "type": "relation",
       "relation": "manyToMany",

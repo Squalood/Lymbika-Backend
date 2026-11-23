@@ -62,6 +62,23 @@
     },
     "efectosAdversos": {
       "type": "text"
+    },
+    "fuenteInfo": {
+      "type": "enumeration",
+      "enum": [
+        "ipp",
+        "plm",
+        "ia",
+        "otra"
+      ]
+    },
+    "estadoFicha": {
+      "type": "enumeration",
+      "default": "pendiente",
+      "enum": [
+        "pendiente",
+        "revisada"
+      ]
     }
   }
 }

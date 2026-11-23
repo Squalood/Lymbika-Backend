@@ -17,8 +17,8 @@
  * composición, y se escribe por SQL sobre el `id`, igual que `stock_central`: pasar por el
  * Document Service volvería a disparar este middleware y re-publicaría el borrador.
  *
- * Regla para el pre-llenado con IA (fase futura): solo llena campos vacíos de fichas con
- * `estadoFicha = pendiente`, marca `fuenteInfo = ia` y nunca toca una ficha `revisada`.
+ * Regla para el pre-llenado con IA (scripts/prellenar-fichas.js): solo llena campos vacíos de
+ * fichas sin revisar, marca `fuenteInfo = ia` y nunca toca una ficha `revisada`.
  *
  * Nunca lanza: un `sal` desactualizado se corrige al volver a guardar el producto, pero
  * tumbar el guardado no.

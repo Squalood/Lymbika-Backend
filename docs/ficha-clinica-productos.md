@@ -182,10 +182,14 @@ Los productos que no son medicamentos (suplementos, dermocosméticos, dispositiv
 
 `fuenteInfo` indica de dónde salió la información: `empaque`, `ipp` (prospecto oficial), `plm` (diccionario PLM), `ia` u `otra`.
 
-**Regla para el pre-llenado con IA (fase futura).** Ningún script ni proceso automático puede romper esto:
+`principio-activo` e `indicacion` también tienen `estadoFicha` (`pendiente` por defecto / `revisada`) y `fuenteInfo` (principio: `ipp`, `plm`, `ia`, `otra`; indicación: `ia`, `manual`). Las contraindicaciones o señales de alarma generadas por IA necesitan la misma revisión que la ficha del producto.
+
+**Regla para el pre-llenado con IA.** Ningún script ni proceso automático puede romper esto (lo aplica `scripts/prellenar-fichas.js`, §5.5):
 1. Solo llena **campos vacíos**. Nunca sobrescribe lo capturado a mano.
-2. Solo toca fichas en `null` o `pendiente`. **Nunca toca una ficha `revisada`.**
+2. Solo toca fichas en `null` o `pendiente`. **Nunca toca una ficha `revisada`** (producto, principio activo ni indicación).
 3. Marca `fuenteInfo = ia` y deja `estadoFicha = pendiente`.
+4. No propone posología ni registro sanitario: tienen que salir del prospecto o del empaque.
+5. Si un producto hoy está con receta y la IA propone fracción V o VI, no la aplica: liberaría la venta en línea sin revisión.
 
 ---
 
@@ -257,6 +261,31 @@ Formato de las columnas de la ficha:
 
 La ruta también se puede llamar a mano (Postman/curl) con el archivo en el campo `file` de un multipart, usando el JWT de un usuario Operador.
 
+### 5.5 Pre-llenado con IA
+
+[`scripts/prellenar-fichas.js`](../scripts/prellenar-fichas.js) usa Claude (Opus 5.5) para **proponer** fichas. No escribe en la tienda por su cuenta: genera CSV que se revisan en Excel y luego se aplican. Respeta las reglas de §4.
+
+**Preparación (una vez), en `Lymbika-Backend\.env`:**
+- `ANTHROPIC_API_KEY`: llave de console.anthropic.com.
+- `LYMBIKA_API_TOKEN`: solo para el paso 4. Token de API **Custom** creado en el admin de producción (*Settings → API Tokens*) con `find`, `create` y `update` de **Principio-activo** e **Indicacion**, más `find` de **Service**; sin este último, Strapi no deja ligar especialidades. Vive solo en este `.env`, nunca en una variable `NEXT_PUBLIC_*`.
+- `LYMBIKA_API_URL`: opcional, por defecto producción. Para probar contra el backend local: `http://localhost:1337`.
+
+**Pasos:**
+
+| # | Comando | Qué hace | ¿Cuesta? |
+|---|---|---|---|
+| 1 | `node scripts/prellenar-fichas.js productos --limite 50` | Propone tipo, composición, forma, vía, contenido, fracción, edad mínima e indicaciones de los siguientes 50 productos sin ficha revisada. También `--ids a,b,c` o `--buscar loratadina` | Sí |
+| 2 | `node scripts/prellenar-fichas.js catalogos` | Llena la ficha clínica de cada principio activo nuevo y unifica las indicaciones (sinónimos, señales de alarma, especialidad) | Sí |
+| 3 | `node scripts/prellenar-fichas.js csv` | Genera `scripts/prellenado/productos.csv`, `principios-activos.csv` e `indicaciones.csv` | No |
+| — | *Revisar los tres CSV en Excel* | Corregir, borrar filas que no convenzan, unificar indicaciones | |
+| 4 | `node scripts/prellenar-fichas.js aplicar-catalogos` y luego `… --confirmar` | Crea en Strapi los principios activos e indicaciones de los CSV. Sin `--confirmar` solo muestra el plan | No |
+| 5 | POS → Admin → Productos → **Importar CSV** con `productos.csv` | Revisa y aplica las fichas de producto (§5.4) | No |
+
+- **Avance y reintentos.** Los pasos 1 y 2 guardan su avance en `scripts/prellenado/` (está en `.gitignore`). Si se interrumpen, o si una llamada falla, basta con volver a correrlos: no se paga dos veces lo ya hecho. Para regenerar un producto hay que borrar su línea de `productos.jsonl`.
+- **Columnas de revisión.** `productos.csv` y `principios-activos.csv` traen `ia_confianza` (alta, media o baja) e `ia_notas` (dudas y discrepancias que detectó la IA). El import las ignora.
+- **Filtra `ia_confianza = baja` antes de importar.** Ante la duda, la IA elige la fracción más restrictiva. Un producto que hoy se vende sin receta y recibe fracción IV deja de poder comprarse en línea hasta que alguien lo revise. Es la dirección segura, pero afecta ventas.
+- **Costo medido** en una prueba con 8 productos: unos US$0.03 por producto, más unos US$0.03 por principio activo nuevo.
+
 ---
 
 ## 6. Cómo consultarla (API)
@@ -301,7 +330,7 @@ Estos filtros se probaron con el Document Service, que es lo que usa la API REST
 
 El bot solo debe recomendar productos que cumplan **todo** esto:
 
-- `estadoFicha = revisada`.
+- `estadoFicha = revisada`, y también revisados **todos sus principios activos** (la información de embarazo, somnolencia o contraindicaciones viene de ahí).
 - `active = true`, publicados y con stock.
 - `fraccion` en V o VI, o `tipoProducto` distinto de `medicamento`.
 - `edadMinimaMeses` menor o igual a la edad del paciente.
@@ -330,7 +359,7 @@ La estructura se crea sola al desplegar, pero los permisos y los datos no.
 
 | Fase | Qué | Notas |
 |---|---|---|
-| Pre-llenado con IA | Script que lea `productName` y `sal`, proponga tipo, composición, forma y contenido, y genere un CSV para revisión | Requiere API key. Respetar la regla de §4 |
+| ~~Pre-llenado con IA~~ | Hecho: `scripts/prellenar-fichas.js` (§5.5) | Falta correrlo con todo el catálogo. Para eso conviene agregar el modo Batch de la API (50% más barato) |
 | ~~Import/export CSV~~ | Hecho: columnas de la ficha y fallas del import corregidas (§5.4) | |
 | Frontend | Mostrar la ficha en la página del producto | Ningún consumidor actual se rompe: frontend y POS piden campos explícitos |
 | Chatbot | Ruta de candidatos en el backend + bot en el frontend | Ver §6.3 |

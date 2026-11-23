@@ -1121,6 +1121,9 @@ export interface ApiIndicacionIndicacion extends Struct.CollectionTypeSchema {
       'manyToMany',
       'api::service.service'
     >;
+    estadoFicha: Schema.Attribute.Enumeration<['pendiente', 'revisada']> &
+      Schema.Attribute.DefaultTo<'pendiente'>;
+    fuenteInfo: Schema.Attribute.Enumeration<['ia', 'manual']>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -1599,6 +1602,9 @@ export interface ApiPrincipioActivoPrincipioActivo
       ['compatible', 'precaucion', 'contraindicado', 'sinDatos']
     >;
     esAntibiotico: Schema.Attribute.Boolean;
+    estadoFicha: Schema.Attribute.Enumeration<['pendiente', 'revisada']> &
+      Schema.Attribute.DefaultTo<'pendiente'>;
+    fuenteInfo: Schema.Attribute.Enumeration<['ipp', 'plm', 'ia', 'otra']>;
     interacciones: Schema.Attribute.Text;
     lactancia: Schema.Attribute.Enumeration<
       ['compatible', 'precaucion', 'contraindicado', 'sinDatos']

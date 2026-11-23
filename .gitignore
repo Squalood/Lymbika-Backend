@@ -144,3 +144,6 @@ scripts/orphan-queries.txt
 # repo es publico. Sacar de aqui cuando el repo sea privado y esos permisos
 # esten cerrados.
 docs/migracion-media-cloudinary-a-s3.md
+
+# Resultados del pre-llenado con IA (datos de trabajo, se revisan en Excel)
+scripts/prellenado/
