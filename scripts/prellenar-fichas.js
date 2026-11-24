@@ -139,10 +139,22 @@ const traerPrincipios = () => traerTodo('principios-activos', q({ sort: 'id:asc'
 const traerIndicaciones = () => traerTodo('indicaciones', q({ 'populate[especialidades][fields][0]': 'serviceName', sort: 'id:asc' }));
 const traerEspecialidades = () => traerTodo('services', q({ 'fields[0]': 'serviceName' }));
 
+/**
+ * Corre `fn` sobre `items` con `n` en paralelo. `fn` recibe además una etiqueta de progreso
+ * ("[45/128 · 35% · ~3 min]") para que quien corre el script sepa cuánto falta.
+ */
 async function enParalelo(items, n, fn) {
   let i = 0;
+  let hechos = 0;
+  const inicio = Date.now();
+  const progreso = () => {
+    hechos++;
+    const restante = ((Date.now() - inicio) / hechos) * (items.length - hechos) / 60000;
+    const pct = Math.round((hechos / items.length) * 100);
+    return `[${hechos}/${items.length} · ${pct}%${hechos < items.length ? ` · ~${Math.max(1, Math.round(restante))} min` : ''}]`;
+  };
   await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => {
-    while (i < items.length) await fn(items[i++]);
+    while (i < items.length) await fn(items[i++], progreso);
   }));
 }
 
@@ -289,14 +301,14 @@ async function pasoProductos(op) {
   const system = systemProductos(indicaciones.map((i) => i.nombre));
   let fallidos = 0;
 
-  await enParalelo(pendientes, Number(op.concurrencia ?? 4), async (p) => {
+  await enParalelo(pendientes, Number(op.concurrencia ?? 4), async (p, progreso) => {
     try {
       const propuesta = await pedir({ system, usuario: entradaProducto(p), schema: SCHEMA_PRODUCTO });
       agregarJsonl(ARCH.productos, { documentId: p.documentId, productName: p.productName?.trim(), propuesta });
-      console.log(`  ✓ ${p.productName?.trim()} [${propuesta.confianza}]`);
+      console.log(`  ${progreso()} ✓ ${p.productName?.trim()} (confianza ${propuesta.confianza})`);
     } catch (e) {
       fallidos++;
-      console.log(`  ✗ ${p.productName?.trim()}: ${e.message}`);
+      console.log(`  ${progreso()} ✗ ${p.productName?.trim()}: ${e.message}`);
     }
   });
   console.log(`Listo. ${fallidos ? `${fallidos} fallaron (vuelve a correr el paso para reintentarlos). ` : ''}${resumenGasto()}`);
@@ -368,7 +380,7 @@ async function pasoCatalogos(op) {
     .map(([, v]) => v);
 
   console.log(`Principios activos: ${usos.size} en las propuestas · ${porPedir.length} por llenar`);
-  await enParalelo(porPedir, Number(op.concurrencia ?? 4), async (u) => {
+  await enParalelo(porPedir, Number(op.concurrencia ?? 4), async (u, progreso) => {
     try {
       const ficha = await pedir({
         system: SYSTEM_PRINCIPIO,
@@ -376,9 +388,9 @@ async function pasoCatalogos(op) {
         schema: SCHEMA_PRINCIPIO,
       });
       agregarJsonl(ARCH.principios, { solicitado: u.nombre, ficha });
-      console.log(`  ✓ ${ficha.nombre} [${ficha.confianza}]`);
+      console.log(`  ${progreso()} ✓ ${ficha.nombre} (confianza ${ficha.confianza})`);
     } catch (e) {
-      console.log(`  ✗ ${u.nombre}: ${e.message}`);
+      console.log(`  ${progreso()} ✗ ${u.nombre}: ${e.message}`);
     }
   });
 
@@ -442,7 +454,14 @@ function renglon(c, nombre) {
   return [nombre, cant].filter(Boolean).join(' ') + (cant ? por : '');
 }
 
-async function pasoCsv() {
+// Confianza mínima para aplicar la fracción propuesta (decidido con Adrian, nov-2026): con
+// `baja` no se pone fracción, así el producto conserva su conReceta actual hasta que alguien lo
+// revise. Aplicar una fracción I–IV deja el producto sin poder comprarse en línea.
+const NIVEL_CONFIANZA = { baja: 0, media: 1, alta: 2 };
+
+async function pasoCsv(op = {}) {
+  const fraccionMin = NIVEL_CONFIANZA[op['fraccion-min'] ?? 'media'];
+  if (fraccionMin === undefined) throw new Error('--fraccion-min debe ser alta, media o baja');
   const propuestas = leerJsonl(ARCH.productos);
   if (!propuestas.length) return console.log('Primero corre el paso "productos".');
   const fichasPrincipio = leerJsonl(ARCH.principios);
@@ -468,6 +487,10 @@ async function pasoCsv() {
     const fila = { documentId, productName: p.productName?.trim(), ia_confianza: propuesta.confianza, ia_notas: propuesta.notas };
     for (const c of camposSimples) if (vacio(p[c]) && !vacio(propuesta[c])) fila[c] = propuesta[c];
 
+    if (fila.fraccion && NIVEL_CONFIANZA[propuesta.confianza] < fraccionMin) {
+      delete fila.fraccion;
+      fila.ia_notas = `[Fracción ${propuesta.fraccion} NO aplicada por confianza ${propuesta.confianza}; decídela al revisar.] ${fila.ia_notas}`;
+    }
     if (fila.fraccion && p.conReceta && !FRACCIONES_CON_RECETA.has(fila.fraccion)) {
       delete fila.fraccion;
       fila.ia_notas = `[Fracción ${propuesta.fraccion} NO aplicada: hoy está marcado con receta; decídelo a mano.] ${fila.ia_notas}`;
@@ -633,13 +656,62 @@ async function pasoAplicar(op) {
   if (!confirmar) console.log('Nada se escribió.');
 }
 
+// ── Paso 5: importar productos.csv ───────────────────────────────────────────
+
+/**
+ * Lo mismo que el botón "Importar CSV" del POS, con el token del .env (necesita además el
+ * permiso export.importProducts). Sin --confirmar solo simula (dryRun del backend).
+ */
+async function pasoImportar(op) {
+  const confirmar = Boolean(op.confirmar);
+  const token = process.env.LYMBIKA_API_TOKEN;
+  if (!token) throw new Error('Falta LYMBIKA_API_TOKEN en .env');
+  const archivo = path.join(DIR, 'productos.csv');
+  if (!fs.existsSync(archivo)) throw new Error('Primero corre el paso "csv".');
+
+  // En bloques: con todo el archivo en una sola llamada, Render tarda varios segundos por
+  // producto y el fetch de Node se rinde a los 5 minutos (en la parte 1 cortó en 43 de 136,
+  // aunque el servidor siguió). Bloques chicos terminan rápido y dan progreso. Repetir un
+  // bloque es seguro: vuelve a escribir los mismos valores.
+  const filas = leerCsv(archivo);
+  const columnas = Object.keys(filas[0] ?? {});
+  const TAM = Number(op.bloque ?? 20);
+  const total = { updated: 0, created: 0, published: 0, errors: [], warnings: new Set() };
+  console.log(confirmar ? `Importando ${filas.length} filas en ${API_URL}…` : `Simulación contra ${API_URL} (agrega --confirmar para escribir)`);
+
+  for (let i = 0; i < filas.length; i += TAM) {
+    const bloque = filas.slice(i, i + TAM);
+    const csv = [columnas.join(','), ...bloque.map((f) => columnas.map((c) => escapar(f[c])).join(','))].join('\r\n');
+    const form = new FormData();
+    form.append('file', new Blob([csv], { type: 'text/csv;charset=utf-8' }), 'productos.csv');
+    const res = await fetch(`${API_URL}/api/export/products/import${confirmar ? '' : '?dryRun=true'}`, {
+      method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form,
+    });
+    const r = await res.json().catch(() => null);
+    if (res.status === 403) throw new Error('El token no tiene el permiso export.importProducts');
+    if (!res.ok) throw new Error(`Import (filas ${i + 1}–${i + bloque.length}): ${res.status} ${r?.error?.message ?? ''}`);
+    total.updated += r.updated; total.created += r.created; total.published += r.published;
+    // El backend numera las filas dentro del bloque; se traduce a la fila del archivo completo.
+    total.errors.push(...r.errors.map((e) => e.replace(/^Fila (\d+)/, (_, n) => `Fila ${Number(n) + i}`)));
+    r.warnings.forEach((w) => total.warnings.add(w));
+    const hechas = Math.min(i + TAM, filas.length);
+    if (confirmar) console.log(`  [${hechas}/${filas.length} · ${Math.round((hechas / filas.length) * 100)}%]`);
+  }
+  console.log(`  ${confirmar ? 'Actualizados' : 'Se actualizarán'}: ${total.updated} · nuevos: ${total.created} · publicados: ${total.published} · filas con error: ${total.errors.length}`);
+  for (const w of total.warnings) console.log(`  ⚠ ${w}`);
+  for (const e of total.errors) console.log(`  ✗ ${e}`);
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 (async () => {
   const { comando, opciones } = args();
-  const pasos = { productos: pasoProductos, catalogos: pasoCatalogos, csv: pasoCsv, 'aplicar-catalogos': pasoAplicar };
+  const pasos = {
+    productos: pasoProductos, catalogos: pasoCatalogos, csv: pasoCsv,
+    'aplicar-catalogos': pasoAplicar, 'importar-productos': pasoImportar,
+  };
   if (!pasos[comando]) {
-    console.log('Uso: node scripts/prellenar-fichas.js <productos|catalogos|csv|aplicar-catalogos> [opciones]');
+    console.log('Uso: node scripts/prellenar-fichas.js <productos|catalogos|csv|aplicar-catalogos|importar-productos> [opciones]');
     process.exit(1);
   }
   try {
