@@ -33,6 +33,9 @@
  *   node scripts/prellenar-fichas.js productos --ids id1,id2      # productos específicos
  *   node scripts/prellenar-fichas.js productos --buscar loratadina --limite 5
  *   node scripts/prellenar-fichas.js productos --limite 50          # los siguientes 50 sin proponer
+ *   node scripts/prellenar-fichas.js productos --con-stock --tipo "Dolor y Fiebre,Gripe y Tos" --estimar
+ *       --con-stock: solo activos con stock · --tipo: por la clasificación anterior (campo `tipo`)
+ *       --estimar: dice cuántos productos y cuánto costaría, sin llamar a la IA
  *   node scripts/prellenar-fichas.js catalogos
  *   node scripts/prellenar-fichas.js csv
  *   node scripts/prellenar-fichas.js aplicar-catalogos [--confirmar]
@@ -118,7 +121,7 @@ async function traerTodo(coleccion, query) {
 const q = (obj) => Object.entries(obj).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
 
 async function traerProductos() {
-  const campos = ['productName', 'sal', 'conReceta', 'drug_type', 'tipo', 'active', 'estadoFicha', 'tipoProducto',
+  const campos = ['productName', 'sal', 'conReceta', 'drug_type', 'tipo', 'active', 'stock_central', 'estadoFicha', 'tipoProducto',
     'formaFarmaceutica', 'viaAdministracion', 'contenidoCantidad', 'contenidoUnidad', 'fraccion',
     'edadMinimaMeses', 'requiereRefrigeracion', 'sinAzucar'];
   const query = q({
@@ -262,9 +265,27 @@ async function pasoProductos(op) {
     const b = clave(op.buscar);
     pendientes = pendientes.filter((p) => clave(p.productName).includes(b) || clave(p.sal).includes(b));
   }
+  // Para no gastar en lo que nadie va a comprar ni el bot va a recomendar.
+  if (op['con-stock']) pendientes = pendientes.filter((p) => p.active !== false && Number(p.stock_central) > 0);
+  if (op.tipo) {
+    const tipos = new Set(String(op.tipo).split(',').map(clave));
+    pendientes = pendientes.filter((p) => tipos.has(clave(p.tipo)));
+  }
   if (op.limite) pendientes = pendientes.slice(0, Number(op.limite));
 
   console.log(`Catálogo: ${productos.length} · ya propuestos: ${hechos.size} · a proponer ahora: ${pendientes.length}`);
+  if (op.estimar) {
+    // Medido en la prueba de noviembre de 2026: ~US$0.03 por producto y ~US$0.03 por principio
+    // activo nuevo (aprox. uno nuevo por cada 1.5 productos al principio; baja conforme crece
+    // el catálogo de principios).
+    const porTipo = {};
+    for (const p of pendientes) porTipo[p.tipo?.trim() || '(sin clasificación)'] = (porTipo[p.tipo?.trim() || '(sin clasificación)'] ?? 0) + 1;
+    for (const [t, n] of Object.entries(porTipo).sort((a, b) => b[1] - a[1])) console.log(`  ${String(n).padStart(4)}  ${t}`);
+    const productosUsd = pendientes.length * 0.03;
+    const principiosUsd = (pendientes.length / 1.5) * 0.03;
+    console.log(`Estimado: ~US$${productosUsd.toFixed(0)} (productos) + ~US$${principiosUsd.toFixed(0)} como máximo (principios activos, paso "catalogos"). No se llamó a la IA.`);
+    return;
+  }
   const system = systemProductos(indicaciones.map((i) => i.nombre));
   let fallidos = 0;
 
