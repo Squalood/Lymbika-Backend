@@ -19,6 +19,16 @@ export default {
       },
     },
     {
+      // Prompt para llenar la ficha de un producto con ChatGPT/Claude (botón del POS).
+      method: 'GET',
+      path: '/export/products/:documentId/prompt',
+      handler: 'export.fichaPrompt',
+      config: {
+        policies: [],
+        middlewares: [],
+      },
+    },
+    {
       method: 'POST',
       path: '/export/products/reset-stock',
       handler: 'export.resetStock',

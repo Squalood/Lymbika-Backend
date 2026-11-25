@@ -21,8 +21,12 @@ import { renglonDeSal } from '../../product/utils/derivar-ficha';
  *
  * Formatos de las columnas de la ficha:
  * - `composicion`: renglones separados por `;` → "Paracetamol 250 mg / 5 ml; Cafeína 65 mg".
- *   El principio activo se busca por nombre o sinónimo y tiene que existir en el admin.
- * - `indicaciones`: nombres separados por `;`, tienen que existir en el admin.
+ *   El principio activo se busca por nombre o sinónimo y tiene que existir en el admin,
+ *   salvo con `?crearFaltantes=true` (ver prepararFaltantes).
+ * - `indicaciones`: nombres separados por `;`, tienen que existir (o `?crearFaltantes=true`).
+ *
+ * `GET /export/products/:documentId/prompt` arma el prompt para llenar la ficha de UN
+ * producto con ChatGPT/Claude y regresar un CSV de una fila (ver fichaPrompt).
  * - Listas (forma, vía, fracción…): se acepta el valor sin importar mayúsculas, acentos
  *   ni espacios ("Solución oral" = `solucionOral`).
  */
@@ -156,11 +160,19 @@ const UNIDADES_POR: Record<string, string> = { ml: 'ml', g: 'g', dosis: 'dosis',
 // "Paracetamol 250 mg / 5 ml", "Óxido de zinc 1.5%", "Vitamina B12 1000 mcg", "Omega 3".
 const RENGLON = /^(.*?)\s+(\d+(?:[.,]\d+)?)\s*(mg|g|mcg|µg|ug|ui|meq|ufc|ml|%|porcentaje)\s*(?:\/\s*(\d+(?:[.,]\d+)?)?\s*(ml|g|dosis|gotas?))?$/i;
 
+/** Renglones de una celda de composición, con el nombre ya separado de la dosis. */
+function renglonesDeComposicion(val: string) {
+  return val.split(/[;\n]/).map((p) => p.trim()).filter(Boolean).map((parte) => {
+    const m = parte.match(RENGLON);
+    return { m, nombre: m ? m[1].trim() : parte };
+  });
+}
+
+const nombresDeIndicaciones = (val: string) => val.split(/[;\n]/).map((n) => n.trim()).filter(Boolean);
+
 function parseComposicion(val: string, principios: Map<string, string>, errores: string[]) {
   const renglones = [];
-  for (const parte of val.split(/[;\n]/).map((p) => p.trim()).filter(Boolean)) {
-    const m = parte.match(RENGLON);
-    const nombre = m ? m[1].trim() : parte;
+  for (const { m, nombre } of renglonesDeComposicion(val)) {
     const documentId = principios.get(clave(nombre));
     if (!documentId) {
       errores.push(`principio activo "${nombre}" no existe (créalo en el admin o agrégalo como sinónimo)`);
@@ -208,6 +220,49 @@ async function cargarCatalogos() {
     indicaciones: porNombre(indicaciones, 'nombre'),
     productos: new Set((productos as any[]).map((p) => p.documentId)),
   };
+}
+
+// ── Principios activos e indicaciones que faltan ─────────────────────────────
+
+/** "Óxido de zinc" → "oxido-de-zinc". Los creados por API no reciben el uid que pone el admin. */
+const slugDe = (nombre: string) =>
+  nombre.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+/**
+ * Con `?crearFaltantes=true`, los principios activos e indicaciones que el CSV nombra y no
+ * existen se crean solo con el nombre (`estadoFicha = pendiente`; la información clínica se
+ * llena después). Pensado para dar de alta productos nuevos uno por uno.
+ *
+ * Se hace antes de procesar las filas para que todas los encuentren. En simulación no se crea
+ * nada: se registran con un id provisional y se reporta qué se crearía, para que un error de
+ * dedo ("Loratdina") se vea antes de confirmar.
+ */
+async function prepararFaltantes(rows: Record<string, string>[], catalogos: any, dryRun: boolean) {
+  const faltan = { principios: new Map<string, string>(), indicaciones: new Map<string, string>() };
+  // Si el mismo nombre viene escrito de dos formas ("Picazón" / "picazon"), se crea con la
+  // primera, que suele ser la bien escrita.
+  const anotar = (mapa: Map<string, string>, existentes: Map<string, string>, nombre: string) => {
+    const k = clave(nombre);
+    if (!existentes.has(k) && !mapa.has(k)) mapa.set(k, nombre);
+  };
+  for (const row of rows) {
+    if (row.composicion && row.composicion !== BORRAR) {
+      for (const { nombre } of renglonesDeComposicion(row.composicion)) anotar(faltan.principios, catalogos.principios, nombre);
+    }
+    if (row.indicaciones && row.indicaciones !== BORRAR) {
+      for (const nombre of nombresDeIndicaciones(row.indicaciones)) anotar(faltan.indicaciones, catalogos.indicaciones, nombre);
+    }
+  }
+
+  const crear = async (uid: string, mapa: Map<string, string>, k: string, nombre: string) => {
+    if (dryRun) return mapa.set(k, `nuevo:${k}`);
+    const doc = await strapi.documents(uid as any).create({ data: { nombre, slug: slugDe(nombre) } as any });
+    mapa.set(k, doc.documentId);
+  };
+  for (const [k, nombre] of faltan.principios) await crear('api::principio-activo.principio-activo', catalogos.principios, k, nombre);
+  for (const [k, nombre] of faltan.indicaciones) await crear('api::indicacion.indicacion', catalogos.indicaciones, k, nombre);
+
+  return { principiosActivos: [...faltan.principios.values()], indicaciones: [...faltan.indicaciones.values()] };
 }
 
 // ── Fila → data ──────────────────────────────────────────────────────────────
@@ -289,7 +344,7 @@ function datosDeFila(row: Record<string, string>, catalogos: any, attrs: any) {
     if (row.indicaciones === BORRAR) data.indicaciones = { set: [] };
     else {
       const ids = [];
-      for (const nombre of row.indicaciones.split(/[;\n]/).map((n) => n.trim()).filter(Boolean)) {
+      for (const nombre of nombresDeIndicaciones(row.indicaciones)) {
         const documentId = catalogos.indicaciones.get(clave(nombre));
         if (documentId) ids.push(documentId);
         else errores.push(`indicación "${nombre}" no existe`);
@@ -299,6 +354,76 @@ function datosDeFila(row: Record<string, string>, catalogos: any, attrs: any) {
   }
 
   return { data, errores };
+}
+
+// ── Prompt de ficha (alta de un producto con ChatGPT/Claude) ─────────────────
+
+// Columnas que pide el prompt, en el orden del CSV que debe devolver la IA.
+const COLUMNAS_PROMPT = [
+  'documentId', 'tipoProducto', 'composicion', 'formaFarmaceutica', 'viaAdministracion',
+  'contenidoCantidad', 'contenidoUnidad', 'fraccion', 'edadMinimaMeses', 'indicaciones', 'posologia',
+  'advertenciasAdicionales', 'registroSanitario', 'requiereRefrigeracion', 'sinAzucar',
+  'fuenteInfo', 'estadoFicha', 'status',
+];
+
+const vacio = (v: unknown) => v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0);
+
+/**
+ * Texto para pegar en ChatGPT/Claude (con fotos del empaque, idealmente) que regresa la ficha
+ * de UN producto como CSV de una fila, listo para el botón "Importar CSV" del POS. Los valores
+ * permitidos salen del schema y los nombres de principios activos/indicaciones de la BD, así
+ * el prompt nunca queda desactualizado.
+ */
+function armarPrompt(p: any, attrs: any, comp: any, principios: string[], indicaciones: string[]) {
+  const opciones = (a: any) => a.enum.join(', ');
+  const valorActual = (c: string) => {
+    if (c === 'composicion') return (p.composicion ?? []).map(renglonDeSal).filter(Boolean).join('; ');
+    if (c === 'indicaciones') return (p.indicaciones ?? []).map((i: any) => i.nombre).join('; ');
+    return p[c];
+  };
+  const capturados = COLUMNAS_PROMPT
+    .filter((c) => !['documentId', 'fuenteInfo', 'estadoFicha', 'status'].includes(c) && !vacio(valorActual(c)))
+    .map((c) => `- ${c}: ${valorActual(c)}`);
+
+  return `Eres farmacéutico en México y vas a llenar la ficha de UN producto de la farmacia en línea Lymbika. Responde SOLO con un bloque de código CSV (encabezado + una fila), sin texto fuera del bloque.
+${p.estadoFicha === 'revisada' ? '\nATENCIÓN: esta ficha ya fue revisada por un farmacéutico. Solo llena lo que falte.\n' : ''}
+## Producto
+- documentId: ${p.documentId}
+- Nombre: ${p.productName?.trim()}
+- Sustancia capturada a mano (puede tener errores): ${p.sal?.trim() || '(vacío)'}
+- Categoría: ${p.category?.categoryName ?? '(sin categoría)'}
+- Laboratorio: ${p.laboratorio?.name ?? '(sin laboratorio)'}
+
+## Fuente de información
+Si te adjunté fotos del empaque o del instructivo, son la fuente principal: copia de ahí dosis, contenido, edad, registro sanitario y si dice "requiere receta". Pon fuenteInfo = empaque (o ipp si usaste el instructivo). Sin fotos, usa lo que sepas del producto y pon fuenteInfo = ia. No inventes: si no sabes un dato, deja la celda vacía.
+${capturados.length ? `\n## Ya capturado (deja esas celdas VACÍAS para no cambiarlas)\n${capturados.join('\n')}\n` : ''}
+## Columnas, en este orden
+${COLUMNAS_PROMPT.join(',')}
+
+- documentId: copia exactamente ${p.documentId}
+- tipoProducto: uno de ${opciones(attrs.tipoProducto)}. (medicamento: tiene registro de medicamento; suplemento: vitaminas, proteína, electrolitos, probióticos; dermocosmetico: cremas, protector solar; dispositivoMedico: jeringas, condones, pruebas, material de curación; higienePersonal: pasta dental, toallitas)
+- composicion: solo principios activos de medicamentos y suplementos, separados por "; ". Formato "Nombre cantidad unidad", y en líquidos o cremas "Nombre cantidad unidad / cantidad unidad" (ej. "Paracetamol 250 mg / 5 ml; Clorfenamina 2 mg"). Unidades: ${opciones(comp.unidad).replace('porcentaje', '%')}; después de "/": ${opciones(comp.porUnidad)}. Nombre genérico en español con su sal si la lleva ("Naproxeno sódico"). Si la cantidad pasa de 99,999,999 (probióticos en UFC), escribe solo el nombre. Vacía en cosméticos, dispositivos e higiene.
+- formaFarmaceutica: uno de ${opciones(attrs.formaFarmaceutica)}
+- viaAdministracion: uno de ${opciones(attrs.viaAdministracion)}
+- contenidoCantidad y contenidoUnidad: lo que trae el empaque ("caja con 20 tabletas" = 20 y tabletas). Unidad: uno de ${opciones(attrs.contenidoUnidad)}
+- fraccion: fracción COFEPRIS, solo medicamentos: ${opciones(attrs.fraccion)}. I–III controlados, IV con receta (antibióticos incluidos), V sin receta solo en farmacias, VI sin receta en cualquier tienda. Si el empaque dice "su venta requiere receta médica" es IV o menor. Si dudas, deja la celda vacía.
+- edadMinimaMeses: edad mínima de uso de ESTA presentación, en meses (12 años = 144). Vacía si no aplica o no lo sabes.
+- indicaciones: 1 a 3 padecimientos o usos, separados por "; ". Usa EXACTAMENTE un nombre de la lista de abajo si alguno corresponde; si ninguno, uno nuevo corto en español con mayúscula inicial.
+- posologia y registroSanitario: SOLO si los lees en el empaque o el instructivo; si no, vacíos.
+- advertenciasAdicionales: solo algo propio de este producto (un excipiente como tartrazina o azúcar), si no, vacía.
+- requiereRefrigeracion y sinAzucar: true o false; vacío si no aplica.
+- fuenteInfo: empaque, ipp o ia (ver arriba).
+- estadoFicha: ${p.estadoFicha === 'revisada' ? 'déjalo vacío (la ficha ya está revisada)' : 'pendiente'}
+- status: published
+
+CSV: separado por comas. Si una celda tiene comas, punto y coma o saltos de línea, enciérrala entre comillas dobles.
+
+## Principios activos que ya existen (usa estos nombres exactos cuando correspondan)
+${principios.join('; ') || '(ninguno)'}
+
+## Indicaciones que ya existen
+${indicaciones.join('; ') || '(ninguna)'}
+`;
 }
 
 // ── Controller ───────────────────────────────────────────────────────────────
@@ -366,6 +491,9 @@ export default {
     const attrs = strapi.contentType(UID).attributes as any;
     const catalogos = await cargarCatalogos();
     const results = { created: 0, updated: 0, published: 0, errors: [] as string[], warnings: [] as string[] };
+    const newCatalogEntries = String(ctx.query?.crearFaltantes ?? '') === 'true'
+      ? await prepararFaltantes(rows, catalogos, dryRun)
+      : { principiosActivos: [] as string[], indicaciones: [] as string[] };
 
     const columnas = Object.keys(rows[0]);
     const desconocidas = columnas.filter((c) => !attrs[c] && !ESPECIALES.has(c) && !SOLO_EXPORT.has(c));
@@ -420,7 +548,39 @@ export default {
       message: dryRun ? 'Simulación completada: no se escribió nada' : 'Importación completada',
       dryRun,
       ...results,
+      // En simulación: los que se crearían. Al importar: los que se crearon.
+      newCatalogEntries,
     };
+  },
+
+  // GET /api/export/products/:documentId/prompt
+  async fichaPrompt(ctx: any) {
+    const { documentId } = ctx.params;
+    const [producto, principios, indicaciones] = await Promise.all([
+      // El borrador: es lo último que se capturó, aunque no esté publicado.
+      strapi.documents(UID).findOne({
+        documentId,
+        status: 'draft',
+        populate: {
+          category: { fields: ['categoryName'] },
+          laboratorio: { fields: ['name'] },
+          composicion: { populate: { principioActivo: { fields: ['nombre'] } } },
+          indicaciones: { fields: ['nombre'] },
+        },
+      }),
+      strapi.documents('api::principio-activo.principio-activo').findMany({ fields: ['nombre'], sort: 'nombre:asc' }),
+      strapi.documents('api::indicacion.indicacion').findMany({ fields: ['nombre'], sort: 'nombre:asc' }),
+    ]);
+    if (!producto) return ctx.notFound('Producto no encontrado');
+
+    ctx.set('Content-Type', 'text/plain; charset=utf-8');
+    ctx.body = armarPrompt(
+      producto,
+      strapi.contentType(UID).attributes,
+      strapi.components['producto.composicion'].attributes,
+      (principios as any[]).map((x) => x.nombre),
+      (indicaciones as any[]).map((x) => x.nombre),
+    );
   },
 
   // POST /api/export/products/reset-stock
