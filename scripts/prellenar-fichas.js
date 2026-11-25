@@ -505,6 +505,12 @@ async function pasoCsv(op = {}) {
           fila.ia_notas = `[Cantidad de ${c.principioActivo} (${c.cantidad} ${c.unidad}) no capturada: excede el campo.] ${fila.ia_notas}`;
           c = { ...c, cantidad: null, unidad: null, porCantidad: null, porUnidad: null };
         }
+        // Unidades fuera de la lista (p. ej. "250 LRU" de la sulodexida): la IA da la cantidad
+        // sin unidad, "Sulodexida 250" no se reconoce como renglón y la fila fallaba.
+        if (c.cantidad !== null && c.cantidad !== undefined && !c.unidad) {
+          fila.ia_notas = `[Cantidad de ${c.principioActivo} (${c.cantidad}) sin unidad válida: no capturada.] ${fila.ia_notas}`;
+          c = { ...c, cantidad: null, porCantidad: null, porUnidad: null };
+        }
         return renglon(c, nombrePrincipio.get(clave(c.principioActivo)) ?? c.principioActivo);
       });
       fila.composicion = renglones.join('; ');
