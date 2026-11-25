@@ -286,6 +286,21 @@ La ruta también se puede llamar a mano (Postman/curl) con el archivo en el camp
 - **Filtra `ia_confianza = baja` antes de importar.** Ante la duda, la IA elige la fracción más restrictiva. Un producto que hoy se vende sin receta y recibe fracción IV deja de poder comprarse en línea hasta que alguien lo revise. Es la dirección segura, pero afecta ventas.
 - **Costo medido** en una prueba con 8 productos: unos US$0.03 por producto, más unos US$0.03 por principio activo nuevo.
 
+### 5.6 Alta de un producto nuevo, uno por uno (colaboradores de farmacia)
+
+Para los productos que van llegando, sin script ni API key: el colaborador usa el ChatGPT o Claude que ya tenga.
+
+1. **POS → Admin → Productos**, buscar el producto y pulsar el ícono de portapapeles junto al nombre (**"Copiar prompt de ficha"**).
+2. **Pegar el prompt** en ChatGPT o Claude y **adjuntar fotos del empaque y del instructivo**. Con fotos, la IA copia dosis, contenido, edad, registro sanitario y si dice "requiere receta"; sin ellas, deduce. El prompt le pide marcar `fuenteInfo = empaque`/`ipp` o `ia` según el caso.
+3. **Copiar el CSV** que responde (una fila) y pegarlo en **Importar CSV → "…o pega aquí el CSV"**. Se puede pegar la respuesta con el bloque ```csv incluido; el POS lo limpia.
+4. **Revisar** y luego **Importar**. Con "Crear los principios activos e indicaciones que todavía no existan" (activado por defecto), la revisión muestra cuáles se crearían; un nombre mal escrito se corrige en el CSV antes de importar.
+
+Detalles:
+- El prompt lo arma el backend (`GET /api/export/products/:documentId/prompt`). Los valores permitidos salen del schema y los nombres de principios activos e indicaciones de la BD, así que nunca queda desactualizado. Lista lo ya capturado y le pide a la IA dejar esas celdas vacías, para no pisarlo.
+- Los principios activos e indicaciones creados así (`?crearFaltantes=true` en el import) solo llevan nombre y `slug`, y quedan `pendiente`: su información clínica se llena después en Strapi.
+- Lo importado queda `estadoFicha = pendiente`; marcarlo `revisada` sigue siendo decisión del farmacéutico responsable.
+- **Permiso:** rol Operador → Export → `fichaPrompt` (además de `exportProducts` e `importProducts`).
+
 ---
 
 ## 6. Cómo consultarla (API)
