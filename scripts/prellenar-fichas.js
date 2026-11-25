@@ -497,8 +497,17 @@ async function pasoCsv(op = {}) {
       avisos.push(`${fila.productName}: la IA propone venta libre (${propuesta.fraccion}) pero hoy está con receta`);
     }
     if (vacio(p.composicion) && propuesta.composicion.length) {
-      fila.composicion = propuesta.composicion
-        .map((c) => renglon(c, nombrePrincipio.get(clave(c.principioActivo)) ?? c.principioActivo)).join('; ');
+      // `cantidad` es decimal(10,2) en la BD: los probióticos (2,000 millones de UFC) no caben y
+      // la fila entera fallaba al importar. Se omite la cantidad y se deja anotado.
+      const MAX_DECIMAL = 99999999;
+      const renglones = propuesta.composicion.map((c) => {
+        if (Number(c.cantidad) > MAX_DECIMAL || Number(c.porCantidad) > MAX_DECIMAL) {
+          fila.ia_notas = `[Cantidad de ${c.principioActivo} (${c.cantidad} ${c.unidad}) no capturada: excede el campo.] ${fila.ia_notas}`;
+          c = { ...c, cantidad: null, unidad: null, porCantidad: null, porUnidad: null };
+        }
+        return renglon(c, nombrePrincipio.get(clave(c.principioActivo)) ?? c.principioActivo);
+      });
+      fila.composicion = renglones.join('; ');
     }
     if (vacio(p.indicaciones) && propuesta.indicaciones.length) {
       fila.indicaciones = [...new Set(propuesta.indicaciones.map((i) => nombreIndicacion.get(clave(i)) ?? i))].join('; ');
@@ -666,8 +675,9 @@ async function pasoImportar(op) {
   const confirmar = Boolean(op.confirmar);
   const token = process.env.LYMBIKA_API_TOKEN;
   if (!token) throw new Error('Falta LYMBIKA_API_TOKEN en .env');
-  const archivo = path.join(DIR, 'productos.csv');
-  if (!fs.existsSync(archivo)) throw new Error('Primero corre el paso "csv".');
+  // --archivo para reimportar un CSV corregido a mano (por ejemplo, solo las filas que fallaron).
+  const archivo = op.archivo ? path.resolve(String(op.archivo)) : path.join(DIR, 'productos.csv');
+  if (!fs.existsSync(archivo)) throw new Error(op.archivo ? `No existe ${archivo}` : 'Primero corre el paso "csv".');
 
   // En bloques: con todo el archivo en una sola llamada, Render tarda varios segundos por
   // producto y el fetch de Node se rinde a los 5 minutos (en la parte 1 cortó en 43 de 136,
