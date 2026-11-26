@@ -231,6 +231,8 @@ Para llenar muchas fichas a la vez, sin ir producto por producto:
 2. **Editar en Excel.** Puedes borrar las columnas que no vayas a tocar. Lo mínimo es `documentId` más las columnas que cambias. Se puede guardar como "CSV UTF-8" o como "CSV (delimitado por comas)", con separador `,` o `;`: el POS y el backend aceptan las dos codificaciones y los dos separadores.
 3. **Crear antes en el admin** los principios activos e indicaciones que vayas a usar. El import no los crea: un nombre que no existe es un error, así un error de dedo no genera duplicados.
 4. **Importar.** En el POS, *Admin → Productos → Importar CSV*. El diálogo primero **revisa** el archivo sin guardar nada (`?dryRun=true`) y muestra cuántos productos se actualizarán, crearán y publicarán, más las filas con error. Después se confirma con *Importar N filas*. Las filas con error se saltan; las válidas se aplican.
+   - **"Solo llenar campos vacíos"** (`?soloVacios=true`) viene **activado**: lo que el producto ya tiene capturado no se cambia aunque el CSV traiga otra cosa, y la revisión avisa qué se respetó. Para **corregir** datos a propósito (precios, una ficha mal llenada) hay que **desactivarlo**.
+   - **"Crear productos nuevos"** (`?crearProductos=true`) viene **desactivado**: una fila sin `documentId` es un error.
 
 **Permisos.** Los dos botones usan la sesión del usuario del POS (JWT), no un token. En *Settings → Users & Permissions → Roles → Operador* hay que marcar `export.exportProducts` y `export.importProducts`. **No** se dan al rol Authenticated: ese rol es el de los clientes de la tienda. `reset-stock` no se le da a ningún rol.
 
@@ -245,7 +247,8 @@ Reglas del import:
 | `stock_central` | **No se importa**: el stock solo se mueve con compras, ajustes y conteos del POS |
 | `sal` / `conReceta` en producto con ficha | Se recalculan desde `composicion` / `fraccion` (§3) |
 | `status = published` | Actualiza y publica. `draft` o vacío solo actualiza el borrador (no despublica) |
-| Sin `documentId` | Crea un producto nuevo (requiere `productName`) |
+| Sin `documentId` | Solo con `?crearProductos=true` crea un producto nuevo (requiere `productName`); sin la opción, la fila es un error |
+| Con `?soloVacios=true` | Las celdas de campos que ya tienen valor se descartan (también un `-`) y se avisa en `warnings`; solo se llenan los vacíos |
 
 Formato de las columnas de la ficha:
 
@@ -296,7 +299,10 @@ Para los productos que van llegando, sin script ni API key: el colaborador usa e
 4. **Revisar** y luego **Importar**. Con "Crear los principios activos e indicaciones que todavía no existan" (activado por defecto), la revisión muestra cuáles se crearían; un nombre mal escrito se corrige en el CSV antes de importar.
 
 Detalles:
-- El prompt lo arma el backend (`GET /api/export/products/:documentId/prompt`). Los valores permitidos salen del schema y los nombres de principios activos e indicaciones de la BD, así que nunca queda desactualizado. Lista lo ya capturado y le pide a la IA dejar esas celdas vacías, para no pisarlo.
+- El prompt lo arma el backend (`GET /api/export/products/:documentId/prompt`). Los valores permitidos salen del schema y los nombres de principios activos e indicaciones de la BD, así que nunca queda desactualizado. Lista lo ya capturado y le pide a la IA dejar esas celdas vacías.
+- **Producto que ya tiene ficha:** se puede volver a usar el prompt para completar lo que falte. Aunque la IA no obedezca y llene una celda ya capturada, con "Solo llenar campos vacíos" (activado por defecto) no se pisa: la revisión dice qué columnas se respetaron. Una ficha `revisada` sigue revisada.
+- **Duplicados de producto:** si la IA omite el `documentId`, la fila sale como error ("Crear productos nuevos" está apagado), en vez de dar de alta otro producto.
+- **Duplicados de principios/indicaciones:** el import reconoce el mismo nombre sin importar mayúsculas, acentos ni espacios, y los sinónimos de un principio activo. Una variante ("Esporas de Bacillus clausii", "Ácido ascórbico") sí se crearía como nueva: revisar la lista "Se crearán" antes de importar.
 - Los principios activos e indicaciones creados así (`?crearFaltantes=true` en el import) solo llevan nombre y `slug`, y quedan `pendiente`: su información clínica se llena después en Strapi.
 - Lo importado queda `estadoFicha = pendiente`; marcarlo `revisada` sigue siendo decisión del farmacéutico responsable.
 - **Permiso:** rol Operador → Export → `fichaPrompt` (además de `exportProducts` e `importProducts`).

@@ -11,6 +11,10 @@ import { renglonDeSal } from '../../product/utils/derivar-ficha';
  *   principio activo, valor de una lista), la fila entera se salta y se reporta. No hay
  *   filas a medias.
  * - `?dryRun=true` valida todo y devuelve el mismo reporte sin escribir nada.
+ * - Una fila sin `documentId` es un producto nuevo y solo se crea con `?crearProductos=true`;
+ *   sin la opción es un error (evita duplicar un producto si la IA pierde el documentId).
+ * - `?soloVacios=true` solo llena campos vacíos: lo ya capturado se respeta aunque la celda
+ *   traiga otra cosa, y se avisa (ver quitarCapturados).
  * - `stock_central` se exporta como referencia pero **no se importa**: el stock solo se
  *   mueve con compras, ajustes y conteos del POS (/pos-stock), que mantienen cuadradas
  *   la bodega y las farmacias.
@@ -197,7 +201,7 @@ async function cargarCatalogos() {
     strapi.documents('api::laboratorio.laboratorio').findMany({ fields: ['name'], status: 'draft' }),
     strapi.documents('api::principio-activo.principio-activo').findMany({ fields: ['nombre', 'sinonimos'] }),
     strapi.documents('api::indicacion.indicacion').findMany({ fields: ['nombre'] }),
-    strapi.documents(UID).findMany({ fields: ['documentId'], status: 'draft' }),
+    strapi.documents(UID).findMany({ fields: ['productName'], status: 'draft' }),
   ]);
 
   const porNombre = (items: any[], campo: string) =>
@@ -218,8 +222,89 @@ async function cargarCatalogos() {
     laboratorios: porNombre(laboratorios, 'name'),
     principios: mapaPrincipios,
     indicaciones: porNombre(indicaciones, 'nombre'),
-    productos: new Set((productos as any[]).map((p) => p.documentId)),
+    // documentId → nombre, para las etiquetas del reporte.
+    productos: new Map<string, string>((productos as any[]).map((p) => [p.documentId, p.productName?.trim()])),
   };
+}
+
+// ── Solo llenar vacíos ───────────────────────────────────────────────────────
+
+const vacio = (v: unknown) => v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0);
+
+/** Valor actual de una columna del CSV en un producto (relaciones y composición como texto). */
+function valorActual(p: any, columna: string): unknown {
+  switch (columna) {
+    case 'composicion': return (p.composicion ?? []).map(renglonDeSal).filter(Boolean).join('; ');
+    case 'indicaciones': return (p.indicaciones ?? []).map((i: any) => i.nombre).join('; ');
+    case 'category': return p.category?.categoryName;
+    case 'laboratorio': return p.laboratorio?.name;
+    default: return p[columna];
+  }
+}
+
+// Columnas que no son datos del producto: nunca se "respetan".
+const NO_PROTEGIDAS = new Set(['documentId', 'status', ...SOLO_EXPORT]);
+
+/** La celda dice lo mismo que ya hay (para no reportar como "respetado" algo que no cambiaba). */
+function mismoValor(actual: unknown, celda: string): boolean {
+  if (typeof actual === 'boolean') return parseBool(celda) === actual;
+  if (typeof actual === 'number') return parseDecimal(celda) === actual;
+  return clave(String(actual)) === clave(celda);
+}
+
+/**
+ * Con `?soloVacios=true` el import solo llena campos que el producto tiene vacíos: si ya
+ * tienen valor, la celda se descarta aunque traiga otra cosa (o un "-"). Es el candado del
+ * alta 1×1 con ChatGPT/Claude: el prompt pide dejar en blanco lo ya capturado, pero si la IA
+ * no obedece, sin esto pisaría una ficha revisada. Para corregir algo a propósito se importa
+ * sin la opción o se edita en el admin.
+ *
+ * Quita las celdas protegidas de cada fila (antes de crear principios/indicaciones faltantes,
+ * para no crear los de una composición que no se va a aplicar) y regresa, por fila, qué
+ * columnas se respetaron.
+ */
+async function quitarCapturados(rows: Record<string, string>[], ok: boolean[], attrs: any) {
+  const ids = [...new Set(rows.filter((r, i) => ok[i] && r.documentId).map((r) => r.documentId))];
+  const actuales = ids.length
+    ? await strapi.documents(UID).findMany({
+      filters: { documentId: { $in: ids } },
+      status: 'draft',
+      populate: {
+        category: { fields: ['categoryName'] },
+        laboratorio: { fields: ['name'] },
+        composicion: { populate: { principioActivo: { fields: ['nombre'] } } },
+        indicaciones: { fields: ['nombre'] },
+      },
+    })
+    : [];
+  const porId = new Map((actuales as any[]).map((p) => [p.documentId, p]));
+
+  return rows.map((row, i) => {
+    const p = ok[i] && porId.get(row.documentId);
+    if (!p) return [];
+    const respetados: string[] = [];
+    for (const [columna, celda] of Object.entries(row)) {
+      if (celda === '' || NO_PROTEGIDAS.has(columna) || (!attrs[columna] && !ESPECIALES.has(columna))) continue;
+      const actual = valorActual(p, columna);
+      if (vacio(actual)) continue;
+      if (!mismoValor(actual, celda)) respetados.push(columna);
+      row[columna] = '';
+    }
+    return respetados;
+  });
+}
+
+/** Aviso de lo respetado: por fila en imports chicos (el alta 1×1), resumido por columna en los grandes. */
+function avisoDeRespetados(etiquetas: string[], respetados: string[][]): string[] {
+  const conCambios = respetados.map((r, i) => ({ r, i })).filter(({ r }) => r.length);
+  if (!conCambios.length) return [];
+  if (etiquetas.length <= 10) {
+    return conCambios.map(({ r, i }) => `${etiquetas[i]}: ya tenía valor y se respetó (solo campos vacíos): ${r.join(', ')}`);
+  }
+  const porColumna = new Map<string, number>();
+  for (const { r } of conCambios) for (const c of r) porColumna.set(c, (porColumna.get(c) ?? 0) + 1);
+  const detalle = [...porColumna].map(([c, n]) => `${c}: ${n}`).join(', ');
+  return [`Solo campos vacíos: en ${conCambios.length} productos se respetó lo ya capturado (${detalle})`];
 }
 
 // ── Principios activos e indicaciones que faltan ─────────────────────────────
@@ -366,8 +451,6 @@ const COLUMNAS_PROMPT = [
   'fuenteInfo', 'estadoFicha', 'status',
 ];
 
-const vacio = (v: unknown) => v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0);
-
 /**
  * Texto para pegar en ChatGPT/Claude (con fotos del empaque, idealmente) que regresa la ficha
  * de UN producto como CSV de una fila, listo para el botón "Importar CSV" del POS. Los valores
@@ -376,14 +459,9 @@ const vacio = (v: unknown) => v === null || v === undefined || v === '' || (Arra
  */
 function armarPrompt(p: any, attrs: any, comp: any, principios: string[], indicaciones: string[]) {
   const opciones = (a: any) => a.enum.join(', ');
-  const valorActual = (c: string) => {
-    if (c === 'composicion') return (p.composicion ?? []).map(renglonDeSal).filter(Boolean).join('; ');
-    if (c === 'indicaciones') return (p.indicaciones ?? []).map((i: any) => i.nombre).join('; ');
-    return p[c];
-  };
   const capturados = COLUMNAS_PROMPT
-    .filter((c) => !['documentId', 'fuenteInfo', 'estadoFicha', 'status'].includes(c) && !vacio(valorActual(c)))
-    .map((c) => `- ${c}: ${valorActual(c)}`);
+    .filter((c) => !['documentId', 'fuenteInfo', 'estadoFicha', 'status'].includes(c) && !vacio(valorActual(p, c)))
+    .map((c) => `- ${c}: ${valorActual(p, c)}`);
 
   return `Eres farmacéutico en México y vas a llenar la ficha de UN producto de la farmacia en línea Lymbika. Responde SOLO con un bloque de código CSV (encabezado + una fila), sin texto fuera del bloque.
 ${p.estadoFicha === 'revisada' ? '\nATENCIÓN: esta ficha ya fue revisada por un farmacéutico. Solo llena lo que falte.\n' : ''}
@@ -464,7 +542,7 @@ export default {
     ctx.body = BOM + [CSV_FIELDS.join(','), ...filas].join('\r\n');
   },
 
-  // POST /api/export/products/import[?dryRun=true]
+  // POST /api/export/products/import[?dryRun=true][&crearFaltantes=true][&soloVacios=true][&crearProductos=true]
   // Acepta multipart/form-data con campo "file" (archivo .csv)
   // o JSON con campo "csv" (string con el contenido del CSV).
   async importProducts(ctx: any) {
@@ -487,13 +565,30 @@ export default {
       return ctx.badRequest('El CSV está vacío o no tiene filas válidas');
     }
 
-    const dryRun = String(ctx.query?.dryRun ?? '') === 'true';
+    const opcion = (nombre: string) => String(ctx.query?.[nombre] ?? '') === 'true';
+    const dryRun = opcion('dryRun');
+    const soloVacios = opcion('soloVacios');
+    // Crear productos es opt-in: si la IA pierde el documentId de la fila, sin esto se daría
+    // de alta un duplicado del producto en vez de llenar su ficha.
+    const crearProductos = opcion('crearProductos');
     const attrs = strapi.contentType(UID).attributes as any;
     const catalogos = await cargarCatalogos();
     const results = { created: 0, updated: 0, published: 0, errors: [] as string[], warnings: [] as string[] };
-    const newCatalogEntries = String(ctx.query?.crearFaltantes ?? '') === 'true'
-      ? await prepararFaltantes(rows, catalogos, dryRun)
-      : { principiosActivos: [] as string[], indicaciones: [] as string[] };
+
+    // Errores de la fila que no dependen de sus celdas. Se ven antes de crear principios e
+    // indicaciones faltantes, para no crearlos por una fila que de todos modos se va a saltar.
+    const previos = rows.map((row) => {
+      if (!row.documentId) {
+        return crearProductos ? [] : ['no trae documentId (para dar de alta productos activa "crear productos nuevos")'];
+      }
+      return catalogos.productos.has(row.documentId) ? [] : [`documentId "${row.documentId}" no existe`];
+    });
+    const sinErrorPrevio = previos.map((e) => e.length === 0);
+    // +2: la fila 1 es el encabezado y Excel numera desde 1. El nombre real del producto va
+    // primero: el CSV de la IA no lo trae, o trae uno distinto. Se arma antes de quitar
+    // celdas con soloVacios, que también vacía productName.
+    const etiquetas = rows.map((row, i) =>
+      `Fila ${i + 2} (${catalogos.productos.get(row.documentId) || row.productName || row.documentId || 'sin nombre'})`);
 
     const columnas = Object.keys(rows[0]);
     const desconocidas = columnas.filter((c) => !attrs[c] && !ESPECIALES.has(c) && !SOLO_EXPORT.has(c));
@@ -501,16 +596,20 @@ export default {
     if (columnas.includes('stock_central')) {
       results.warnings.push('stock_central no se importa: el stock se mueve con compras, ajustes y conteos del POS');
     }
+    if (soloVacios) {
+      const respetados = await quitarCapturados(rows, sinErrorPrevio, attrs);
+      results.warnings.push(...avisoDeRespetados(etiquetas, respetados));
+    }
+
+    const newCatalogEntries = opcion('crearFaltantes')
+      ? await prepararFaltantes(rows.filter((_, i) => sinErrorPrevio[i]), catalogos, dryRun)
+      : { principiosActivos: [] as string[], indicaciones: [] as string[] };
 
     for (const [i, row] of rows.entries()) {
-      // +2: la fila 1 es el encabezado y Excel numera desde 1.
-      const etiqueta = `Fila ${i + 2} (${row.productName || row.documentId || 'sin nombre'})`;
+      const etiqueta = etiquetas[i];
       const { data, errores } = datosDeFila(row, catalogos, attrs);
-
-      if (row.documentId && !catalogos.productos.has(row.documentId)) {
-        errores.push(`documentId "${row.documentId}" no existe`);
-      }
-      if (!row.documentId && !data.productName) errores.push('producto nuevo sin productName');
+      errores.unshift(...previos[i]);
+      if (!row.documentId && crearProductos && !data.productName) errores.push('producto nuevo sin productName');
       if (row.status && !['published', 'draft'].includes(row.status)) {
         errores.push(`status "${row.status}" no es válido (published o draft)`);
       }
