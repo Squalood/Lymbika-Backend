@@ -43,6 +43,24 @@ export interface CaseFollowUpTask extends Struct.ComponentSchema {
   };
 }
 
+export interface ClinicUrgencia extends Struct.ComponentSchema {
+  collectionName: 'components_clinic_urgencias';
+  info: {
+    description: 'Banda de urgencias de la ficha de cl\u00EDnica (dise\u00F1o nuevo)';
+    displayName: 'urgencia';
+    icon: 'alert';
+  };
+  attributes: {
+    etiqueta: Schema.Attribute.String;
+    imagen: Schema.Attribute.Media<'images'>;
+    mensajeWhatsapp: Schema.Attribute.String;
+    nota: Schema.Attribute.String;
+    pieImagen: Schema.Attribute.String;
+    texto: Schema.Attribute.Text;
+    titulo: Schema.Attribute.String;
+  };
+}
+
 export interface CompraItemCompraItem extends Struct.ComponentSchema {
   collectionName: 'components_compra_item_compra_items';
   info: {
@@ -471,6 +489,19 @@ export interface ItemFaqItem extends Struct.ComponentSchema {
   };
 }
 
+export interface ItemPaso extends Struct.ComponentSchema {
+  collectionName: 'components_item_pasos';
+  info: {
+    description: 'Paso de "C\u00F3mo funciona"';
+    displayName: 'paso';
+    icon: 'arrowRight';
+  };
+  attributes: {
+    descripcion: Schema.Attribute.Text;
+    titulo: Schema.Attribute.String;
+  };
+}
+
 export interface ItemPill extends Struct.ComponentSchema {
   collectionName: 'components_item_pills';
   info: {
@@ -690,6 +721,7 @@ declare module '@strapi/strapi' {
       'badge.badge': BadgeBadge;
       'button.button': ButtonButton;
       'case.follow-up-task': CaseFollowUpTask;
+      'clinic.urgencia': ClinicUrgencia;
       'compra-item.compra-item': CompraItemCompraItem;
       'contact.contact': ContactContact;
       'doctor.doctor': DoctorDoctor;
@@ -713,6 +745,7 @@ declare module '@strapi/strapi' {
       'home.turist-section': HomeTuristSection;
       'home.videos-section': HomeVideosSection;
       'item.faq-item': ItemFaqItem;
+      'item.paso': ItemPaso;
       'item.pill': ItemPill;
       'item.values': ItemValues;
       'landing-texts.landing-texts-medical-service': LandingTextsLandingTextsMedicalService;

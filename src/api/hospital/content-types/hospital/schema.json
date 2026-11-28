@@ -50,6 +50,12 @@
     },
     "descripcion": {
       "type": "text"
+    },
+    "clinics": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::clinic.clinic",
+      "mappedBy": "hospitals"
     }
   }
 }

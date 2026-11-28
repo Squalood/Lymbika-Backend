@@ -98,6 +98,16 @@
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::hospital.hospital"
+    },
+    "paraQuien": {
+      "type": "component",
+      "component": "plus.plus",
+      "repeatable": true
+    },
+    "pasos": {
+      "type": "component",
+      "component": "item.paso",
+      "repeatable": true
     }
   }
 }

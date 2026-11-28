@@ -1,0 +1,38 @@
+{
+  "collectionName": "components_clinic_urgencias",
+  "info": {
+    "displayName": "urgencia",
+    "icon": "alert",
+    "description": "Banda de urgencias de la ficha de clínica (diseño nuevo)"
+  },
+  "options": {},
+  "attributes": {
+    "etiqueta": {
+      "type": "string"
+    },
+    "titulo": {
+      "type": "string"
+    },
+    "texto": {
+      "type": "text"
+    },
+    "imagen": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "pieImagen": {
+      "type": "string"
+    },
+    "mensajeWhatsapp": {
+      "type": "string"
+    },
+    "nota": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}

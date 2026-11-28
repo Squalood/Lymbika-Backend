@@ -65,6 +65,68 @@
     },
     "requiereCirugia": {
       "type": "boolean"
+    },
+    "enCatalogo": {
+      "type": "boolean",
+      "default": false
+    },
+    "tituloTarjeta": {
+      "type": "string"
+    },
+    "descripcion": {
+      "type": "text"
+    },
+    "periodo": {
+      "type": "string"
+    },
+    "detallePrecio": {
+      "type": "string"
+    },
+    "textoSinPrecio": {
+      "type": "string"
+    },
+    "noIncluye": {
+      "type": "component",
+      "component": "plus.plus",
+      "repeatable": true
+    },
+    "estiloTarjeta": {
+      "type": "enumeration",
+      "enum": [
+        "claro",
+        "tinte",
+        "oscuro"
+      ],
+      "default": "claro"
+    },
+    "icono": {
+      "type": "enumeration",
+      "default": "Stethoscope",
+      "enum": [
+        "Stethoscope",
+        "UserRound",
+        "Droplet",
+        "Activity",
+        "Heart",
+        "HeartPulse",
+        "HeartHandshake",
+        "Route",
+        "Syringe",
+        "Microscope",
+        "ClipboardCheck",
+        "Pill",
+        "Ambulance",
+        "Hospital",
+        "Scissors",
+        "Bandage",
+        "Baby",
+        "Brain",
+        "Bone",
+        "ScanHeart",
+        "Venus",
+        "Ribbon",
+        "Sparkles"
+      ]
     }
   }
 }

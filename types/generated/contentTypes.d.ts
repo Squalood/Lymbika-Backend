@@ -702,6 +702,7 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
+    avisoLegal: Schema.Attribute.Text;
     colorPage: Schema.Attribute.Enumeration<
       ['navy', 'pink', 'green', 'blue', 'red']
     >;
@@ -712,17 +713,29 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    disenoNuevo: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     doctor: Schema.Attribute.Component<'doctor.doctor', false>;
     doctorPage: Schema.Attribute.Relation<'oneToOne', 'api::doctor.doctor'>;
+    faq_group: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::faq-group.faq-group'
+    >;
     featuredClinic: Schema.Attribute.Boolean;
     features: Schema.Attribute.Component<'feature.features', true>;
     gallery: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios',
       true
     >;
+    heroEyebrow: Schema.Attribute.String;
     heroImage: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    heroImageMobile: Schema.Attribute.Media<'images'>;
+    heroPills: Schema.Attribute.Component<'item.pill', true>;
     heroSubtitle: Schema.Attribute.Text;
     heroTitle: Schema.Attribute.String;
+    hospitals: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::hospital.hospital'
+    >;
     icon: Schema.Attribute.Enumeration<
       [
         'HeartPulse',
@@ -754,6 +767,7 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
       'api::clinic.clinic'
     > &
       Schema.Attribute.Private;
+    mensajeWhatsapp: Schema.Attribute.String;
     pageTexts: Schema.Attribute.JSON;
     products: Schema.Attribute.Relation<'manyToMany', 'api::product.product'>;
     publishedAt: Schema.Attribute.DateTime;
@@ -764,10 +778,12 @@ export interface ApiClinicClinic extends Struct.CollectionTypeSchema {
     >;
     slug: Schema.Attribute.UID<'title'>;
     testimonials: Schema.Attribute.Component<'testimonial.testimonials', true>;
+    textoEquipo: Schema.Attribute.Text;
     title: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    urgencia: Schema.Attribute.Component<'clinic.urgencia', false>;
     videos: Schema.Attribute.Component<'video-id.youtube-video', true>;
   };
 }
@@ -993,6 +1009,7 @@ export interface ApiFaqGroupFaqGroup extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
+    clinic: Schema.Attribute.Relation<'oneToOne', 'api::clinic.clinic'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1076,6 +1093,7 @@ export interface ApiHospitalHospital extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
+    clinics: Schema.Attribute.Relation<'manyToMany', 'api::clinic.clinic'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1268,6 +1286,8 @@ export interface ApiMedicalServiceMedicalService
     > &
       Schema.Attribute.Private;
     name: Schema.Attribute.String & Schema.Attribute.Required;
+    paraQuien: Schema.Attribute.Component<'plus.plus', true>;
+    pasos: Schema.Attribute.Component<'item.paso', true>;
     publishedAt: Schema.Attribute.DateTime;
     service_rates: Schema.Attribute.Relation<
       'oneToMany',
@@ -1950,9 +1970,42 @@ export interface ApiServiceRateServiceRate extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    descripcion: Schema.Attribute.Text;
     destacado: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    detallePrecio: Schema.Attribute.String;
     doctor: Schema.Attribute.Relation<'manyToOne', 'api::doctor.doctor'>;
     duration_min: Schema.Attribute.Integer;
+    enCatalogo: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    estiloTarjeta: Schema.Attribute.Enumeration<['claro', 'tinte', 'oscuro']> &
+      Schema.Attribute.DefaultTo<'claro'>;
+    icono: Schema.Attribute.Enumeration<
+      [
+        'Stethoscope',
+        'UserRound',
+        'Droplet',
+        'Activity',
+        'Heart',
+        'HeartPulse',
+        'HeartHandshake',
+        'Route',
+        'Syringe',
+        'Microscope',
+        'ClipboardCheck',
+        'Pill',
+        'Ambulance',
+        'Hospital',
+        'Scissors',
+        'Bandage',
+        'Baby',
+        'Brain',
+        'Bone',
+        'ScanHeart',
+        'Venus',
+        'Ribbon',
+        'Sparkles',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'Stethoscope'>;
     items: Schema.Attribute.Component<'plus.plus', true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -1964,13 +2017,17 @@ export interface ApiServiceRateServiceRate extends Struct.CollectionTypeSchema {
       'manyToOne',
       'api::medical-service.medical-service'
     >;
+    noIncluye: Schema.Attribute.Component<'plus.plus', true>;
     notes: Schema.Attribute.Text;
     package_items: Schema.Attribute.JSON;
     package_label: Schema.Attribute.String;
     package_note: Schema.Attribute.Text;
+    periodo: Schema.Attribute.String;
     price: Schema.Attribute.Decimal & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
     requiereCirugia: Schema.Attribute.Boolean;
+    textoSinPrecio: Schema.Attribute.String;
+    tituloTarjeta: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

@@ -141,6 +141,52 @@
         "blue",
         "red"
       ]
+    },
+    "disenoNuevo": {
+      "type": "boolean",
+      "default": false
+    },
+    "heroEyebrow": {
+      "type": "string"
+    },
+    "heroPills": {
+      "type": "component",
+      "component": "item.pill",
+      "repeatable": true
+    },
+    "heroImageMobile": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "urgencia": {
+      "type": "component",
+      "component": "clinic.urgencia",
+      "repeatable": false
+    },
+    "hospitals": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::hospital.hospital",
+      "inversedBy": "clinics"
+    },
+    "faq_group": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::faq-group.faq-group",
+      "inversedBy": "clinic"
+    },
+    "mensajeWhatsapp": {
+      "type": "string"
+    },
+    "textoEquipo": {
+      "type": "text"
+    },
+    "avisoLegal": {
+      "type": "text"
     }
   }
 }

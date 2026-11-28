@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_item_pasos",
+  "info": {
+    "displayName": "paso",
+    "icon": "arrowRight",
+    "description": "Paso de \"Cómo funciona\""
+  },
+  "options": {},
+  "attributes": {
+    "titulo": {
+      "type": "string"
+    },
+    "descripcion": {
+      "type": "text"
+    }
+  },
+  "config": {}
+}

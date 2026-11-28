@@ -38,6 +38,7 @@ Casi todos usan controller/service/router de fábrica (`factories.createCore*`, 
 
 **Clínicas / servicios médicos**
 - `clinic`, `doctor`, `hospital`, `service` (especialidad), `medical-service` (con landing: hero, FAQ, galería, hospitales), `service-rate` (precio por servicio+doctor+clínica, paquetes), `surgery`, `faq-group`.
+- Diseño nuevo de clínicas (nov-2026; detalle en el CLAUDE.md del front): `clinic.disenoNuevo` lo activa por clínica; `clinic` suma `heroEyebrow`, `heroPills`, `heroImageMobile`, `urgencia` (componente `clinic.urgencia`), `hospitals` (manyToMany ↔ `hospital.clinics`), `faq_group` (oneToOne ↔ `faq-group.clinic`), `mensajeWhatsapp`, `textoEquipo`, `avisoLegal`. `service-rate` (= paquete) suma `enCatalogo`, `tituloTarjeta`, `descripcion`, `periodo`, `detallePrecio`, `textoSinPrecio`, `noIncluye`, `estiloTarjeta`, `icono`. `medical-service` suma `paraQuien` y `pasos` (componente `item.paso`). Todo opcional: sin capturar, el front cae al diseño anterior.
 - `case` ★ — casos de pacientes (sin draft). Rutas públicas en `routes/case-paciente.ts` (`auth: false`): `POST /cases/intake`, `GET /cases/by-token/:token`, `POST /cases/by-token/:token/documents`. Ningún rol debe tener permisos sobre el core router de `case`. `lifecycles.ts` completa token/número (`LYM-<año>-<000001>`)/link si se crea desde el panel (`utils/identidad-caso.ts`); `utils/notificar-caso.ts` avisa por correo a `CASE_NOTIFY_EMAILS` con datos mínimos y nunca lanza.
 
 **Contenido / páginas (single types)**
